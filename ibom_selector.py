@@ -2,9 +2,10 @@
 Programme de sélection de composants depuis un fichier InteractiveHtmlBom
 - Charge un fichier HTML généré par InteractiveHtmlBom
 - Permet de sélectionner une zone rectangulaire sur le PCB
-- Exporte les composants sélectionnés vers Excel
+- Exporte les composants sélectionnés vers Excel ou CSV
 """
 
+import csv
 import json
 import re
 import tkinter as tk
@@ -871,14 +872,18 @@ class IBomSelectorApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("IBom Component Selector")
-        self.root.geometry("1100x850")
+        self.root.geometry("1100x900")
         self.root.configure(bg='#f0f0f0')
         
         self.parser = None
         self.selected_components = []
+        self.filtered_components = []  # Composants filtrés pour l'affichage
         self.selection_rect = None  # Rectangle de sélection en coordonnées PCB
+        self.layer_filter = tk.StringVar(value="all")  # Filtre de couche: all, F, B
+        self.search_var = tk.StringVar()  # Variable de recherche
         
         self._setup_ui()
+        self._setup_keyboard_shortcuts()
     
     def _setup_ui(self):
         """Configure l'interface utilisateur principale"""
@@ -948,6 +953,15 @@ class IBomSelectorApp:
         )
         self.export_btn.pack(pady=10)
         
+        self.export_csv_btn = ttk.Button(
+            btn_side_frame,
+            text="Exporter vers CSV",
+            command=self._export_csv,
+            state=tk.DISABLED,
+            width=20
+        )
+        self.export_csv_btn.pack(pady=10)
+        
         # Label de statut
         self.status_var = tk.StringVar(value="Chargez un fichier HTML InteractiveHtmlBom pour commencer")
         status_label = ttk.Label(btn_side_frame, textvariable=self.status_var, font=('Segoe UI', 9), wraplength=150)
@@ -956,6 +970,40 @@ class IBomSelectorApp:
         # Message initial sur le canvas
         self.pcb_canvas.create_text(350, 90, text="Chargez un fichier pour voir le PCB", 
                                      fill='#666666', font=('Segoe UI', 12))
+        
+        # Frame pour les filtres
+        filter_frame = ttk.LabelFrame(main_frame, text="Filtres", padding=10)
+        filter_frame.pack(fill=tk.X, pady=5)
+        
+        # Filtre par couche
+        layer_label = ttk.Label(filter_frame, text="Couche:")
+        layer_label.pack(side=tk.LEFT, padx=(0, 5))
+        
+        ttk.Radiobutton(filter_frame, text="Toutes", variable=self.layer_filter, 
+                        value="all", command=self._apply_filters).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(filter_frame, text="Front (F)", variable=self.layer_filter, 
+                        value="F", command=self._apply_filters).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(filter_frame, text="Back (B)", variable=self.layer_filter, 
+                        value="B", command=self._apply_filters).pack(side=tk.LEFT, padx=5)
+        
+        # Séparateur
+        ttk.Separator(filter_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=15)
+        
+        # Recherche
+        search_label = ttk.Label(filter_frame, text="Rechercher:")
+        search_label.pack(side=tk.LEFT, padx=(0, 5))
+        
+        self.search_entry = ttk.Entry(filter_frame, textvariable=self.search_var, width=30)
+        self.search_entry.pack(side=tk.LEFT, padx=5)
+        self.search_var.trace('w', lambda *args: self._apply_filters())
+        
+        clear_search_btn = ttk.Button(filter_frame, text="✕", width=3, command=self._clear_search)
+        clear_search_btn.pack(side=tk.LEFT, padx=2)
+        
+        # Statistiques
+        self.stats_var = tk.StringVar(value="")
+        stats_label = ttk.Label(filter_frame, textvariable=self.stats_var, font=('Segoe UI', 9, 'italic'))
+        stats_label.pack(side=tk.RIGHT, padx=10)
         
         # Liste des composants sélectionnés
         list_frame = ttk.LabelFrame(main_frame, text="Composants sélectionnés", padding=10)
@@ -1108,12 +1156,56 @@ class IBomSelectorApp:
         self.selected_components = selected_components
         self.selection_rect = selection_rect
         
-        self._update_tree()
+        self._apply_filters()
         self._draw_pcb_preview()  # Redessiner avec la zone de sélection
         
         self.export_btn.config(state=tk.NORMAL)
+        self.export_csv_btn.config(state=tk.NORMAL)
         self.clear_btn.config(state=tk.NORMAL)
         self.status_var.set(f"{len(selected_components)} composants sélectionnés")
+    
+    def _apply_filters(self):
+        """Applique les filtres sur les composants sélectionnés"""
+        layer_filter = self.layer_filter.get()
+        search_text = self.search_var.get().lower().strip()
+        
+        # Filtrer les composants
+        self.filtered_components = []
+        for comp in self.selected_components:
+            # Filtre par couche
+            if layer_filter != "all" and comp.get('layer', 'F') != layer_filter:
+                continue
+            
+            # Filtre par recherche
+            if search_text:
+                searchable = f"{comp['ref']} {comp['value']} {comp['footprint']} {comp['lcsc']}".lower()
+                if search_text not in searchable:
+                    continue
+            
+            self.filtered_components.append(comp)
+        
+        self._update_tree()
+        self._update_statistics()
+    
+    def _update_statistics(self):
+        """Met à jour les statistiques affichées"""
+        if not self.selected_components:
+            self.stats_var.set("")
+            return
+        
+        total = len(self.selected_components)
+        filtered = len(self.filtered_components)
+        front_count = sum(1 for c in self.selected_components if c.get('layer', 'F') == 'F')
+        back_count = total - front_count
+        
+        if filtered == total:
+            self.stats_var.set(f"Total: {total} | Front: {front_count} | Back: {back_count}")
+        else:
+            self.stats_var.set(f"Affichés: {filtered}/{total} | Front: {front_count} | Back: {back_count}")
+    
+    def _clear_search(self):
+        """Efface le champ de recherche"""
+        self.search_var.set("")
     
     def _update_tree(self):
         """Met à jour l'affichage de la liste des composants (regroupés par value/footprint)"""
@@ -1123,7 +1215,7 @@ class IBomSelectorApp:
         
         # Regrouper par (value, footprint, lcsc)
         grouped = {}
-        for comp in self.selected_components:
+        for comp in self.filtered_components:
             key = (comp['value'], comp['footprint'], comp['lcsc'])
             if key not in grouped:
                 grouped[key] = []
@@ -1147,16 +1239,19 @@ class IBomSelectorApp:
     def _clear_selection(self):
         """Efface la sélection actuelle"""
         self.selected_components = []
+        self.filtered_components = []
         self.selection_rect = None
         self._update_tree()
+        self._update_statistics()
         self._draw_pcb_preview()  # Redessiner sans la zone de sélection
         self.export_btn.config(state=tk.DISABLED)
+        self.export_csv_btn.config(state=tk.DISABLED)
         self.clear_btn.config(state=tk.DISABLED)
         self.status_var.set("Sélection effacée")
     
     def _export_excel(self):
         """Exporte les composants sélectionnés vers Excel"""
-        if not self.selected_components:
+        if not self.filtered_components:
             messagebox.showwarning("Attention", "Aucun composant à exporter")
             return
         
@@ -1198,7 +1293,7 @@ class IBomSelectorApp:
             
             # Regrouper par valeur et footprint pour compter les quantités
             grouped = {}
-            for comp in self.selected_components:
+            for comp in self.filtered_components:
                 key = (comp['value'], comp['footprint'], comp['lcsc'])
                 if key not in grouped:
                     grouped[key] = {'refs': [], 'value': comp['value'], 
@@ -1234,6 +1329,66 @@ class IBomSelectorApp:
             
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors de l'export:\n{str(e)}")
+    
+    def _export_csv(self):
+        """Exporte les composants sélectionnés vers CSV"""
+        if not self.filtered_components:
+            messagebox.showwarning("Attention", "Aucun composant à exporter")
+            return
+        
+        # Demander le nom du fichier
+        filename = filedialog.asksaveasfilename(
+            title="Enregistrer le fichier CSV",
+            defaultextension=".csv",
+            filetypes=[("Fichiers CSV", "*.csv")]
+        )
+        
+        if not filename:
+            return
+        
+        try:
+            # Regrouper par valeur et footprint
+            grouped = {}
+            for comp in self.filtered_components:
+                key = (comp['value'], comp['footprint'], comp['lcsc'])
+                if key not in grouped:
+                    grouped[key] = {'refs': [], 'value': comp['value'], 
+                                   'footprint': comp['footprint'], 'lcsc': comp['lcsc']}
+                grouped[key]['refs'].append(comp['ref'])
+            
+            # Écrire le fichier CSV
+            with open(filename, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['Quantité', 'Référence', 'Valeur', 'Footprint', 'LCSC'])
+                
+                for key, data in sorted(grouped.items()):
+                    refs = sorted(data['refs'])
+                    writer.writerow([
+                        len(refs),
+                        ', '.join(refs),
+                        data['value'],
+                        data['footprint'],
+                        data['lcsc']
+                    ])
+            
+            messagebox.showinfo(
+                "Succès",
+                f"Fichier CSV créé avec succès!\n{filename}"
+            )
+            self.status_var.set(f"Export CSV réussi: {filename}")
+            
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Erreur lors de l'export CSV:\n{str(e)}")
+    
+    def _setup_keyboard_shortcuts(self):
+        """Configure les raccourcis clavier"""
+        self.root.bind('<Control-o>', lambda e: self._browse_file())
+        self.root.bind('<Control-s>', lambda e: self._export_excel() if self.filtered_components else None)
+        self.root.bind('<Control-Shift-s>', lambda e: self._export_csv() if self.filtered_components else None)
+        self.root.bind('<Control-l>', lambda e: self._load_file())
+        self.root.bind('<Escape>', lambda e: self._clear_selection())
+        self.root.bind('<Control-f>', lambda e: self.search_entry.focus_set())
+        self.root.bind('<F5>', lambda e: self._draw_pcb_preview() if self.parser else None)
     
     def run(self):
         """Lance l'application"""
