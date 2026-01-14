@@ -2,6 +2,8 @@
 
 A Python GUI tool to visually select components from InteractiveHtmlBom files and export them to Excel.
 
+![IBom Component Selector](pictures/main.png)
+
 ## Features
 
 - **Load InteractiveHtmlBom HTML files** - Supports compressed (LZ-String) and uncompressed formats
