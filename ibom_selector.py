@@ -240,7 +240,6 @@ class IBomParser:
             return
         
         try:
-            import csv
             with open(csv_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
@@ -1383,11 +1382,11 @@ class IBomSelectorApp:
     def _setup_keyboard_shortcuts(self):
         """Configure les raccourcis clavier"""
         self.root.bind('<Control-o>', lambda e: self._browse_file())
-        self.root.bind('<Control-s>', lambda e: self._export_excel() if self.filtered_components else None)
-        self.root.bind('<Control-Shift-s>', lambda e: self._export_csv() if self.filtered_components else None)
+        self.root.bind('<Control-s>', lambda e: self._export_excel() if self.filtered_components else messagebox.showinfo("Info", "Aucun composant sélectionné"))
+        self.root.bind('<Control-Shift-s>', lambda e: self._export_csv() if self.filtered_components else messagebox.showinfo("Info", "Aucun composant sélectionné"))
         self.root.bind('<Control-l>', lambda e: self._load_file())
         self.root.bind('<Escape>', lambda e: self._clear_selection())
-        self.root.bind('<Control-f>', lambda e: self.search_entry.focus_set())
+        self.root.bind('<Control-f>', lambda e: self.search_entry.focus_set() if hasattr(self, 'search_entry') else None)
         self.root.bind('<F5>', lambda e: self._draw_pcb_preview() if self.parser else None)
     
     def run(self):
