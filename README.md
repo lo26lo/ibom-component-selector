@@ -11,6 +11,9 @@ A Python GUI tool to visually select components from InteractiveHtmlBom files an
 - **Rectangle selection** - Click on the PCB preview to open the selection window, then draw a rectangle to select components
 - **Layer filtering** - Filter selected components by Front (F) or Back (B) layer
 - **Search functionality** - Search components by reference, value, footprint, or LCSC code
+- **Sortable columns** - Click on column headers to sort by Quantity, Value, Footprint, LCSC, etc.
+- **Progress tracking** - Mark components as "processed" with a checkbox to track your work
+- **Selection history** - Save and reload previous selections with their processed status
 - **Statistics display** - View component counts by layer and filter status
 - **LCSC part numbers** - Automatically loads LCSC codes from a CSV file if available
 - **Grouped export** - Components are grouped by value/footprint with quantity count
@@ -95,6 +98,48 @@ The program will automatically match component references to LCSC codes.
 | `Ctrl+F` | Focus search field |
 | `Escape` | Clear selection |
 | `F5` | Refresh PCB preview |
+| `Double-click` | Toggle processed status on a row |
+| `Space` | Toggle processed status on selected row |
+
+## Component List Features
+
+### Sorting
+
+Click on any column header to sort the list:
+- **✓** - Sort by processed status (processed items first/last)
+- **Qté** - Sort by quantity
+- **Références** - Sort by reference names
+- **Valeur** - Sort by component value
+- **Footprint** - Sort by footprint name
+- **LCSC** - Sort by LCSC code
+
+Click again to reverse the sort order. The arrow (↑/↓) indicates the current sort direction.
+
+### Processed Tracking
+
+Track your progress while working through the BOM:
+- **Double-click** or press **Space** on a row to mark it as processed
+- Processed rows are highlighted in green with a ✓
+- Use the buttons at the bottom:
+  - "Marquer sélection comme traitée" - Mark selected rows as processed
+  - "Démarquer sélection" - Unmark selected rows
+  - "Tout démarquer" - Clear all processed marks
+- The counter "Traités: X/Y" shows your progress
+
+### Selection History
+
+Save and manage your selection zones with their processed status:
+- **Automatic persistence** - History is saved in a `.ibom_history.json` file next to the HTML file
+- **Sauvegarder** - Save current selection with a custom name
+- **Charger** - Reload a previous selection with all processed marks restored
+- **Mettre à jour** - Update an existing history entry with current changes
+- **Supprimer** - Remove a selection from history
+
+Each history entry stores:
+- Selection zone coordinates
+- All component data (ref, value, footprint, LCSC)
+- Processed status for each component group
+- Creation/modification date
 
 ## Export Format
 

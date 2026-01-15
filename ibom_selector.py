@@ -11,6 +11,7 @@ import re
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
+from datetime import datetime
 
 try:
     import openpyxl
@@ -880,6 +881,12 @@ class IBomSelectorApp:
         self.selection_rect = None  # Rectangle de sélection en coordonnées PCB
         self.layer_filter = tk.StringVar(value="all")  # Filtre de couche: all, F, B
         self.search_var = tk.StringVar()  # Variable de recherche
+        self.processed_items = set()  # Ensemble des items traités (clés: value, footprint, lcsc)
+        self.sort_column = None  # Colonne de tri actuelle
+        self.sort_reverse = False  # Ordre de tri inversé
+        self.history = []  # Historique des sélections
+        self.history_file = None  # Fichier d'historique associé au HTML courant
+        self.current_history_index = None  # Index de l'élément d'historique actuel
         
         self._setup_ui()
         self._setup_keyboard_shortcuts()
@@ -966,6 +973,31 @@ class IBomSelectorApp:
         status_label = ttk.Label(btn_side_frame, textvariable=self.status_var, font=('Segoe UI', 9), wraplength=150)
         status_label.pack(pady=20)
         
+        # Frame pour l'historique
+        history_frame = ttk.LabelFrame(main_frame, text="Historique des sélections", padding=10)
+        history_frame.pack(fill=tk.X, pady=5)
+        
+        # Combobox pour l'historique
+        history_inner = ttk.Frame(history_frame)
+        history_inner.pack(fill=tk.X)
+        
+        ttk.Label(history_inner, text="Sélection:").pack(side=tk.LEFT, padx=(0, 5))
+        
+        self.history_var = tk.StringVar()
+        self.history_combo = ttk.Combobox(history_inner, textvariable=self.history_var, 
+                                           state='readonly', width=50)
+        self.history_combo.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        self.history_combo.bind('<<ComboboxSelected>>', self._on_history_select)
+        
+        ttk.Button(history_inner, text="Charger", command=self._load_history_selection,
+                   width=10).pack(side=tk.LEFT, padx=2)
+        ttk.Button(history_inner, text="Sauvegarder", command=self._save_current_to_history,
+                   width=12).pack(side=tk.LEFT, padx=2)
+        ttk.Button(history_inner, text="Supprimer", command=self._delete_history_selection,
+                   width=10).pack(side=tk.LEFT, padx=2)
+        ttk.Button(history_inner, text="Mettre à jour", command=self._update_history_selection,
+                   width=12).pack(side=tk.LEFT, padx=2)
+        
         # Message initial sur le canvas
         self.pcb_canvas.create_text(350, 90, text="Chargez un fichier pour voir le PCB", 
                                      fill='#666666', font=('Segoe UI', 12))
@@ -1005,30 +1037,56 @@ class IBomSelectorApp:
         stats_label.pack(side=tk.RIGHT, padx=10)
         
         # Liste des composants sélectionnés
-        list_frame = ttk.LabelFrame(main_frame, text="Composants sélectionnés", padding=10)
+        list_frame = ttk.LabelFrame(main_frame, text="Composants sélectionnés (cliquez sur les en-têtes pour trier)", padding=10)
         list_frame.pack(fill=tk.BOTH, expand=True, pady=10)
         
         # Treeview pour afficher les composants
-        columns = ('qty', 'ref', 'value', 'footprint', 'lcsc')
+        columns = ('done', 'qty', 'ref', 'value', 'footprint', 'lcsc')
         self.tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=15)
         
-        self.tree.heading('qty', text='Qté')
-        self.tree.heading('ref', text='Références')
-        self.tree.heading('value', text='Valeur')
-        self.tree.heading('footprint', text='Footprint')
-        self.tree.heading('lcsc', text='LCSC')
+        # Configuration des tags pour le style
+        self.tree.tag_configure('done', background='#c8e6c9', foreground='#2e7d32')
+        self.tree.tag_configure('pending', background='', foreground='')
         
+        # En-têtes avec tri
+        self.tree.heading('done', text='✓', command=lambda: self._sort_by_column('done'))
+        self.tree.heading('qty', text='Qté ↕', command=lambda: self._sort_by_column('qty'))
+        self.tree.heading('ref', text='Références ↕', command=lambda: self._sort_by_column('ref'))
+        self.tree.heading('value', text='Valeur ↕', command=lambda: self._sort_by_column('value'))
+        self.tree.heading('footprint', text='Footprint ↕', command=lambda: self._sort_by_column('footprint'))
+        self.tree.heading('lcsc', text='LCSC ↕', command=lambda: self._sort_by_column('lcsc'))
+        
+        self.tree.column('done', width=30, anchor='center')
         self.tree.column('qty', width=50, anchor='center')
         self.tree.column('ref', width=150)
         self.tree.column('value', width=120)
         self.tree.column('footprint', width=180)
         self.tree.column('lcsc', width=100)
         
+        # Bind double-clic pour marquer comme traité
+        self.tree.bind('<Double-1>', self._toggle_processed)
+        self.tree.bind('<space>', self._toggle_processed)
+        
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
         
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Boutons pour la gestion des "traités"
+        processed_frame = ttk.Frame(main_frame)
+        processed_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Button(processed_frame, text="Marquer sélection comme traitée", 
+                   command=self._mark_selected_processed).pack(side=tk.LEFT, padx=5)
+        ttk.Button(processed_frame, text="Démarquer sélection", 
+                   command=self._unmark_selected_processed).pack(side=tk.LEFT, padx=5)
+        ttk.Button(processed_frame, text="Tout démarquer", 
+                   command=self._unmark_all_processed).pack(side=tk.LEFT, padx=5)
+        
+        self.processed_count_var = tk.StringVar(value="")
+        ttk.Label(processed_frame, textvariable=self.processed_count_var, 
+                  font=('Segoe UI', 9, 'italic')).pack(side=tk.RIGHT, padx=10)
     
     def _browse_file(self):
         """Ouvre le dialogue de sélection de fichier"""
@@ -1058,6 +1116,9 @@ class IBomSelectorApp:
                 f"Fichier chargé: {len(self.parser.components)} composants trouvés"
             )
             
+            # Charger l'historique associé au fichier
+            self._load_history()
+            
             # Dessiner la miniature du PCB
             self._draw_pcb_preview()
             
@@ -1065,7 +1126,8 @@ class IBomSelectorApp:
                 "Succès",
                 f"Fichier chargé avec succès!\n"
                 f"Composants trouvés: {len(self.parser.components)}\n"
-                f"Entrées BOM: {len(self.parser.bom_data)}"
+                f"Entrées BOM: {len(self.parser.bom_data)}\n"
+                f"Sélections en historique: {len(self.history)}"
             )
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors du chargement:\n{str(e)}")
@@ -1220,26 +1282,135 @@ class IBomSelectorApp:
                 grouped[key] = []
             grouped[key].append(comp['ref'])
         
-        # Trier par valeur puis par première référence
-        sorted_groups = sorted(grouped.items(), key=lambda x: (x[0][0], x[1][0] if x[1] else ''))
-        
-        # Ajouter les groupes
-        for (value, footprint, lcsc), refs in sorted_groups:
+        # Construire la liste des données pour le tri
+        data_list = []
+        for (value, footprint, lcsc), refs in grouped.items():
             refs_sorted = sorted(refs, key=lambda r: (r[0], int(''.join(filter(str.isdigit, r)) or 0)))
             refs_str = ', '.join(refs_sorted)
+            key = (value, footprint, lcsc)
+            is_done = key in self.processed_items
+            data_list.append({
+                'key': key,
+                'done': '✓' if is_done else '',
+                'qty': len(refs),
+                'ref': refs_str,
+                'value': value,
+                'footprint': footprint,
+                'lcsc': lcsc,
+                'is_done': is_done
+            })
+        
+        # Appliquer le tri
+        if self.sort_column:
+            if self.sort_column == 'done':
+                data_list.sort(key=lambda x: (not x['is_done'], x['value']), reverse=self.sort_reverse)
+            elif self.sort_column == 'qty':
+                data_list.sort(key=lambda x: x['qty'], reverse=self.sort_reverse)
+            elif self.sort_column == 'ref':
+                data_list.sort(key=lambda x: x['ref'], reverse=self.sort_reverse)
+            elif self.sort_column == 'value':
+                data_list.sort(key=lambda x: x['value'], reverse=self.sort_reverse)
+            elif self.sort_column == 'footprint':
+                data_list.sort(key=lambda x: x['footprint'], reverse=self.sort_reverse)
+            elif self.sort_column == 'lcsc':
+                data_list.sort(key=lambda x: x['lcsc'], reverse=self.sort_reverse)
+        else:
+            # Tri par défaut: valeur puis référence
+            data_list.sort(key=lambda x: (x['value'], x['ref']))
+        
+        # Ajouter les groupes
+        for data in data_list:
+            tag = 'done' if data['is_done'] else 'pending'
             self.tree.insert('', tk.END, values=(
-                len(refs),
-                refs_str,
-                value,
-                footprint,
-                lcsc
-            ))
+                data['done'],
+                data['qty'],
+                data['ref'],
+                data['value'],
+                data['footprint'],
+                data['lcsc']
+            ), tags=(tag,))
+        
+        self._update_processed_count()
+    
+    def _sort_by_column(self, column):
+        """Trie le tableau par la colonne spécifiée"""
+        if self.sort_column == column:
+            self.sort_reverse = not self.sort_reverse
+        else:
+            self.sort_column = column
+            self.sort_reverse = False
+        
+        # Mettre à jour les indicateurs de tri dans les en-têtes
+        for col in ('done', 'qty', 'ref', 'value', 'footprint', 'lcsc'):
+            text = self.tree.heading(col)['text'].rstrip(' ↑↓↕')
+            if col == column:
+                arrow = ' ↓' if self.sort_reverse else ' ↑'
+            else:
+                arrow = ' ↕' if col != 'done' else ''
+            self.tree.heading(col, text=text + arrow)
+        
+        self._update_tree()
+    
+    def _toggle_processed(self, event=None):
+        """Bascule l'état 'traité' de la ligne sélectionnée"""
+        selection = self.tree.selection()
+        if not selection:
+            return
+        
+        for item in selection:
+            values = self.tree.item(item, 'values')
+            if len(values) >= 6:
+                # Récupérer la clé (value, footprint, lcsc)
+                key = (values[3], values[4], values[5])  # value, footprint, lcsc
+                
+                if key in self.processed_items:
+                    self.processed_items.discard(key)
+                else:
+                    self.processed_items.add(key)
+        
+        self._update_tree()
+    
+    def _mark_selected_processed(self):
+        """Marque les lignes sélectionnées comme traitées"""
+        selection = self.tree.selection()
+        for item in selection:
+            values = self.tree.item(item, 'values')
+            if len(values) >= 6:
+                key = (values[3], values[4], values[5])
+                self.processed_items.add(key)
+        self._update_tree()
+    
+    def _unmark_selected_processed(self):
+        """Démarque les lignes sélectionnées"""
+        selection = self.tree.selection()
+        for item in selection:
+            values = self.tree.item(item, 'values')
+            if len(values) >= 6:
+                key = (values[3], values[4], values[5])
+                self.processed_items.discard(key)
+        self._update_tree()
+    
+    def _unmark_all_processed(self):
+        """Démarque toutes les lignes"""
+        self.processed_items.clear()
+        self._update_tree()
+    
+    def _update_processed_count(self):
+        """Met à jour le compteur d'items traités"""
+        total = len(self.tree.get_children())
+        processed = sum(1 for item in self.tree.get_children() 
+                       if self.tree.item(item, 'values')[0] == '✓')
+        if total > 0:
+            self.processed_count_var.set(f"Traités: {processed}/{total}")
+        else:
+            self.processed_count_var.set("")
     
     def _clear_selection(self):
         """Efface la sélection actuelle"""
         self.selected_components = []
         self.filtered_components = []
         self.selection_rect = None
+        self.processed_items.clear()  # Réinitialiser aussi les items traités
         self._update_tree()
         self._update_statistics()
         self._draw_pcb_preview()  # Redessiner sans la zone de sélection
@@ -1378,6 +1549,200 @@ class IBomSelectorApp:
             
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors de l'export CSV:\n{str(e)}")
+    
+    # ==================== Gestion de l'historique ====================
+    
+    def _get_history_file_path(self):
+        """Retourne le chemin du fichier d'historique basé sur le fichier HTML chargé"""
+        if not self.file_var.get():
+            return None
+        html_path = Path(self.file_var.get())
+        return html_path.parent / f".{html_path.stem}_history.json"
+    
+    def _load_history(self):
+        """Charge l'historique depuis le fichier JSON"""
+        self.history = []
+        self.current_history_index = None
+        self.history_file = self._get_history_file_path()
+        
+        if self.history_file and self.history_file.exists():
+            try:
+                with open(self.history_file, 'r', encoding='utf-8') as f:
+                    self.history = json.load(f)
+                print(f"Historique chargé: {len(self.history)} sélections")
+            except Exception as e:
+                print(f"Erreur lors du chargement de l'historique: {e}")
+                self.history = []
+        
+        self._update_history_combo()
+    
+    def _save_history(self):
+        """Sauvegarde l'historique dans le fichier JSON"""
+        if not self.history_file:
+            return
+        
+        try:
+            with open(self.history_file, 'w', encoding='utf-8') as f:
+                json.dump(self.history, f, indent=2, ensure_ascii=False)
+            print(f"Historique sauvegardé: {len(self.history)} sélections")
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde de l'historique: {e}")
+    
+    def _update_history_combo(self):
+        """Met à jour la combobox de l'historique"""
+        items = []
+        for i, entry in enumerate(self.history):
+            name = entry.get('name', f"Sélection {i+1}")
+            date = entry.get('date', '')
+            count = len(entry.get('components', []))
+            processed = len(entry.get('processed', []))
+            items.append(f"{name} ({count} comp., {processed} traités) - {date}")
+        
+        self.history_combo['values'] = items
+        if items and self.current_history_index is not None:
+            self.history_combo.current(self.current_history_index)
+    
+    def _on_history_select(self, event=None):
+        """Appelé quand on sélectionne un élément dans l'historique"""
+        pass  # La sélection est gérée par _load_history_selection
+    
+    def _load_history_selection(self):
+        """Charge la sélection depuis l'historique"""
+        if not self.history:
+            messagebox.showinfo("Info", "Aucun historique disponible")
+            return
+        
+        selection_idx = self.history_combo.current()
+        if selection_idx < 0 or selection_idx >= len(self.history):
+            messagebox.showwarning("Attention", "Veuillez sélectionner une entrée dans l'historique")
+            return
+        
+        entry = self.history[selection_idx]
+        self.current_history_index = selection_idx
+        
+        # Restaurer la zone de sélection
+        rect = entry.get('rect')
+        if rect and len(rect) == 4:
+            self.selection_rect = tuple(rect)
+            # Récupérer les composants dans cette zone
+            self.selected_components = self.parser.get_components_in_rect(*self.selection_rect)
+        else:
+            # Utiliser les composants sauvegardés directement
+            saved_refs = set(c.get('ref') for c in entry.get('components', []))
+            self.selected_components = [
+                comp for comp in self.parser.components
+                if comp.get('ref') in saved_refs
+            ]
+            # Ajouter les infos BOM
+            for comp in self.selected_components:
+                bom_info = self.parser.get_bom_for_ref(comp['ref'], comp.get('id'))
+                comp['value'] = bom_info.get('value', '')
+                comp['footprint'] = bom_info.get('footprint', '')
+                comp['lcsc'] = bom_info.get('lcsc', '')
+        
+        # Restaurer les items traités
+        self.processed_items.clear()
+        for proc in entry.get('processed', []):
+            if isinstance(proc, list) and len(proc) == 3:
+                self.processed_items.add(tuple(proc))
+        
+        self._apply_filters()
+        self._draw_pcb_preview()
+        
+        self.export_btn.config(state=tk.NORMAL)
+        self.export_csv_btn.config(state=tk.NORMAL)
+        self.clear_btn.config(state=tk.NORMAL)
+        
+        name = entry.get('name', f"Sélection {selection_idx + 1}")
+        self.status_var.set(f"Chargé: {name} ({len(self.selected_components)} composants)")
+    
+    def _save_current_to_history(self):
+        """Sauvegarde la sélection actuelle dans l'historique"""
+        if not self.selected_components:
+            messagebox.showwarning("Attention", "Aucune sélection à sauvegarder")
+            return
+        
+        # Demander un nom pour la sélection
+        from tkinter import simpledialog
+        name = simpledialog.askstring(
+            "Nom de la sélection",
+            "Entrez un nom pour cette sélection:",
+            initialvalue=f"Zone {len(self.history) + 1}"
+        )
+        
+        if not name:
+            return
+        
+        # Créer l'entrée d'historique
+        entry = {
+            'name': name,
+            'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
+            'rect': list(self.selection_rect) if self.selection_rect else None,
+            'components': [
+                {'ref': c['ref'], 'value': c['value'], 'footprint': c['footprint'], 'lcsc': c['lcsc']}
+                for c in self.selected_components
+            ],
+            'processed': [list(p) for p in self.processed_items]
+        }
+        
+        self.history.append(entry)
+        self.current_history_index = len(self.history) - 1
+        self._save_history()
+        self._update_history_combo()
+        
+        messagebox.showinfo("Succès", f"Sélection '{name}' sauvegardée dans l'historique")
+    
+    def _update_history_selection(self):
+        """Met à jour l'entrée d'historique actuelle avec les modifications"""
+        if not self.history:
+            messagebox.showinfo("Info", "Aucun historique disponible")
+            return
+        
+        selection_idx = self.history_combo.current()
+        if selection_idx < 0 or selection_idx >= len(self.history):
+            messagebox.showwarning("Attention", "Veuillez sélectionner une entrée dans l'historique")
+            return
+        
+        if not self.selected_components:
+            messagebox.showwarning("Attention", "Aucune sélection active à mettre à jour")
+            return
+        
+        # Mettre à jour l'entrée
+        entry = self.history[selection_idx]
+        entry['date'] = datetime.now().strftime("%Y-%m-%d %H:%M")
+        entry['rect'] = list(self.selection_rect) if self.selection_rect else None
+        entry['components'] = [
+            {'ref': c['ref'], 'value': c['value'], 'footprint': c['footprint'], 'lcsc': c['lcsc']}
+            for c in self.selected_components
+        ]
+        entry['processed'] = [list(p) for p in self.processed_items]
+        
+        self._save_history()
+        self._update_history_combo()
+        
+        messagebox.showinfo("Succès", f"Sélection '{entry['name']}' mise à jour")
+    
+    def _delete_history_selection(self):
+        """Supprime l'entrée d'historique sélectionnée"""
+        if not self.history:
+            messagebox.showinfo("Info", "Aucun historique disponible")
+            return
+        
+        selection_idx = self.history_combo.current()
+        if selection_idx < 0 or selection_idx >= len(self.history):
+            messagebox.showwarning("Attention", "Veuillez sélectionner une entrée dans l'historique")
+            return
+        
+        entry = self.history[selection_idx]
+        name = entry.get('name', f"Sélection {selection_idx + 1}")
+        
+        if messagebox.askyesno("Confirmation", f"Supprimer la sélection '{name}' de l'historique?"):
+            del self.history[selection_idx]
+            self.current_history_index = None
+            self._save_history()
+            self._update_history_combo()
+            self.history_var.set("")
+            messagebox.showinfo("Succès", f"Sélection '{name}' supprimée")
     
     def _setup_keyboard_shortcuts(self):
         """Configure les raccourcis clavier"""
