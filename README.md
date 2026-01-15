@@ -1,6 +1,6 @@
 # IBom Component Selector
 
-A Python GUI tool to visually select components from InteractiveHtmlBom files and export them to Excel.
+A Python GUI tool to visually select components from InteractiveHtmlBom files and export them to Excel or CSV.
 
 ![IBom Component Selector](pictures/main.png)
 
@@ -9,9 +9,14 @@ A Python GUI tool to visually select components from InteractiveHtmlBom files an
 - **Load InteractiveHtmlBom HTML files** - Supports compressed (LZ-String) and uncompressed formats
 - **Visual PCB preview** - See your PCB layout with pads, silkscreen, and board outline
 - **Rectangle selection** - Click on the PCB preview to open the selection window, then draw a rectangle to select components
+- **Layer filtering** - Filter selected components by Front (F) or Back (B) layer
+- **Search functionality** - Search components by reference, value, footprint, or LCSC code
+- **Statistics display** - View component counts by layer and filter status
 - **LCSC part numbers** - Automatically loads LCSC codes from a CSV file if available
 - **Grouped export** - Components are grouped by value/footprint with quantity count
 - **Excel export** - Export selected components to a formatted Excel file
+- **CSV export** - Export selected components to a CSV file
+- **Keyboard shortcuts** - Quick access to common functions
 
 ## Requirements
 
@@ -21,6 +26,11 @@ A Python GUI tool to visually select components from InteractiveHtmlBom files an
   - `lzstring` - For decompressing InteractiveHtmlBom data
 
 Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Or manually:
 ```bash
 pip install openpyxl lzstring
 ```
@@ -73,6 +83,18 @@ The program will automatically match component references to LCSC codes.
 - **Mouse wheel** - Zoom in/out
 - **Zoom +/-** buttons - Zoom controls
 - **Reset** button - Reset view to fit
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+O` | Open file browser |
+| `Ctrl+L` | Load current file |
+| `Ctrl+S` | Export to Excel |
+| `Ctrl+Shift+S` | Export to CSV |
+| `Ctrl+F` | Focus search field |
+| `Escape` | Clear selection |
+| `F5` | Refresh PCB preview |
 
 ## Export Format
 
