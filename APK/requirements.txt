@@ -1,0 +1,7 @@
+# Requirements pour IBom Selector Android
+# Pour le développement local (PC)
+kivy>=2.2.0
+kivymd>=1.1.1
+
+# Note: Pour la compilation Android avec Buildozer,
+# les dépendances sont gérées dans buildozer.spec

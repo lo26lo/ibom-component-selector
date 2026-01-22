@@ -706,5 +706,443 @@
         "C25803"
       ]
     ]
+  },
+  {
+    "name": "Zone 2",
+    "date": "2026-01-15 11:16",
+    "rect": [
+      177.4326142136752,
+      51.884672081196584,
+      224.669258497151,
+      141.44316528917378
+    ],
+    "components": [
+      {
+        "ref": "REF**",
+        "value": "",
+        "footprint": "",
+        "lcsc": ""
+      },
+      {
+        "ref": "D13",
+        "value": "9v",
+        "footprint": "LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder",
+        "lcsc": "C2986059"
+      },
+      {
+        "ref": "R51",
+        "value": "100k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25803"
+      },
+      {
+        "ref": "R36",
+        "value": "0.5R",
+        "footprint": "R_2512_6332Metric_Pad1.40x3.35mm_HandSolder",
+        "lcsc": "C2904268"
+      },
+      {
+        "ref": "D10",
+        "value": "BAV23CL",
+        "footprint": "SOT-23-3",
+        "lcsc": "C232533"
+      },
+      {
+        "ref": "Q19",
+        "value": "AO3400A",
+        "footprint": "SOT-23_Handsoldering",
+        "lcsc": "C20917"
+      },
+      {
+        "ref": "C28",
+        "value": "100nF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C14663"
+      },
+      {
+        "ref": "D8",
+        "value": "BAV23CL",
+        "footprint": "SOT-23-3",
+        "lcsc": "C232533"
+      },
+      {
+        "ref": "J11",
+        "value": "CHAN1",
+        "footprint": "PJ-3062-CO",
+        "lcsc": "C319113"
+      },
+      {
+        "ref": "R47",
+        "value": "100k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25803"
+      },
+      {
+        "ref": "U9",
+        "value": "",
+        "footprint": "",
+        "lcsc": ""
+      },
+      {
+        "ref": "Q4",
+        "value": "AO3400A",
+        "footprint": "SOT-23_Handsoldering",
+        "lcsc": "C20917"
+      },
+      {
+        "ref": "R86",
+        "value": "330K",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C23137"
+      },
+      {
+        "ref": "R94",
+        "value": "4k7",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C23162"
+      },
+      {
+        "ref": "R43",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R93",
+        "value": "4k7",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C23162"
+      },
+      {
+        "ref": "TP1",
+        "value": "",
+        "footprint": "",
+        "lcsc": ""
+      },
+      {
+        "ref": "C30",
+        "value": "100nF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C14663"
+      },
+      {
+        "ref": "Q18",
+        "value": "AO3401A",
+        "footprint": "SOT-23_Handsoldering",
+        "lcsc": "C15127"
+      },
+      {
+        "ref": "J13",
+        "value": "Conn_01x02",
+        "footprint": "Molex_KK-254_AE-6410-02A_1x02_P2.54mm_Vertical",
+        "lcsc": "C27543"
+      },
+      {
+        "ref": "C23",
+        "value": "22uF",
+        "footprint": "C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",
+        "lcsc": "C45783"
+      },
+      {
+        "ref": "Q2",
+        "value": "AO3400A",
+        "footprint": "SOT-23_Handsoldering",
+        "lcsc": "C20917"
+      },
+      {
+        "ref": "C21",
+        "value": "1uF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C15849"
+      },
+      {
+        "ref": "R1",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R89",
+        "value": "56k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C23206"
+      },
+      {
+        "ref": "Q7",
+        "value": "AO3400A",
+        "footprint": "SOT-23_Handsoldering",
+        "lcsc": "C20917"
+      },
+      {
+        "ref": "TR3",
+        "value": "",
+        "footprint": "",
+        "lcsc": ""
+      },
+      {
+        "ref": "D15",
+        "value": "SMAJ13A",
+        "footprint": "D_SMA",
+        "lcsc": "C110519"
+      },
+      {
+        "ref": "J14",
+        "value": "CHAN3",
+        "footprint": "PJ-3062-CO",
+        "lcsc": "C319113"
+      },
+      {
+        "ref": "D9",
+        "value": "SMAJ13A",
+        "footprint": "D_SMA",
+        "lcsc": "C110519"
+      },
+      {
+        "ref": "R54",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R38",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R46",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R5",
+        "value": "100R",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C22775"
+      },
+      {
+        "ref": "Q5",
+        "value": "AO3400A",
+        "footprint": "SOT-23_Handsoldering",
+        "lcsc": "C20917"
+      },
+      {
+        "ref": "D18",
+        "value": "BZX584C3V6",
+        "footprint": "D_SOD-523",
+        "lcsc": "C22395574"
+      },
+      {
+        "ref": "C20",
+        "value": "100nF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C14663"
+      },
+      {
+        "ref": "C14",
+        "value": "220uF",
+        "footprint": "CP_EIA-7343-43_Kemet-X_Pad2.25x2.55mm_HandSolder",
+        "lcsc": "C122311"
+      },
+      {
+        "ref": "U8",
+        "value": "TPS61088",
+        "footprint": "IC_TPS61088RHLR",
+        "lcsc": "C87357"
+      },
+      {
+        "ref": "Q6",
+        "value": "IRF9Z24NPBF",
+        "footprint": "TO-220-3_Vertical",
+        "lcsc": "C2576"
+      },
+      {
+        "ref": "D7",
+        "value": "SMAJ13A",
+        "footprint": "D_SMA",
+        "lcsc": "C110519"
+      },
+      {
+        "ref": "C13",
+        "value": "100nF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C14663"
+      },
+      {
+        "ref": "C27",
+        "value": "10nF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C57112"
+      },
+      {
+        "ref": "Q3",
+        "value": "IRF9Z24NPBF",
+        "footprint": "TO-220-3_Vertical",
+        "lcsc": "C2576"
+      },
+      {
+        "ref": "C22",
+        "value": "22uF",
+        "footprint": "C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",
+        "lcsc": "C45783"
+      },
+      {
+        "ref": "D11",
+        "value": "SMAJ13A",
+        "footprint": "D_SMA",
+        "lcsc": "C110519"
+      },
+      {
+        "ref": "R87",
+        "value": "56k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C23206"
+      },
+      {
+        "ref": "Q8",
+        "value": "AO3400A",
+        "footprint": "SOT-23_Handsoldering",
+        "lcsc": "C20917"
+      },
+      {
+        "ref": "R95",
+        "value": "330K",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C23137"
+      },
+      {
+        "ref": "R91",
+        "value": "150k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C22807"
+      },
+      {
+        "ref": "R105",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R106",
+        "value": "4k7",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C23162"
+      },
+      {
+        "ref": "C29",
+        "value": "3.3nF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C1613"
+      },
+      {
+        "ref": "R59",
+        "value": "100k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25803"
+      },
+      {
+        "ref": "R40",
+        "value": "100k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25803"
+      },
+      {
+        "ref": "C24",
+        "value": "22uF",
+        "footprint": "C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",
+        "lcsc": "C45783"
+      },
+      {
+        "ref": "D17",
+        "value": "SS34",
+        "footprint": "D_SMA",
+        "lcsc": "C8678"
+      },
+      {
+        "ref": "R57",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "J12",
+        "value": "CHAN2",
+        "footprint": "PJ-3062-CO",
+        "lcsc": "C319113"
+      },
+      {
+        "ref": "R2",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R6",
+        "value": "100R",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C22775"
+      },
+      {
+        "ref": "C10",
+        "value": "100nF",
+        "footprint": "C_0603_1608Metric_Pad1.08x0.95mm_HandSolder",
+        "lcsc": "C14663"
+      },
+      {
+        "ref": "R92",
+        "value": "150k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C22807"
+      },
+      {
+        "ref": "U20",
+        "value": "USBLC6-2P6",
+        "footprint": "SOT-666",
+        "lcsc": "C15999"
+      },
+      {
+        "ref": "Q9",
+        "value": "IRF9Z24NPBF",
+        "footprint": "TO-220-3_Vertical",
+        "lcsc": "C2576"
+      },
+      {
+        "ref": "D12",
+        "value": "BAV23CL",
+        "footprint": "SOT-23-3",
+        "lcsc": "C232533"
+      },
+      {
+        "ref": "R77",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "R49",
+        "value": "10k",
+        "footprint": "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "lcsc": "C25804"
+      },
+      {
+        "ref": "TR2",
+        "value": "",
+        "footprint": "",
+        "lcsc": ""
+      }
+    ],
+    "processed": [
+      [
+        "",
+        "",
+        ""
+      ],
+      [
+        "100k",
+        "R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",
+        "C25803"
+      ]
+    ]
   }
 ]
