@@ -655,6 +655,7 @@ class PCBView(Widget):
         self.last_touch_pos = None
         self.is_panning = False
         self._touches = []
+        self.last_selection_rect = None  # Rectangle de la dernière sélection
         self.bind(size=self._on_size)
         
     def _on_size(self, *args):
@@ -779,7 +780,15 @@ class PCBView(Widget):
                 if self.zoom_factor >= 2:
                     Color(1, 1, 1, 0.8)
             
-            # Rectangle de sélection
+            # Rectangle de la dernière sélection (persistant)
+            if self.last_selection_rect and not self.selection_rect:
+                Color(1, 1, 0, 0.2)
+                x, y, w, h = self.last_selection_rect
+                Rectangle(pos=(x, y), size=(w, h))
+                Color(1, 1, 0, 0.7)
+                Line(rectangle=(x, y, w, h), width=1.5)
+            
+            # Rectangle de sélection en cours
             if self.selection_rect:
                 Color(1, 1, 0, 0.3)
                 x, y, w, h = self.selection_rect
@@ -871,6 +880,8 @@ class PCBView(Widget):
             elif self.selection_start:
                 if self.selection_rect and self.selection_rect[2] > 10 and self.selection_rect[3] > 10:
                     self._select_components_in_rect()
+                    # Garder le rectangle visible (last_selection_rect)
+                    self.last_selection_rect = self.selection_rect
                 self.selection_start = None
                 self.selection_rect = None
                 self._redraw()
@@ -922,16 +933,28 @@ class ComponentRow(BoxLayout):
         self.checkbox.bind(active=self._on_checkbox)
         self.add_widget(self.checkbox)
         
-        # Infos
-        self.add_widget(Label(text=component.get('ref', ''), size_hint_x=0.12, font_size=dp(11)))
-        self.add_widget(Label(text=component.get('value', '')[:12], size_hint_x=0.2, font_size=dp(11)))
-        self.add_widget(Label(text=component.get('footprint', '')[:12], size_hint_x=0.25, font_size=dp(10)))
+        # Tronquer les références si trop longues (max 15 chars)
+        ref_text = component.get('ref', '')
+        if len(ref_text) > 15:
+            ref_text = ref_text[:12] + '...'
+        
+        # Infos avec labels tronqués
+        self.add_widget(Label(text=ref_text, size_hint_x=0.12, font_size=dp(11), shorten=True, shorten_from='right'))
+        self.add_widget(Label(text=component.get('value', '')[:10], size_hint_x=0.2, font_size=dp(11), shorten=True))
+        self.add_widget(Label(text=component.get('footprint', '')[:10], size_hint_x=0.25, font_size=dp(10), shorten=True))
         self.add_widget(Label(text=component.get('lcsc', ''), size_hint_x=0.2, font_size=dp(11)))
         self.add_widget(Label(text=component.get('layer', ''), size_hint_x=0.08, font_size=dp(11)))
         
         # Quantité (pour les groupes)
         qty = component.get('qty', 1)
         self.add_widget(Label(text=str(qty) if qty > 1 else '', size_hint_x=0.07, font_size=dp(11)))
+    
+    def on_touch_down(self, touch):
+        """Double-tap pour basculer l'état traité"""
+        if self.collide_point(*touch.pos) and touch.is_double_tap:
+            self.checkbox.active = not self.checkbox.active
+            return True
+        return super().on_touch_down(touch)
     
     def _on_checkbox(self, checkbox, value):
         self.is_processed = value
@@ -943,14 +966,22 @@ class ComponentRow(BoxLayout):
         self.is_processed = value
 
 
-class ComponentList(ScrollView):
-    """Liste scrollable des composants avec tri"""
+class ComponentList(BoxLayout):
+    """Liste scrollable des composants avec tri et en-tête fixe"""
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.orientation = 'vertical'
+        
+        # En-tête fixe (sera créé dans _refresh_list)
+        self.header = None
+        
+        # ScrollView pour les composants seulement
+        self.scroll_view = ScrollView()
         self.layout = GridLayout(cols=1, spacing=dp(2), size_hint_y=None)
         self.layout.bind(minimum_height=self.layout.setter('height'))
-        self.add_widget(self.layout)
+        self.scroll_view.add_widget(self.layout)
+        
         self.components = []
         self.component_rows = []
         self.processed_items = set()
@@ -968,8 +999,12 @@ class ComponentList(ScrollView):
     
     def _refresh_list(self):
         """Rafraîchit l'affichage de la liste"""
+        # Nettoyer
         self.layout.clear_widgets()
         self.component_rows = []
+        
+        # Supprimer l'ancien header et scroll_view du parent
+        self.clear_widgets()
         
         # Filtrer les composants
         filtered = self.components[:]
@@ -1023,23 +1058,27 @@ class ComponentList(ScrollView):
                 filtered.sort(key=lambda x: str(x.get(self.sort_column, '')).lower(), 
                             reverse=self.sort_reverse)
         
-        # En-tête avec boutons de tri
-        header = BoxLayout(size_hint_y=None, height=dp(40))
-        header.add_widget(Label(text='✓', size_hint_x=0.08, font_size=dp(10)))
+        # En-tête fixe avec boutons de tri
+        self.header = BoxLayout(size_hint_y=None, height=dp(35))
+        self.header.add_widget(Label(text='✓', size_hint_x=0.08, font_size=dp(10)))
         
-        for col, text, size in [('ref', 'Ref', 0.12), ('value', 'Valeur', 0.2), 
+        for col, text, size in [('ref', 'Ref ⏷', 0.12), ('value', 'Valeur', 0.2), 
                                  ('footprint', 'Footprint', 0.25), ('lcsc', 'LCSC', 0.2),
                                  ('layer', 'L', 0.08), ('qty', 'Qt', 0.07)]:
             indicator = ''
             if self.sort_column == col:
                 indicator = ' ↓' if self.sort_reverse else ' ↑'
-            btn = Button(text=text + indicator, size_hint_x=size, 
-                        background_color=(0.25, 0.25, 0.4, 1), font_size=dp(10))
+            btn = Button(text=text.replace(' ⏷', '') + indicator, size_hint_x=size, 
+                        background_color=(0.2, 0.2, 0.35, 1), font_size=dp(10))
             btn.col = col
             btn.bind(on_press=self._on_sort_click)
-            header.add_widget(btn)
+            self.header.add_widget(btn)
         
-        self.layout.add_widget(header)
+        # Ajouter l'en-tête en premier (fixe)
+        self.add_widget(self.header)
+        
+        # Ajouter le scroll_view après l'en-tête
+        self.add_widget(self.scroll_view)
         
         # Composants
         for comp in filtered:
