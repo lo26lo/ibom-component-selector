@@ -927,6 +927,8 @@ class ComponentRow(BoxLayout):
         self.component = component
         self.on_toggle = on_toggle
         self.is_processed = False
+        self._long_press_event = None
+        self._detail_popup = None
         
         # Checkbox
         self.checkbox = CheckBox(size_hint_x=0.08, active=False)
@@ -950,11 +952,87 @@ class ComponentRow(BoxLayout):
         self.add_widget(Label(text=str(qty) if qty > 1 else '', size_hint_x=0.07, font_size=dp(11)))
     
     def on_touch_down(self, touch):
-        """Double-tap pour basculer l'état traité"""
-        if self.collide_point(*touch.pos) and touch.is_double_tap:
-            self.checkbox.active = not self.checkbox.active
-            return True
+        """Double-tap pour basculer, appui long pour détails"""
+        if self.collide_point(*touch.pos):
+            if touch.is_double_tap:
+                self.checkbox.active = not self.checkbox.active
+                return True
+            # Programmer l'appui long (0.5 secondes)
+            self._long_press_event = Clock.schedule_once(self._show_details, 0.5)
+            touch.grab(self)
         return super().on_touch_down(touch)
+    
+    def on_touch_up(self, touch):
+        """Annuler l'appui long si on relâche avant"""
+        if touch.grab_current is self:
+            touch.ungrab(self)
+            if self._long_press_event:
+                self._long_press_event.cancel()
+                self._long_press_event = None
+        return super().on_touch_up(touch)
+    
+    def on_touch_move(self, touch):
+        """Annuler l'appui long si on bouge le doigt"""
+        if touch.grab_current is self:
+            if self._long_press_event:
+                self._long_press_event.cancel()
+                self._long_press_event = None
+        return super().on_touch_move(touch)
+    
+    def _show_details(self, dt):
+        """Affiche une popup avec les détails complets"""
+        self._long_press_event = None
+        comp = self.component
+        
+        # Construire le texte des détails
+        refs = comp.get('ref', '')
+        qty = comp.get('qty', 1)
+        
+        # Formater les références sur plusieurs lignes si nécessaire
+        if ',' in refs:
+            ref_list = refs.split(', ')
+            # Grouper par 5 refs par ligne
+            ref_lines = []
+            for i in range(0, len(ref_list), 5):
+                ref_lines.append(', '.join(ref_list[i:i+5]))
+            refs_formatted = '\n'.join(ref_lines)
+        else:
+            refs_formatted = refs
+        
+        detail_text = f"[b]Références ({qty}):[/b]\n{refs_formatted}\n\n"
+        detail_text += f"[b]Valeur:[/b] {comp.get('value', '-')}\n"
+        detail_text += f"[b]Footprint:[/b] {comp.get('footprint', '-')}\n"
+        detail_text += f"[b]LCSC:[/b] {comp.get('lcsc', '-')}\n"
+        detail_text += f"[b]Layer:[/b] {comp.get('layer', '-')}"
+        
+        content = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(5))
+        
+        label = Label(
+            text=detail_text, 
+            markup=True,
+            font_size=dp(12),
+            halign='left',
+            valign='top',
+            size_hint_y=None
+        )
+        label.bind(texture_size=label.setter('size'))
+        label.bind(size=lambda *x: setattr(label, 'text_size', (label.width, None)))
+        
+        scroll = ScrollView(size_hint_y=0.85)
+        scroll.add_widget(label)
+        content.add_widget(scroll)
+        
+        close_btn = Button(text='Fermer', size_hint_y=None, height=dp(40), font_size=dp(12))
+        content.add_widget(close_btn)
+        
+        self._detail_popup = Popup(
+            title='Détails du composant',
+            content=content,
+            size_hint=(0.9, 0.5),
+            auto_dismiss=True
+        )
+        close_btn.bind(on_press=lambda x: self._detail_popup.dismiss())
+        self._detail_popup.open()
     
     def _on_checkbox(self, checkbox, value):
         self.is_processed = value
