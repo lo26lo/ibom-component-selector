@@ -661,6 +661,10 @@ class PCBView(Widget):
         self._calculate_transform()
         self._redraw()
     
+    def on_pos(self, *args):
+        """Redessine quand la position change"""
+        self._redraw()
+    
     def set_parser(self, parser):
         """Définit le parser et redessine"""
         self.parser = parser
@@ -699,13 +703,15 @@ class PCBView(Widget):
     
     def _board_to_screen(self, x, y):
         """Convertit les coordonnées du PCB en coordonnées écran"""
-        return (x * self.scale + self.offset_x, 
-                self.height - (y * self.scale + self.offset_y))
+        # Ajouter self.x et self.y pour tenir compte de la position du widget
+        return (self.x + x * self.scale + self.offset_x, 
+                self.y + self.height - (y * self.scale + self.offset_y))
     
     def _screen_to_board(self, x, y):
         """Convertit les coordonnées écran en coordonnées du PCB"""
-        return ((x - self.offset_x) / self.scale,
-                (self.height - y - self.offset_y) / self.scale)
+        # Soustraire self.x et self.y pour convertir depuis les coordonnées absolues
+        return ((x - self.x - self.offset_x) / self.scale,
+                (self.height - (y - self.y) - self.offset_y) / self.scale)
     
     def zoom_in(self):
         """Zoom avant"""
