@@ -1382,72 +1382,78 @@ class IBomSelectorApp(App):
         self.history_manager = HistoryManager()
         self.current_history_index = None
         self.lcsc_csv_path = None
+        self._is_landscape = False
         
         # Demander les permissions au démarrage (délai plus long pour s'assurer que l'activité est prête)
         Clock.schedule_once(self._request_permissions_safe, 1.5)
         
-        # Layout principal
-        main_layout = BoxLayout(orientation='vertical', padding=dp(5), spacing=dp(3))
+        # Container racine qui sera réorganisé selon l'orientation
+        self.root_layout = BoxLayout(orientation='vertical', padding=dp(5), spacing=dp(3))
         
+        # Créer tous les widgets
+        self._create_widgets()
+        
+        # Construire l'interface initiale
+        self._build_portrait_layout()
+        
+        # Écouter les changements de taille pour adapter l'orientation
+        Window.bind(on_resize=self._on_window_resize)
+        Clock.schedule_once(self._check_orientation, 0.5)
+        
+        return self.root_layout
+    
+    def _create_widgets(self):
+        """Crée tous les widgets une seule fois"""
         # === Barre d'outils principale ===
-        toolbar = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(3))
+        self.toolbar = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(3))
         
         load_btn = Button(text='📂 HTML', size_hint_x=0.22, font_size=dp(12))
         load_btn.bind(on_press=self.show_file_chooser)
-        toolbar.add_widget(load_btn)
+        self.toolbar.add_widget(load_btn)
         
         lcsc_btn = Button(text='📋 LCSC', size_hint_x=0.22, font_size=dp(12))
         lcsc_btn.bind(on_press=self.show_lcsc_file_chooser)
-        toolbar.add_widget(lcsc_btn)
+        self.toolbar.add_widget(lcsc_btn)
         
         history_btn = Button(text='📜 Hist.', size_hint_x=0.18, font_size=dp(12))
         history_btn.bind(on_press=self.show_history_popup)
-        toolbar.add_widget(history_btn)
+        self.toolbar.add_widget(history_btn)
         
         save_btn = Button(text='💾', size_hint_x=0.12, font_size=dp(14))
         save_btn.bind(on_press=self.save_selection)
-        toolbar.add_widget(save_btn)
+        self.toolbar.add_widget(save_btn)
         
         export_btn = Button(text='📤 Exp', size_hint_x=0.26, font_size=dp(12))
         export_btn.bind(on_press=self.show_export_popup)
-        toolbar.add_widget(export_btn)
+        self.toolbar.add_widget(export_btn)
         
-        main_layout.add_widget(toolbar)
-        
-        # === Zone PCB avec contrôles de zoom ===
-        pcb_container = BoxLayout(orientation='horizontal', size_hint_y=0.35)
-        
-        self.pcb_view = PCBView(size_hint_x=0.85)
+        # === Zone PCB ===
+        self.pcb_view = PCBView()
         self.pcb_view.on_selection_callback = self.on_selection_changed
-        pcb_container.add_widget(self.pcb_view)
         
         # Boutons de contrôle du zoom
-        zoom_layout = BoxLayout(orientation='vertical', size_hint_x=0.15, spacing=dp(5))
+        self.zoom_layout = BoxLayout(orientation='vertical', spacing=dp(5))
         
         zoom_in_btn = Button(text='+', font_size=dp(20))
         zoom_in_btn.bind(on_press=lambda x: self.pcb_view.zoom_in())
-        zoom_layout.add_widget(zoom_in_btn)
+        self.zoom_layout.add_widget(zoom_in_btn)
         
         zoom_out_btn = Button(text='-', font_size=dp(20))
         zoom_out_btn.bind(on_press=lambda x: self.pcb_view.zoom_out())
-        zoom_layout.add_widget(zoom_out_btn)
+        self.zoom_layout.add_widget(zoom_out_btn)
         
         reset_btn = Button(text='⟲', font_size=dp(18))
         reset_btn.bind(on_press=lambda x: self.pcb_view.reset_view())
-        zoom_layout.add_widget(reset_btn)
+        self.zoom_layout.add_widget(reset_btn)
         
         select_all_btn = Button(text='All', font_size=dp(12))
         select_all_btn.bind(on_press=lambda x: self.pcb_view.select_all())
-        zoom_layout.add_widget(select_all_btn)
-        
-        pcb_container.add_widget(zoom_layout)
-        main_layout.add_widget(pcb_container)
+        self.zoom_layout.add_widget(select_all_btn)
         
         # === Filtres ===
-        filter_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(3))
+        self.filter_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(3))
         
-        # Filtre couche
-        filter_layout.add_widget(Label(text='Couche:', size_hint_x=0.12, font_size=dp(10)))
+        self.filter_layout.add_widget(Label(text='Couche:', size_hint_x=0.12, font_size=dp(10)))
         self.layer_spinner = Spinner(
             text='Tous',
             values=['Tous', 'Front', 'Back'],
@@ -1455,10 +1461,9 @@ class IBomSelectorApp(App):
             font_size=dp(10)
         )
         self.layer_spinner.bind(text=self.on_layer_filter_change)
-        filter_layout.add_widget(self.layer_spinner)
+        self.filter_layout.add_widget(self.layer_spinner)
         
-        # Recherche
-        filter_layout.add_widget(Label(text='🔍', size_hint_x=0.08, font_size=dp(12)))
+        self.filter_layout.add_widget(Label(text='🔍', size_hint_x=0.08, font_size=dp(12)))
         self.search_input = TextInput(
             hint_text='Rechercher...',
             multiline=False,
@@ -1466,55 +1471,141 @@ class IBomSelectorApp(App):
             font_size=dp(11)
         )
         self.search_input.bind(text=self.on_search_change)
-        filter_layout.add_widget(self.search_input)
+        self.filter_layout.add_widget(self.search_input)
         
-        # Toggle groupement
         self.group_btn = ToggleButton(text='Grp', size_hint_x=0.12, state='down', font_size=dp(10))
         self.group_btn.bind(on_press=self.toggle_grouping)
-        filter_layout.add_widget(self.group_btn)
+        self.filter_layout.add_widget(self.group_btn)
         
-        # Clear search
         clear_btn = Button(text='✕', size_hint_x=0.08, font_size=dp(12))
         clear_btn.bind(on_press=lambda x: setattr(self.search_input, 'text', ''))
-        filter_layout.add_widget(clear_btn)
-        
-        main_layout.add_widget(filter_layout)
+        self.filter_layout.add_widget(clear_btn)
         
         # === Info sélection ===
-        info_layout = BoxLayout(size_hint_y=None, height=dp(30), spacing=dp(5))
+        self.info_layout = BoxLayout(size_hint_y=None, height=dp(30), spacing=dp(5))
         
-        self.selection_label = Label(text='Sélection: 0 composants', size_hint_x=0.4, font_size=dp(10))
-        info_layout.add_widget(self.selection_label)
+        self.selection_label = Label(text='Sélection: 0 comp.', size_hint_x=0.4, font_size=dp(10))
+        self.info_layout.add_widget(self.selection_label)
         
         self.processed_label = Label(text='Traités: 0/0', size_hint_x=0.25, font_size=dp(10))
-        info_layout.add_widget(self.processed_label)
+        self.info_layout.add_widget(self.processed_label)
         
         mark_all_btn = Button(text='✓All', size_hint_x=0.15, font_size=dp(10))
         mark_all_btn.bind(on_press=lambda x: self.component_list.mark_all_processed(True))
-        info_layout.add_widget(mark_all_btn)
+        self.info_layout.add_widget(mark_all_btn)
         
         clear_proc_btn = Button(text='↻', size_hint_x=0.1, font_size=dp(14))
         clear_proc_btn.bind(on_press=self.clear_processed)
-        info_layout.add_widget(clear_proc_btn)
-        
-        main_layout.add_widget(info_layout)
+        self.info_layout.add_widget(clear_proc_btn)
         
         # === Liste des composants ===
-        self.component_list = ComponentList(size_hint_y=0.5)
+        self.component_list = ComponentList()
         self.component_list.on_processed_change = self.update_processed_count
-        main_layout.add_widget(self.component_list)
         
         # === Barre de statut ===
         self.status_label = Label(
-            text='Aucun fichier chargé - Tapez "📂 HTML" pour charger un fichier',
+            text='Aucun fichier chargé - Tapez "📂 HTML"',
             size_hint_y=None,
             height=dp(25),
             color=(0.7, 0.7, 0.7, 1),
             font_size=dp(10)
         )
-        main_layout.add_widget(self.status_label)
+    
+    def _on_window_resize(self, window, width, height):
+        """Appelé quand la fenêtre change de taille"""
+        Clock.schedule_once(self._check_orientation, 0.1)
+    
+    def _check_orientation(self, dt=None):
+        """Vérifie et adapte l'orientation"""
+        is_landscape = Window.width > Window.height
         
-        return main_layout
+        if is_landscape != self._is_landscape:
+            self._is_landscape = is_landscape
+            self._rebuild_layout()
+    
+    def _rebuild_layout(self):
+        """Reconstruit l'interface selon l'orientation"""
+        # Retirer tous les widgets de leurs parents
+        self._detach_all_widgets()
+        
+        if self._is_landscape:
+            self._build_landscape_layout()
+        else:
+            self._build_portrait_layout()
+    
+    def _detach_all_widgets(self):
+        """Détache tous les widgets de leurs parents"""
+        widgets = [self.toolbar, self.pcb_view, self.zoom_layout, 
+                   self.filter_layout, self.info_layout, self.component_list, 
+                   self.status_label]
+        
+        for widget in widgets:
+            if widget.parent:
+                widget.parent.remove_widget(widget)
+        
+        self.root_layout.clear_widgets()
+    
+    def _build_portrait_layout(self):
+        """Construit le layout portrait (vertical)"""
+        self.root_layout.orientation = 'vertical'
+        
+        # Toolbar
+        self.root_layout.add_widget(self.toolbar)
+        
+        # PCB + Zoom
+        pcb_container = BoxLayout(orientation='horizontal', size_hint_y=0.35)
+        self.pcb_view.size_hint = (0.85, 1)
+        self.zoom_layout.size_hint = (0.15, 1)
+        pcb_container.add_widget(self.pcb_view)
+        pcb_container.add_widget(self.zoom_layout)
+        self.root_layout.add_widget(pcb_container)
+        
+        # Filtres
+        self.root_layout.add_widget(self.filter_layout)
+        
+        # Info
+        self.root_layout.add_widget(self.info_layout)
+        
+        # Liste composants
+        self.component_list.size_hint_y = 0.5
+        self.root_layout.add_widget(self.component_list)
+        
+        # Status
+        self.root_layout.add_widget(self.status_label)
+    
+    def _build_landscape_layout(self):
+        """Construit le layout paysage (PCB à gauche, liste à droite)"""
+        self.root_layout.orientation = 'vertical'
+        
+        # Toolbar en haut
+        self.root_layout.add_widget(self.toolbar)
+        
+        # Conteneur principal horizontal
+        main_container = BoxLayout(orientation='horizontal', spacing=dp(5))
+        
+        # === Partie gauche: PCB + Zoom ===
+        left_panel = BoxLayout(orientation='horizontal', size_hint_x=0.5)
+        self.pcb_view.size_hint = (0.88, 1)
+        self.zoom_layout.size_hint = (0.12, 1)
+        left_panel.add_widget(self.pcb_view)
+        left_panel.add_widget(self.zoom_layout)
+        main_container.add_widget(left_panel)
+        
+        # === Partie droite: Filtres + Info + Liste ===
+        right_panel = BoxLayout(orientation='vertical', size_hint_x=0.5, spacing=dp(3))
+        
+        right_panel.add_widget(self.filter_layout)
+        right_panel.add_widget(self.info_layout)
+        
+        self.component_list.size_hint_y = 1
+        right_panel.add_widget(self.component_list)
+        
+        main_container.add_widget(right_panel)
+        
+        self.root_layout.add_widget(main_container)
+        
+        # Status en bas
+        self.root_layout.add_widget(self.status_label)
     
     def on_selection_changed(self, selected_components):
         """Appelé quand la sélection change"""
