@@ -920,8 +920,20 @@ class PCBView(Widget):
             self.on_selection_callback(self.selected_components)
     
     def select_all(self):
-        """Sélectionne tous les composants"""
+        """Sélectionne tous les composants et dessine le rectangle englobant"""
         self.selected_components = self.components[:]
+        
+        # Calculer le rectangle englobant tous les composants en coordonnées PCB
+        if self.components and self.parser and self.parser.board_bbox:
+            bbox = self.parser.board_bbox
+            # Utiliser la bounding box du PCB
+            self.last_selection_pcb = (
+                bbox.get('minx', 0),
+                bbox.get('miny', 0),
+                bbox.get('maxx', 100),
+                bbox.get('maxy', 100)
+            )
+        
         self._redraw()
         if hasattr(self, 'on_selection_callback') and self.on_selection_callback:
             self.on_selection_callback(self.selected_components)
