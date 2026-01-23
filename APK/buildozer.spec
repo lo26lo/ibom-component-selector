@@ -13,10 +13,13 @@ package.domain = org.lolobom
 source.dir = .
 
 # (str) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,html,csv
+source.include_exts = py,png,jpg,kv,atlas
 
 # (str) Source files to exclude (let empty to not exclude anything)
-#source.exclude_exts = spec
+source.exclude_exts = spec,logs,log,txt,md,sh
+
+# (list) Source patterns to exclude (comma separated)
+source.exclude_patterns = logs,*.log,build_apk.sh,README.md,.git,.buildozer,bin,__pycache__
 
 # (str) Application versioning (method 2 - from main.py)
 version.regex = __version__ = ['"](.*)['"]
