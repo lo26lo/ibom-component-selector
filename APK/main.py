@@ -73,12 +73,17 @@ if platform == 'android':
     def _request_manage_storage():
         """Demande MANAGE_EXTERNAL_STORAGE pour Android 11+ si nécessaire"""
         try:
-            Build = _get_java_class('android.os.Build')
-            if Build is None:
+            # VERSION est une classe interne de Build, il faut la charger avec $
+            BuildVERSION = _get_java_class('android.os.Build$VERSION')
+            if BuildVERSION is None:
+                print("Impossible de charger android.os.Build$VERSION")
                 return
                 
+            sdk_int = BuildVERSION.SDK_INT
+            print(f"Android SDK version: {sdk_int}")
+            
             # Pour Android 11+ (API 30+), on a besoin de MANAGE_EXTERNAL_STORAGE
-            if Build.VERSION.SDK_INT >= 30:
+            if sdk_int >= 30:
                 Environment = _get_java_class('android.os.Environment')
                 if Environment is None:
                     return
