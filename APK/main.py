@@ -38,42 +38,83 @@ if platform == 'android':
     from android.storage import primary_external_storage_path, app_storage_path
     from jnius import autoclass
     
-    # Classes Java nécessaires
-    Environment = autoclass('android.os.Environment')
-    Build = autoclass('android.os.Build')
-    Intent = autoclass('android.content.Intent')
-    Settings = autoclass('android.provider.Settings')
-    Uri = autoclass('android.net.Uri')
-    PythonActivity = autoclass('org.kivy.android.PythonActivity')
+    # Classes Java - chargées de manière lazy pour éviter les crashs au démarrage
+    _java_classes = {}
+    
+    def _get_java_class(class_name):
+        """Charge une classe Java de manière lazy et sécurisée"""
+        if class_name not in _java_classes:
+            try:
+                _java_classes[class_name] = autoclass(class_name)
+            except Exception as e:
+                print(f"Erreur chargement classe {class_name}: {e}")
+                return None
+        return _java_classes[class_name]
     
     def request_all_permissions():
         """Demande toutes les permissions nécessaires pour Android"""
-        permissions = [
-            Permission.READ_EXTERNAL_STORAGE,
-            Permission.WRITE_EXTERNAL_STORAGE,
-        ]
-        
-        # Pour Android 11+ (API 30+), on a besoin de MANAGE_EXTERNAL_STORAGE
-        if Build.VERSION.SDK_INT >= 30:
-            # Vérifier si on a déjà l'accès
-            if not Environment.isExternalStorageManager():
-                try:
-                    # Ouvrir les paramètres pour demander l'accès
-                    activity = PythonActivity.mActivity
-                    intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                    activity.startActivity(intent)
-                except Exception as e:
-                    print(f"Erreur lors de la demande de permission: {e}")
-                    # Fallback: essayer avec l'URI spécifique
+        try:
+            permissions = [
+                Permission.READ_EXTERNAL_STORAGE,
+                Permission.WRITE_EXTERNAL_STORAGE,
+            ]
+            
+            # D'abord demander les permissions de base
+            def on_permissions_result(permissions_list, grant_results):
+                print(f"Permissions result: {grant_results}")
+                # Après les permissions de base, gérer Android 11+
+                _request_manage_storage()
+            
+            request_permissions(permissions, on_permissions_result)
+            
+        except Exception as e:
+            print(f"Erreur request_all_permissions: {e}")
+    
+    def _request_manage_storage():
+        """Demande MANAGE_EXTERNAL_STORAGE pour Android 11+ si nécessaire"""
+        try:
+            Build = _get_java_class('android.os.Build')
+            if Build is None:
+                return
+                
+            # Pour Android 11+ (API 30+), on a besoin de MANAGE_EXTERNAL_STORAGE
+            if Build.VERSION.SDK_INT >= 30:
+                Environment = _get_java_class('android.os.Environment')
+                if Environment is None:
+                    return
+                    
+                # Vérifier si on a déjà l'accès
+                if not Environment.isExternalStorageManager():
                     try:
-                        intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                        uri = Uri.parse("package:org.lolobom.ibomselector")
-                        intent.setData(uri)
-                        activity.startActivity(intent)
-                    except Exception as e2:
-                        print(f"Erreur fallback: {e2}")
-        
-        request_permissions(permissions)
+                        PythonActivity = _get_java_class('org.kivy.android.PythonActivity')
+                        Intent = _get_java_class('android.content.Intent')
+                        Settings = _get_java_class('android.provider.Settings')
+                        
+                        if PythonActivity and Intent and Settings:
+                            activity = PythonActivity.mActivity
+                            if activity:
+                                intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                                activity.startActivity(intent)
+                    except Exception as e:
+                        print(f"Erreur lors de la demande de permission MANAGE: {e}")
+                        # Fallback: essayer avec l'URI spécifique
+                        try:
+                            PythonActivity = _get_java_class('org.kivy.android.PythonActivity')
+                            Intent = _get_java_class('android.content.Intent')
+                            Settings = _get_java_class('android.provider.Settings')
+                            Uri = _get_java_class('android.net.Uri')
+                            
+                            if PythonActivity and Intent and Settings and Uri:
+                                activity = PythonActivity.mActivity
+                                if activity:
+                                    intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                                    uri = Uri.parse("package:org.lolobom.ibomselector")
+                                    intent.setData(uri)
+                                    activity.startActivity(intent)
+                        except Exception as e2:
+                            print(f"Erreur fallback MANAGE: {e2}")
+        except Exception as e:
+            print(f"Erreur _request_manage_storage: {e}")
     
     def get_storage_paths():
         """Retourne une liste de chemins de stockage disponibles"""
@@ -1181,8 +1222,8 @@ class IBomSelectorApp(App):
         self.current_history_index = None
         self.lcsc_csv_path = None
         
-        # Demander les permissions au démarrage
-        Clock.schedule_once(lambda dt: request_all_permissions(), 0.5)
+        # Demander les permissions au démarrage (délai plus long pour s'assurer que l'activité est prête)
+        Clock.schedule_once(self._request_permissions_safe, 1.5)
         
         # Layout principal
         main_layout = BoxLayout(orientation='vertical', padding=dp(5), spacing=dp(3))
@@ -1346,6 +1387,13 @@ class IBomSelectorApp(App):
     def clear_processed(self, instance):
         """Efface les marquages 'traité'"""
         self.component_list.mark_all_processed(False)
+    
+    def _request_permissions_safe(self, dt):
+        """Demande les permissions de manière sécurisée"""
+        try:
+            request_all_permissions()
+        except Exception as e:
+            print(f"Erreur lors de la demande de permissions: {e}")
     
     def show_file_chooser(self, instance):
         """Affiche le sélecteur de fichier HTML"""
