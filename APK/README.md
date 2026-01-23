@@ -1,10 +1,49 @@
-# IBom Selector - Version Android
+# IBom Selector - Application Android
 
-Application Android pour sélectionner des composants depuis des fichiers InteractiveHtmlBom.
+Application Android/Tablette pour sélectionner et gérer des composants depuis des fichiers InteractiveHtmlBom (générés par KiCad).
 
-## Prérequis pour la compilation
+## 📱 Fonctionnalités
 
-### Sur Linux (recommandé pour Buildozer)
+### Visualisation PCB
+- **Affichage interactif** du PCB avec les composants
+- **Zoom +/-** et panoramique tactile
+- **Double-tap** pour réinitialiser la vue
+- **Sélection rectangulaire** - Dessinez une zone pour sélectionner les composants
+- **Rectangle persistant** - La zone sélectionnée reste visible (en jaune) et suit le zoom/pan
+
+### Liste des composants
+- **Groupement automatique** par valeur/footprint (toggle avec bouton "Grp")
+- **Tri** par colonnes (Ref, Valeur, Footprint, LCSC, Layer, Quantité)
+- **Filtrage** par couche (Front/Back) et recherche textuelle
+- **En-tête fixe** - Reste visible lors du défilement
+
+### Gestion des composants
+- **Double-tap sur une ligne** → Bascule l'état "traité" (fond jaune)
+- **Appui long (0.5s)** → Affiche popup avec tous les détails (références complètes, etc.)
+- **Checkbox** pour marquer les composants comme traités
+- **Boutons "✓All" et "↻"** pour tout marquer/démarquer
+
+### Fichiers LCSC
+- **Chargement CSV LCSC** pour associer les codes LCSC aux composants
+- Export compatible JLCPCB
+
+### Historique
+- **Sauvegarde des sélections** avec nom personnalisé
+- **Restauration** des sélections précédentes
+- **Mise à jour** de l'état des composants traités
+
+### Export
+- **Export CSV** standard
+- **Export CSV format LCSC/JLCPCB**
+
+### Interface adaptative
+- **Mode Portrait** (téléphone) : PCB en haut, liste en bas
+- **Mode Paysage** (tablette) : PCB à gauche, liste à droite
+- Adaptation automatique lors de la rotation
+
+## 🔧 Prérequis pour la compilation
+
+### Sur Linux (recommandé)
 
 ```bash
 # Installer les dépendances système
@@ -14,19 +53,21 @@ sudo apt install -y python3 python3-pip python3-venv \
     zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
     cmake libffi-dev libssl-dev
 
-# Installer Buildozer
-pip3 install --user buildozer
+# Créer un environnement virtuel
+python3 -m venv .venv
+source .venv/bin/activate
 
-# Installer Cython
-pip3 install --user cython
+# Installer Buildozer et Cython
+pip install buildozer cython
 ```
 
 ### Sur Windows (via WSL2)
 
-1. Installer WSL2 avec Ubuntu
-2. Suivre les instructions Linux ci-dessus
+1. Installer WSL2 : `wsl --install -d Ubuntu`
+2. Redémarrer le PC
+3. Suivre les instructions Linux ci-dessus dans le terminal WSL
 
-## Compilation de l'APK
+## 📦 Compilation de l'APK
 
 ### Debug APK
 
@@ -35,74 +76,107 @@ cd APK
 buildozer android debug
 ```
 
-L'APK sera généré dans `bin/ibomselector-1.0.0-arm64-v8a_armeabi-v7a-debug.apk`
+L'APK sera généré dans `bin/ibomselector-X.X.X-arm64-v8a_armeabi-v7a-debug.apk`
 
-### Release APK
+### En cas de problème "Argument list too long"
+
+```bash
+# Nettoyer complètement le cache
+rm -rf .buildozer bin
+buildozer android debug
+```
+
+### Release APK (signé)
 
 ```bash
 buildozer android release
 ```
 
-## Installation sur appareil Android
+## 📲 Installation sur Android
 
 ### Via ADB
 
 ```bash
-adb install bin/ibomselector-1.0.0-arm64-v8a_armeabi-v7a-debug.apk
+adb install bin/ibomselector-*-debug.apk
 ```
 
 ### Manuellement
 
 1. Copier l'APK sur le téléphone
-2. Activer "Sources inconnues" dans les paramètres
-3. Ouvrir l'APK pour l'installer
+2. Autoriser l'installation depuis des sources inconnues
+3. Installer l'APK
 
-## Test local (PC)
+## 📋 Permissions requises
 
-```bash
-# Installer les dépendances
-pip install -r requirements.txt
+- `READ_EXTERNAL_STORAGE` - Lire les fichiers HTML/CSV
+- `WRITE_EXTERNAL_STORAGE` - Sauvegarder les exports
+- `MANAGE_EXTERNAL_STORAGE` - Accès complet aux fichiers (Android 11+)
+- `INTERNET` - Non utilisé actuellement
 
-# Lancer l'application
-python main.py
-```
+## 🎮 Guide d'utilisation
 
-## Fonctionnalités
+### 1. Charger un fichier HTML
+- Appuyer sur **📂 HTML**
+- Naviguer vers le fichier `ibom.html` généré par InteractiveHtmlBom
 
-- **Charger des fichiers HTML** - Supporte les formats InteractiveHtmlBom compressés et non compressés
-- **Visualisation PCB** - Affiche le PCB avec les composants
-- **Sélection tactile** - Dessinez un rectangle pour sélectionner les composants
-- **Export CSV** - Exportez les composants sélectionnés vers un fichier CSV
+### 2. (Optionnel) Charger le fichier LCSC
+- Appuyer sur **📋 LCSC**
+- Sélectionner le fichier `BOM-lcsc.csv`
 
-## Structure des fichiers
+### 3. Sélectionner des composants
+- Sur le PCB, **glisser** pour dessiner une zone de sélection
+- Ou appuyer sur **All** pour tout sélectionner
+
+### 4. Gérer les composants
+- **Double-tap** sur une ligne pour la marquer comme traitée (devient jaune)
+- **Appui long** pour voir tous les détails
+- Utiliser les filtres pour affiner la vue
+
+### 5. Sauvegarder la sélection
+- Appuyer sur **💾** pour sauvegarder dans l'historique
+- Donner un nom à la sélection
+
+### 6. Exporter
+- Appuyer sur **📤 Exp**
+- Choisir le format d'export (CSV ou CSV LCSC)
+
+## 📁 Structure des fichiers
 
 ```
 APK/
-├── main.py              # Application principale Kivy
-├── buildozer.spec       # Configuration Buildozer pour Android
-├── requirements.txt     # Dépendances Python
-└── README.md           # Ce fichier
+├── main.py           # Code source principal
+├── buildozer.spec    # Configuration Buildozer
+├── requirements.txt  # Dépendances Python
+└── README.md         # Ce fichier
 ```
 
-## Notes
+## 🛠️ Technologies utilisées
 
-- L'application demande les permissions de lecture/écriture du stockage
-- Les fichiers HTML doivent être accessibles depuis le stockage de l'appareil
-- Les exports CSV sont sauvegardés dans le dossier de stockage principal
+- **Python 3** - Langage principal
+- **Kivy** - Framework UI multiplateforme
+- **Buildozer** - Outil de compilation Android
+- **python-for-android** - Toolchain Android
 
-## Dépannage
+## 📝 Notes
 
-### Erreur "SDK not found"
-```bash
-buildozer android clean
-buildozer android debug
-```
+- Les fichiers d'historique sont sauvegardés à côté du fichier HTML (`.nomfichier_history.json`)
+- Le format LZ-String compressé des fichiers ibom récents est supporté
+- Compatible avec Android 5.0+ (API 21+)
 
-### Erreur de permissions Android
-Assurez-vous que les permissions sont accordées dans les paramètres de l'application.
+## 🐛 Dépannage
 
-### L'application ne se lance pas
-Vérifiez les logs avec:
-```bash
-adb logcat | grep python
-```
+### L'app ne démarre pas
+- Vérifier les permissions dans les paramètres Android
+- Redémarrer l'application
+
+### Fichier HTML non lu
+- S'assurer que c'est un fichier généré par InteractiveHtmlBom
+- Vérifier que les permissions de stockage sont accordées
+
+### PCB ne s'affiche pas
+- Le fichier HTML peut être dans un format non supporté
+- Vérifier la console de logs (adb logcat)
+
+## 📄 Licence
+
+MIT License
