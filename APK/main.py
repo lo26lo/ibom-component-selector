@@ -5,6 +5,8 @@ Avec tri, sauvegarde d'historique et marquage des composants traités
 Compatible avec les versions récentes d'Android (API 29+)
 """
 
+__version__ = '1.0.1'
+
 import os
 import json
 import re
@@ -1221,7 +1223,7 @@ class IBomSelectorApp(App):
     """Application principale"""
     
     def build(self):
-        self.title = 'IBom Selector'
+        self.title = f'IBom Selector v{__version__}'
         self.parser = None
         self.history_manager = HistoryManager()
         self.current_history_index = None

@@ -18,12 +18,9 @@ source.include_exts = py,png,jpg,kv,atlas,html,csv
 # (str) Source files to exclude (let empty to not exclude anything)
 #source.exclude_exts = spec
 
-# (str) Application versioning (method 1)
-version = 1.0.0
-
-# (str) Application versioning (method 2)
-# version.regex = __version__ = ['"](.*)['"]
-# version.filename = %(source.dir)s/main.py
+# (str) Application versioning (method 2 - from main.py)
+version.regex = __version__ = ['"](.*)['"]
+version.filename = %(source.dir)s/main.py
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
