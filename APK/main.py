@@ -656,6 +656,7 @@ class PCBView(Widget):
         self.is_panning = False
         self._touches = []
         self.last_selection_rect = None  # Rectangle de la dernière sélection
+        self.last_selection_pcb = None   # Coordonnées PCB de la dernière sélection
         self.bind(size=self._on_size)
         
     def _on_size(self, *args):
@@ -780,10 +781,16 @@ class PCBView(Widget):
                 if self.zoom_factor >= 2:
                     Color(1, 1, 1, 0.8)
             
-            # Rectangle de la dernière sélection (persistant)
-            if self.last_selection_rect and not self.selection_rect:
+            # Rectangle de la dernière sélection (persistant, en coordonnées PCB)
+            if self.last_selection_pcb and not self.selection_rect:
+                pcb_x1, pcb_y1, pcb_x2, pcb_y2 = self.last_selection_pcb
+                sx1, sy1 = self._board_to_screen(pcb_x1, pcb_y1)
+                sx2, sy2 = self._board_to_screen(pcb_x2, pcb_y2)
+                x = min(sx1, sx2)
+                y = min(sy1, sy2)
+                w = abs(sx2 - sx1)
+                h = abs(sy2 - sy1)
                 Color(1, 1, 0, 0.2)
-                x, y, w, h = self.last_selection_rect
                 Rectangle(pos=(x, y), size=(w, h))
                 Color(1, 1, 0, 0.7)
                 Line(rectangle=(x, y, w, h), width=1.5)
@@ -880,7 +887,11 @@ class PCBView(Widget):
             elif self.selection_start:
                 if self.selection_rect and self.selection_rect[2] > 10 and self.selection_rect[3] > 10:
                     self._select_components_in_rect()
-                    # Garder le rectangle visible (last_selection_rect)
+                    # Sauvegarder en coordonnées PCB pour suivre le zoom
+                    rx, ry, rw, rh = self.selection_rect
+                    pcb_x1, pcb_y1 = self._screen_to_board(rx, ry + rh)
+                    pcb_x2, pcb_y2 = self._screen_to_board(rx + rw, ry)
+                    self.last_selection_pcb = (pcb_x1, pcb_y1, pcb_x2, pcb_y2)
                     self.last_selection_rect = self.selection_rect
                 self.selection_start = None
                 self.selection_rect = None
@@ -929,6 +940,12 @@ class ComponentRow(BoxLayout):
         self.is_processed = False
         self._long_press_event = None
         self._detail_popup = None
+        
+        # Canvas pour le fond coloré
+        with self.canvas.before:
+            self._bg_color = Color(0.15, 0.15, 0.2, 1)  # Couleur normale
+            self._bg_rect = Rectangle(pos=self.pos, size=self.size)
+        self.bind(pos=self._update_bg, size=self._update_bg)
         
         # Checkbox
         self.checkbox = CheckBox(size_hint_x=0.08, active=False)
@@ -1036,12 +1053,26 @@ class ComponentRow(BoxLayout):
     
     def _on_checkbox(self, checkbox, value):
         self.is_processed = value
+        self._update_bg_color()
         if self.on_toggle:
             self.on_toggle(self.component, value)
+    
+    def _update_bg(self, *args):
+        """Met à jour la position/taille du fond"""
+        self._bg_rect.pos = self.pos
+        self._bg_rect.size = self.size
+    
+    def _update_bg_color(self):
+        """Met à jour la couleur du fond selon l'état"""
+        if self.is_processed:
+            self._bg_color.rgba = (0.6, 0.6, 0.1, 0.8)  # Jaune
+        else:
+            self._bg_color.rgba = (0.15, 0.15, 0.2, 1)  # Normal
     
     def set_processed(self, value):
         self.checkbox.active = value
         self.is_processed = value
+        self._update_bg_color()
 
 
 class ComponentList(BoxLayout):
