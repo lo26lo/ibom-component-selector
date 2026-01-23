@@ -636,6 +636,9 @@ class IBomParser:
         return [comp.copy() for comp in self.components]
 
 
+# Variable globale pour le mode e-ink
+EINK_MODE = False
+
 class PCBView(Widget):
     """Widget pour afficher le PCB et permettre la sélection"""
     
@@ -739,11 +742,15 @@ class PCBView(Widget):
     
     def _redraw(self):
         """Redessine le PCB"""
+        global EINK_MODE
         self.canvas.clear()
         
         with self.canvas:
-            # Fond
-            Color(0.1, 0.1, 0.15, 1)
+            # Fond - blanc en mode e-ink, sombre sinon
+            if EINK_MODE:
+                Color(1, 1, 1, 1)  # Blanc
+            else:
+                Color(0.1, 0.1, 0.15, 1)
             Rectangle(pos=self.pos, size=self.size)
             
             if not self.parser or not self.parser.board_bbox:
@@ -752,7 +759,10 @@ class PCBView(Widget):
             
             # Dessiner le contour du board
             bbox = self.parser.board_bbox
-            Color(0.1, 0.25, 0.15, 1)
+            if EINK_MODE:
+                Color(0.9, 0.9, 0.9, 1)  # Gris très clair
+            else:
+                Color(0.1, 0.25, 0.15, 1)
             x1, y1 = self._board_to_screen(bbox.get('minx', 0), bbox.get('miny', 0))
             x2, y2 = self._board_to_screen(bbox.get('maxx', 100), bbox.get('maxy', 100))
             Rectangle(pos=(min(x1, x2), min(y1, y2)), 
@@ -766,20 +776,33 @@ class PCBView(Widget):
                 cx, cy = self._board_to_screen(comp['x'], comp['y'])
                 
                 if comp in self.selected_components:
-                    Color(1, 0.5, 0, 0.9)
-                    size = max(8, 6 * self.zoom_factor)
+                    if EINK_MODE:
+                        Color(0, 0, 0, 1)  # Noir pour sélectionné
+                        size = max(10, 8 * self.zoom_factor)
+                    else:
+                        Color(1, 0.5, 0, 0.9)
+                        size = max(8, 6 * self.zoom_factor)
                 elif comp['layer'] == 'F':
-                    Color(0.8, 0.2, 0.2, 0.7)
+                    if EINK_MODE:
+                        Color(0.3, 0.3, 0.3, 1)  # Gris foncé
+                    else:
+                        Color(0.8, 0.2, 0.2, 0.7)
                     size = max(5, 4 * self.zoom_factor)
                 else:
-                    Color(0.2, 0.2, 0.8, 0.7)
+                    if EINK_MODE:
+                        Color(0.6, 0.6, 0.6, 1)  # Gris clair
+                    else:
+                        Color(0.2, 0.2, 0.8, 0.7)
                     size = max(5, 4 * self.zoom_factor)
                 
                 Ellipse(pos=(cx - size/2, cy - size/2), size=(size, size))
                 
                 # Afficher la référence si zoom suffisant
                 if self.zoom_factor >= 2:
-                    Color(1, 1, 1, 0.8)
+                    if EINK_MODE:
+                        Color(0, 0, 0, 1)
+                    else:
+                        Color(1, 1, 1, 0.8)
             
             # Rectangle de la dernière sélection (persistant, en coordonnées PCB)
             if self.last_selection_pcb and not self.selection_rect:
@@ -790,14 +813,24 @@ class PCBView(Widget):
                 y = min(sy1, sy2)
                 w = abs(sx2 - sx1)
                 h = abs(sy2 - sy1)
-                Color(1, 1, 0, 0.2)
+                if EINK_MODE:
+                    Color(0, 0, 0, 0.3)
+                else:
+                    Color(1, 1, 0, 0.2)
                 Rectangle(pos=(x, y), size=(w, h))
-                Color(1, 1, 0, 0.7)
-                Line(rectangle=(x, y, w, h), width=1.5)
+                if EINK_MODE:
+                    Color(0, 0, 0, 1)
+                    Line(rectangle=(x, y, w, h), width=2)
+                else:
+                    Color(1, 1, 0, 0.7)
+                    Line(rectangle=(x, y, w, h), width=1.5)
             
             # Rectangle de sélection en cours
             if self.selection_rect:
-                Color(1, 1, 0, 0.3)
+                if EINK_MODE:
+                    Color(0, 0, 0, 0.2)
+                else:
+                    Color(1, 1, 0, 0.3)
                 x, y, w, h = self.selection_rect
                 Rectangle(pos=(x, y), size=(w, h))
                 Color(1, 1, 0, 1)
@@ -943,6 +976,7 @@ class ComponentRow(BoxLayout):
     """Ligne de composant avec checkbox pour marquer comme traité"""
     
     def __init__(self, component, on_toggle=None, **kwargs):
+        global EINK_MODE
         super().__init__(**kwargs)
         self.orientation = 'horizontal'
         self.size_hint_y = None
@@ -955,7 +989,10 @@ class ComponentRow(BoxLayout):
         
         # Canvas pour le fond coloré
         with self.canvas.before:
-            self._bg_color = Color(0.15, 0.15, 0.2, 1)  # Couleur normale
+            if EINK_MODE:
+                self._bg_color = Color(1, 1, 1, 1)  # Blanc
+            else:
+                self._bg_color = Color(0.15, 0.15, 0.2, 1)  # Couleur normale
             self._bg_rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(pos=self._update_bg, size=self._update_bg)
         
@@ -1076,10 +1113,17 @@ class ComponentRow(BoxLayout):
     
     def _update_bg_color(self):
         """Met à jour la couleur du fond selon l'état"""
+        global EINK_MODE
         if self.is_processed:
-            self._bg_color.rgba = (0.6, 0.6, 0.1, 0.8)  # Jaune
+            if EINK_MODE:
+                self._bg_color.rgba = (0.7, 0.7, 0.7, 1)  # Gris moyen
+            else:
+                self._bg_color.rgba = (0.6, 0.6, 0.1, 0.8)  # Jaune
         else:
-            self._bg_color.rgba = (0.15, 0.15, 0.2, 1)  # Normal
+            if EINK_MODE:
+                self._bg_color.rgba = (1, 1, 1, 1)  # Blanc
+            else:
+                self._bg_color.rgba = (0.15, 0.15, 0.2, 1)  # Normal
     
     def set_processed(self, value):
         self.checkbox.active = value
@@ -1277,6 +1321,11 @@ class ComponentList(BoxLayout):
         
         if self.on_processed_change:
             self.on_processed_change()
+    
+    def refresh_display(self):
+        """Rafraîchit l'affichage pour le changement de mode (e-ink)"""
+        for row in self.component_rows:
+            row._update_bg_color()
 
 
 class HistoryManager:
@@ -1419,25 +1468,29 @@ class IBomSelectorApp(App):
         # === Barre d'outils principale ===
         self.toolbar = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(3))
         
-        load_btn = Button(text='📂 HTML', size_hint_x=0.22, font_size=dp(12))
+        load_btn = Button(text='📂 HTML', size_hint_x=0.20, font_size=dp(12))
         load_btn.bind(on_press=self.show_file_chooser)
         self.toolbar.add_widget(load_btn)
         
-        lcsc_btn = Button(text='📋 LCSC', size_hint_x=0.22, font_size=dp(12))
+        lcsc_btn = Button(text='📋 LCSC', size_hint_x=0.20, font_size=dp(12))
         lcsc_btn.bind(on_press=self.show_lcsc_file_chooser)
         self.toolbar.add_widget(lcsc_btn)
         
-        history_btn = Button(text='📜 Hist.', size_hint_x=0.18, font_size=dp(12))
+        history_btn = Button(text='📜 Hist.', size_hint_x=0.16, font_size=dp(12))
         history_btn.bind(on_press=self.show_history_popup)
         self.toolbar.add_widget(history_btn)
         
-        save_btn = Button(text='💾', size_hint_x=0.12, font_size=dp(14))
+        save_btn = Button(text='💾', size_hint_x=0.10, font_size=dp(14))
         save_btn.bind(on_press=self.save_selection)
         self.toolbar.add_widget(save_btn)
         
-        export_btn = Button(text='📤 Exp', size_hint_x=0.26, font_size=dp(12))
+        export_btn = Button(text='📤 Exp', size_hint_x=0.20, font_size=dp(12))
         export_btn.bind(on_press=self.show_export_popup)
         self.toolbar.add_widget(export_btn)
+        
+        self.eink_btn = Button(text='📟', size_hint_x=0.14, font_size=dp(14))
+        self.eink_btn.bind(on_press=self.toggle_eink_mode)
+        self.toolbar.add_widget(self.eink_btn)
         
         # === Zone PCB ===
         self.pcb_view = PCBView()
@@ -1642,6 +1695,23 @@ class IBomSelectorApp(App):
     def toggle_grouping(self, instance):
         """Active/désactive le groupement"""
         self.component_list.toggle_grouping()
+    
+    def toggle_eink_mode(self, instance):
+        """Active/désactive le mode e-ink (haut contraste)"""
+        global EINK_MODE
+        EINK_MODE = not EINK_MODE
+        
+        # Met à jour le bouton
+        if EINK_MODE:
+            self.eink_btn.text = '🌙'  # Icône pour mode actif
+        else:
+            self.eink_btn.text = '📟'  # Icône pour mode inactif
+        
+        # Rafraîchit le PCB
+        self.pcb_view._redraw()
+        
+        # Rafraîchit les lignes de composants
+        self.component_list.refresh_display()
     
     def update_processed_count(self):
         """Met à jour le compteur de composants traités"""
