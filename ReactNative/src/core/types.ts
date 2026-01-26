@@ -129,6 +129,8 @@ export interface Preferences {
   autoHighlight: boolean;
   fontSize: number;
   vibrationEnabled: boolean;
+  autoSave: boolean;
+  autoSaveMinutes: number;
 }
 
 // Rectangle de sélection

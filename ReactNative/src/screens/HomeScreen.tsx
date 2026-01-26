@@ -36,11 +36,10 @@ export function HomeScreen() {
   const haptic = useHaptic();
 
   // Stores
-  const pcbData = useAppStore((s) => s.pcbData);
+  const components = useAppStore((s) => s.components);
   const selectedComponents = useAppStore((s) => s.selectedComponents);
   const processedItems = useAppStore((s) => s.processedItems);
   const currentHtmlPath = useAppStore((s) => s.currentHtmlPath);
-  const setPcbData = useAppStore((s) => s.setPcbData);
   const setCurrentHtmlPath = useAppStore((s) => s.setCurrentHtmlPath);
   const setSelectedComponents = useAppStore((s) => s.setSelectedComponents);
   const toggleProcessed = useAppStore((s) => s.toggleProcessed);
@@ -106,19 +105,6 @@ export function HomeScreen() {
       haptic.trigger('medium');
     },
     [toggleProcessed, haptic]
-  );
-
-  const handlePCBSelection = useCallback(
-    (refs: string[]) => {
-      if (!pcbData) return;
-
-      const selected = pcbData.components.filter((c) =>
-        refs.includes(c.ref)
-      );
-      setSelectedComponents(selected);
-      haptic.trigger('selection');
-    },
-    [pcbData, setSelectedComponents, haptic]
   );
 
   const toggleView = useCallback(() => {
@@ -215,10 +201,10 @@ export function HomeScreen() {
               ]}
             >
               <PCBView
-                pcbData={pcbData}
-                selectedComponents={selectedComponents}
-                processedItems={processedItems}
-                onSelectionChange={handlePCBSelection}
+                onSelectionComplete={(selected) => {
+                  setSelectedComponents(selected);
+                  haptic.trigger('selection');
+                }}
               />
             </View>
           )}

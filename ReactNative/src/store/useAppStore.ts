@@ -6,6 +6,12 @@ import { create } from 'zustand';
 import type { Component, ListFilters, SelectionRect, BoundingBox } from '../core/types';
 import { IBomParser } from '../core/IBomParser';
 
+// Type pour les données PCB (structure simplifiée pour la vue)
+interface PCBData {
+  components: Component[];
+  boardBbox: BoundingBox;
+}
+
 interface AppState {
   // Parser et données
   parser: IBomParser | null;
@@ -13,6 +19,10 @@ interface AppState {
   boardBbox: BoundingBox;
   htmlFilePath: string | null;
   lcscFilePath: string | null;
+
+  // Alias pour compatibilité
+  pcbData: PCBData | null;
+  currentHtmlPath: string | null;
 
   // Sélection
   selectedComponents: Component[];
@@ -36,6 +46,10 @@ interface AppState {
   setParser: (parser: IBomParser) => void;
   setHtmlFilePath: (path: string) => void;
   setLcscFilePath: (path: string) => void;
+  
+  // Alias pour compatibilité
+  setCurrentHtmlPath: (path: string) => void;
+  setPcbData: (data: PCBData | null) => void;
   
   setSelectedComponents: (components: Component[]) => void;
   addToSelection: (components: Component[]) => void;
@@ -83,6 +97,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   htmlFilePath: null,
   lcscFilePath: null,
 
+  // Alias pour compatibilité (getters calculés)
+  pcbData: null,
+  currentHtmlPath: null,
+
   selectedComponents: [],
   highlightedComponents: [],
   selectionRect: null,
@@ -98,10 +116,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Actions
   setParser: (parser) => {
+    const components = parser.getComponents();
+    const boardBbox = parser.getBoardBbox();
     set({
       parser,
-      components: parser.getComponents(),
-      boardBbox: parser.getBoardBbox(),
+      components,
+      boardBbox,
+      // Mettre à jour pcbData pour compatibilité
+      pcbData: { components, boardBbox },
       selectedComponents: [],
       highlightedComponents: [],
       processedItems: new Set<string>(),
@@ -109,8 +131,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  setHtmlFilePath: (path) => set({ htmlFilePath: path }),
+  setHtmlFilePath: (path) => set({ htmlFilePath: path, currentHtmlPath: path }),
   setLcscFilePath: (path) => set({ lcscFilePath: path }),
+
+  // Alias pour compatibilité
+  setCurrentHtmlPath: (path) => set({ htmlFilePath: path, currentHtmlPath: path }),
+  setPcbData: (data) => {
+    if (data) {
+      set({ 
+        pcbData: data, 
+        components: data.components, 
+        boardBbox: data.boardBbox 
+      });
+    } else {
+      set({ pcbData: null, components: [], boardBbox: defaultBbox });
+    }
+  },
 
   setSelectedComponents: (components) => set({ selectedComponents: components }),
   
@@ -196,6 +232,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       components: [],
       boardBbox: defaultBbox,
       htmlFilePath: null,
+      lcscFilePath: null,
+      pcbData: null,
+      currentHtmlPath: null,
       selectedComponents: [],
       highlightedComponents: [],
       selectionRect: null,

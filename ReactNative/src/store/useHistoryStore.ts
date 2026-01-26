@@ -27,6 +27,10 @@ interface HistoryState {
     rect?: [number, number, number, number]
   ) => number;
   
+  // Alias pour compatibilité avec HomeScreen
+  addHistory: (htmlPath: string, entry: { timestamp: number; name: string; selectedComponents: Component[]; processedItems: string[] }) => void;
+  loadHistory: () => Promise<void>;
+  
   updateEntry: (
     index: number,
     components: Component[],
@@ -51,6 +55,40 @@ export const useHistoryStore = create<HistoryState>()(
 
       setCurrentHtmlPath: (path) => {
         set({ currentHtmlPath: path, currentIndex: null });
+      },
+
+      // Alias pour compatibilité avec HomeScreen
+      addHistory: (htmlPath, entry) => {
+        const { histories } = get();
+        const historyEntry: HistoryEntry = {
+          id: entry.timestamp.toString(),
+          name: entry.name,
+          date: new Date(entry.timestamp).toLocaleString('fr-FR'),
+          components: entry.selectedComponents.map((c) => ({
+            ref: c.ref,
+            value: c.value,
+            footprint: c.footprint,
+            lcsc: c.lcsc,
+            layer: c.layer,
+            x: c.x,
+            y: c.y,
+            rotation: c.rotation,
+            qty: c.qty,
+          })),
+          processedItems: entry.processedItems,
+        };
+        
+        const currentHistory = histories[htmlPath] || [];
+        const newHistory = [...currentHistory, historyEntry];
+        
+        set({
+          histories: { ...histories, [htmlPath]: newHistory },
+        });
+      },
+      
+      loadHistory: async () => {
+        // L'historique est chargé automatiquement par persist/zustand
+        // Cette fonction existe pour compatibilité avec l'interface
       },
 
       addEntry: (name, components, processedItems, rect) => {

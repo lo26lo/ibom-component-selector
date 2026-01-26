@@ -8,7 +8,6 @@ import Svg, { Rect, Circle, G, Line, Polygon } from 'react-native-svg';
 import {
   GestureDetector,
   Gesture,
-  GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -273,7 +272,7 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
   }, [selectionStart, selectionEnd, theme]);
 
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <View style={styles.container}>
       <View
         ref={containerRef}
         style={[styles.svgContainer, { backgroundColor: theme.pcbBg }]}
@@ -303,7 +302,7 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
           </Animated.View>
         </GestureDetector>
       </View>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 
