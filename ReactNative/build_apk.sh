@@ -201,12 +201,20 @@ fi
 # ============================================
 echo -e "${YELLOW}[3/6] Copie des fichiers sources...${NC}"
 
-# Créer le dossier src s'il n'existe pas
+# Supprimer l'ancien src et recopier (pour avoir les dernières modifications)
+rm -rf src
 mkdir -p src
 
-# Copier les sources
+# Copier les sources avec verbose pour debug
 cp -r "$SCRIPT_DIR/src/"* src/
 cp "$SCRIPT_DIR/tsconfig.json" .
+
+# Vérifier que theme existe
+if [ ! -d "src/theme" ]; then
+    echo -e "${RED}ERREUR: src/theme n'existe pas après la copie!${NC}"
+    ls -la src/
+    exit 1
+fi
 
 # Mettre à jour index.js pour pointer vers notre App
 cat > index.js << 'EOF'
