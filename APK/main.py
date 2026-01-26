@@ -53,6 +53,52 @@ if platform == 'android':
                 return None
         return _java_classes[class_name]
     
+    def is_eink_device():
+        """Détecte si l'appareil est un écran e-ink (Boox, Remarkable, Kindle, etc.)"""
+        try:
+            Build = _get_java_class('android.os.Build')
+            if Build is None:
+                return False
+            
+            # Récupérer les infos de l'appareil
+            manufacturer = str(Build.MANUFACTURER).lower() if Build.MANUFACTURER else ''
+            model = str(Build.MODEL).lower() if Build.MODEL else ''
+            brand = str(Build.BRAND).lower() if Build.BRAND else ''
+            device = str(Build.DEVICE).lower() if Build.DEVICE else ''
+            product = str(Build.PRODUCT).lower() if Build.PRODUCT else ''
+            
+            print(f"Device info: manufacturer={manufacturer}, model={model}, brand={brand}")
+            
+            # Liste des fabricants/marques d'écrans e-ink
+            eink_manufacturers = [
+                'onyx', 'boox',           # Boox (Onyx)
+                'remarkable',              # reMarkable
+                'amazon', 'kindle',        # Kindle
+                'kobo', 'rakuten',         # Kobo
+                'pocketbook',              # PocketBook
+                'tolino',                  # Tolino
+                'bigme',                   # Bigme
+                'supernote',               # Supernote
+                'dasung',                  # Dasung
+                'hisense',                 # Hisense A5/A7 (e-ink phones)
+                'boyue', 'likebook',       # Boyue/Likebook
+            ]
+            
+            # Vérifier si c'est un appareil e-ink
+            for eink_name in eink_manufacturers:
+                if (eink_name in manufacturer or 
+                    eink_name in model or 
+                    eink_name in brand or
+                    eink_name in device or
+                    eink_name in product):
+                    print(f"E-ink device detected: {eink_name}")
+                    return True
+            
+            return False
+        except Exception as e:
+            print(f"Erreur detection e-ink: {e}")
+            return False
+    
     def request_all_permissions():
         """Demande toutes les permissions nécessaires pour Android"""
         try:
@@ -166,6 +212,10 @@ else:
     
     def get_storage_paths():
         return [('Home', str(Path.home()))]
+    
+    def is_eink_device():
+        """Sur PC, retourne False"""
+        return False
 
 
 class LZString:
@@ -1468,12 +1518,19 @@ class IBomSelectorApp(App):
     """Application principale"""
     
     def build(self):
+        global EINK_MODE
+        
         self.title = f'IBom Selector v{__version__}'
         self.parser = None
         self.history_manager = HistoryManager()
         self.current_history_index = None
         self.lcsc_csv_path = None
         self._is_landscape = False
+        
+        # Détecter automatiquement si on est sur un appareil e-ink
+        if is_eink_device():
+            EINK_MODE = True
+            print("Mode E-Ink activé automatiquement")
         
         # Demander les permissions au démarrage (délai plus long pour s'assurer que l'activité est prête)
         Clock.schedule_once(self._request_permissions_safe, 1.5)
@@ -1826,7 +1883,8 @@ class IBomSelectorApp(App):
             size_hint=(0.85, 0.5),
             auto_dismiss=True,
             separator_height=0,
-            background_color=(0, 0, 0, 0)  # Transparent pour utiliser notre fond
+            background='',  # Supprimer l'image de fond par défaut
+            background_color=bg_color  # Utiliser notre couleur de fond
         )
         close_btn.bind(on_press=lambda x: self._prefs_popup.dismiss())
         self._prefs_popup.open()
