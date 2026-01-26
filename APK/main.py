@@ -248,6 +248,7 @@ class PreferencesManager:
             'group_by_value': True,
             'font_size': 11,
             'status_filter': 'all',  # 'all', 'pending', 'done'
+            'auto_highlight': True,  # Highlight auto sur PCB
         }
         self.prefs = self.defaults.copy()
         self.load()
@@ -907,15 +908,24 @@ class PCBView(Widget):
                 is_highlighted = comp in self.highlighted_components
                 
                 if is_highlighted:
-                    # Highlight pulsant - cercle plus grand et coloré
+                    # Highlight très visible - grand cercle + croix
                     if EINK_MODE:
                         Color(0, 0, 0, 1)
-                        size = max(16, 12 * self.zoom_factor)
                     else:
-                        Color(0, 1, 0, 1)  # Vert vif
-                        size = max(14, 10 * self.zoom_factor)
-                    # Cercle externe
-                    Line(circle=(cx, cy, size/2), width=2)
+                        Color(1, 0, 0, 1)  # Rouge vif
+                    size = max(30, 25 * self.zoom_factor)
+                    # Grand cercle externe épais
+                    Line(circle=(cx, cy, size/2), width=3)
+                    # Croix au centre pour mieux repérer
+                    cross_size = size * 0.6
+                    Line(points=[cx - cross_size/2, cy, cx + cross_size/2, cy], width=2)
+                    Line(points=[cx, cy - cross_size/2, cx, cy + cross_size/2], width=2)
+                    # Second cercle interne
+                    if EINK_MODE:
+                        Color(0.5, 0.5, 0.5, 1)
+                    else:
+                        Color(1, 1, 0, 0.8)  # Jaune
+                    Line(circle=(cx, cy, size/3), width=2)
                 elif comp in self.selected_components:
                     if EINK_MODE:
                         Color(0, 0, 0, 1)  # Noir pour sélectionné
@@ -1927,6 +1937,9 @@ class IBomSelectorApp(App):
         self.component_list.group_by_value = prefs_manager.get('group_by_value', True)
         self.component_list.font_size = prefs_manager.get('font_size', 11)
         
+        # Option highlight auto
+        self.auto_highlight = prefs_manager.get('auto_highlight', True)
+        
         # === Barre de statut ===
         self.status_label = Label(
             text='Aucun fichier charge',
@@ -2073,19 +2086,21 @@ class IBomSelectorApp(App):
     def navigate_prev(self, instance):
         """Navigue vers le composant précédent"""
         refs = self.component_list.navigate_prev()
-        if refs:
+        if refs and getattr(self, 'auto_highlight', True):
             self.pcb_view.highlight_components(refs)
             self.pcb_view.zoom_to_components(refs)
     
     def navigate_next(self, instance):
         """Navigue vers le composant suivant"""
         refs = self.component_list.navigate_next()
-        if refs:
+        if refs and getattr(self, 'auto_highlight', True):
             self.pcb_view.highlight_components(refs)
             self.pcb_view.zoom_to_components(refs)
     
     def on_component_highlight(self, refs):
         """Callback quand on touche un composant dans la liste"""
+        if not getattr(self, 'auto_highlight', True):
+            return
         self.pcb_view.highlight_components(refs)
         self.pcb_view.zoom_to_components(refs)
     
@@ -2124,15 +2139,17 @@ class IBomSelectorApp(App):
         """Affiche le popup des préférences"""
         global EINK_MODE
         
-        # Couleurs selon le mode
+        # Couleurs selon le mode - améliorées pour meilleure visibilité
         if EINK_MODE:
             bg_color = (1, 1, 1, 1)  # Blanc
             text_color = (0, 0, 0, 1)  # Noir
-            btn_bg = (0.85, 0.85, 0.85, 1)  # Gris clair
+            btn_bg = (0.7, 0.7, 0.7, 1)  # Gris moyen (plus visible)
+            checkbox_color = (0.2, 0.2, 0.2, 1)  # Foncé pour contraste
         else:
-            bg_color = (0.15, 0.15, 0.2, 1)  # Sombre
+            bg_color = (0.2, 0.2, 0.25, 1)  # Sombre mais pas trop
             text_color = (1, 1, 1, 1)  # Blanc
-            btn_bg = (0.3, 0.3, 0.4, 1)  # Gris foncé
+            btn_bg = (0.4, 0.5, 0.7, 1)  # Bleu-gris clair (plus visible)
+            checkbox_color = (0.9, 0.9, 0.9, 1)  # Clair pour contraste
         
         # Container principal avec fond
         content = BoxLayout(orientation='vertical', padding=dp(15), spacing=dp(15))
@@ -2174,9 +2191,19 @@ class IBomSelectorApp(App):
         eink_lbl.bind(size=lambda *x: setattr(eink_lbl, 'text_size', eink_lbl.size))
         eink_row.add_widget(eink_lbl)
         
-        self.eink_checkbox = CheckBox(active=EINK_MODE, size_hint_x=0.3)
+        # Conteneur avec fond pour checkbox visible
+        eink_cb_container = BoxLayout(size_hint_x=0.3)
+        with eink_cb_container.canvas.before:
+            Color(*checkbox_color)
+            self._eink_cb_bg = Rectangle(pos=eink_cb_container.pos, size=eink_cb_container.size)
+        eink_cb_container.bind(
+            pos=lambda w, p: setattr(self._eink_cb_bg, 'pos', p),
+            size=lambda w, s: setattr(self._eink_cb_bg, 'size', s)
+        )
+        self.eink_checkbox = CheckBox(active=EINK_MODE, color=(0, 0.8, 0, 1) if not EINK_MODE else (0, 0, 0, 1))
         self.eink_checkbox.bind(active=self._on_eink_toggle)
-        eink_row.add_widget(self.eink_checkbox)
+        eink_cb_container.add_widget(self.eink_checkbox)
+        eink_row.add_widget(eink_cb_container)
         content.add_widget(eink_row)
         
         # Option Grouper par valeur
@@ -2192,13 +2219,55 @@ class IBomSelectorApp(App):
         group_lbl.bind(size=lambda *x: setattr(group_lbl, 'text_size', group_lbl.size))
         group_row.add_widget(group_lbl)
         
+        # Conteneur avec fond pour checkbox visible
+        group_cb_container = BoxLayout(size_hint_x=0.3)
+        with group_cb_container.canvas.before:
+            Color(*checkbox_color)
+            self._group_cb_bg = Rectangle(pos=group_cb_container.pos, size=group_cb_container.size)
+        group_cb_container.bind(
+            pos=lambda w, p: setattr(self._group_cb_bg, 'pos', p),
+            size=lambda w, s: setattr(self._group_cb_bg, 'size', s)
+        )
         group_checkbox = CheckBox(
             active=self.component_list.group_by_value,
-            size_hint_x=0.3
+            color=(0, 0.8, 0, 1) if not EINK_MODE else (0, 0, 0, 1)
         )
         group_checkbox.bind(active=self._on_group_toggle)
-        group_row.add_widget(group_checkbox)
+        group_cb_container.add_widget(group_checkbox)
+        group_row.add_widget(group_cb_container)
         content.add_widget(group_row)
+        
+        # Option Highlight auto sur PCB
+        highlight_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
+        highlight_lbl = Label(
+            text='Highlight auto\nsur le PCB',
+            font_size=dp(13),
+            halign='left',
+            valign='middle',
+            size_hint_x=0.7,
+            color=text_color
+        )
+        highlight_lbl.bind(size=lambda *x: setattr(highlight_lbl, 'text_size', highlight_lbl.size))
+        highlight_row.add_widget(highlight_lbl)
+        
+        # Conteneur avec fond pour checkbox visible
+        highlight_cb_container = BoxLayout(size_hint_x=0.3)
+        with highlight_cb_container.canvas.before:
+            Color(*checkbox_color)
+            self._highlight_cb_bg = Rectangle(pos=highlight_cb_container.pos, size=highlight_cb_container.size)
+        highlight_cb_container.bind(
+            pos=lambda w, p: setattr(self._highlight_cb_bg, 'pos', p),
+            size=lambda w, s: setattr(self._highlight_cb_bg, 'size', s)
+        )
+        self.auto_highlight = prefs_manager.get('auto_highlight', True)
+        highlight_checkbox = CheckBox(
+            active=self.auto_highlight,
+            color=(0, 0.8, 0, 1) if not EINK_MODE else (0, 0, 0, 1)
+        )
+        highlight_checkbox.bind(active=self._on_highlight_toggle)
+        highlight_cb_container.add_widget(highlight_checkbox)
+        highlight_row.add_widget(highlight_cb_container)
+        content.add_widget(highlight_row)
         
         # Option Taille de police
         font_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
@@ -2243,14 +2312,16 @@ class IBomSelectorApp(App):
         # Spacer
         content.add_widget(Widget(size_hint_y=1))
         
-        # Bouton Fermer
+        # Bouton Fermer - avec fond dessiné pour meilleure visibilité
         close_btn = Button(
             text='Fermer',
             size_hint_y=None,
             height=dp(50),
-            font_size=dp(14),
+            font_size=dp(16),
+            bold=True,
+            background_normal='',
             background_color=btn_bg,
-            color=text_color
+            color=(0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
         )
         content.add_widget(close_btn)
         
@@ -2293,6 +2364,14 @@ class IBomSelectorApp(App):
             # Mettre à jour aussi le bouton Grp dans la barre de filtres
             self.group_btn.state = 'down' if value else 'normal'
         prefs_manager.set('group_by_value', value)
+    
+    def _on_highlight_toggle(self, checkbox, value):
+        """Active/désactive le highlight auto sur PCB"""
+        self.auto_highlight = value
+        prefs_manager.set('auto_highlight', value)
+        if not value:
+            # Effacer le highlight actuel
+            self.pcb_view.clear_highlight()
     
     def update_processed_count(self):
         """Met à jour le compteur de composants traités"""
