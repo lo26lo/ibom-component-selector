@@ -85,20 +85,32 @@ if [ ! -d "$ANDROID_SDK_ROOT/platforms" ]; then
     echo "      Téléchargement des Android Command Line Tools..."
     curl -L -o "$CMDLINE_TOOLS_ZIP" "$CMDLINE_TOOLS_URL"
     
-    # Extraire
-    unzip -q "$CMDLINE_TOOLS_ZIP" -d "$ANDROID_SDK_ROOT"
-    mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-    mv "$ANDROID_SDK_ROOT/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools-tmp" 2>/dev/null || true
-    mv "$ANDROID_SDK_ROOT/cmdline-tools-tmp" "$ANDROID_SDK_ROOT/cmdline-tools/latest" 2>/dev/null || \
-    mv "$ANDROID_SDK_ROOT/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest" 2>/dev/null || true
+    # Extraire dans un dossier temporaire
+    rm -rf "/tmp/cmdline-tools-extract"
+    unzip -q "$CMDLINE_TOOLS_ZIP" -d "/tmp/cmdline-tools-extract"
     
-    # Accepter les licences et installer les composants nécessaires
+    # Créer la bonne structure: cmdline-tools/latest/bin/sdkmanager
+    mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+    mv /tmp/cmdline-tools-extract/cmdline-tools/* "$ANDROID_SDK_ROOT/cmdline-tools/latest/"
+    rm -rf "/tmp/cmdline-tools-extract"
+    
+    # Exporter les variables
     export ANDROID_HOME="$ANDROID_SDK_ROOT"
-    export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
+    export ANDROID_SDK_ROOT="$ANDROID_SDK_ROOT"
+    export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+    
+    # Vérifier que sdkmanager existe
+    if [ ! -f "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+        echo -e "${RED}Erreur: sdkmanager non trouvé${NC}"
+        ls -la "$ANDROID_SDK_ROOT/cmdline-tools/"
+        exit 1
+    fi
+    
+    echo "      Acceptation des licences..."
+    yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
     
     echo "      Installation des composants SDK (cela peut prendre quelques minutes)..."
-    yes | sdkmanager --licenses > /dev/null 2>&1 || true
-    sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" > /dev/null 2>&1
+    "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" "platform-tools"
     
     rm -f "$CMDLINE_TOOLS_ZIP"
     echo "      ✓ Android SDK installé"
@@ -106,7 +118,8 @@ fi
 
 # Exporter ANDROID_HOME
 export ANDROID_HOME="$ANDROID_SDK_ROOT"
-export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools"
+export ANDROID_SDK_ROOT="$ANDROID_SDK_ROOT"
+export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
 echo "      ✓ Android SDK: $ANDROID_HOME"
 
 # ============================================
