@@ -145,8 +145,8 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
     # Supprimer l'ancien projet s'il existe partiellement
     rm -rf "$PROJECT_NAME"
     
-    # Créer un nouveau projet React Native
-    npx react-native@0.73.4 init "$PROJECT_NAME" --version 0.73.4 --skip-git-init
+    # Créer un nouveau projet React Native (--yes pour éviter les prompts interactifs)
+    npx --yes react-native@0.73.4 init "$PROJECT_NAME" --version 0.73.4 --skip-git-init
     
     cd "$PROJECT_NAME"
     
