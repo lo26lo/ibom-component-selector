@@ -25,6 +25,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
+from kivy.uix.slider import Slider
 from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.widget import Widget
 from kivy.graphics import Color, Rectangle, Line, Ellipse
@@ -206,6 +207,20 @@ if platform == 'android':
             pass
         
         return paths
+    
+    def vibrate(duration=50):
+        """Fait vibrer l'appareil Android"""
+        try:
+            PythonActivity = _get_java_class('org.kivy.android.PythonActivity')
+            Context = _get_java_class('android.content.Context')
+            if PythonActivity and Context:
+                activity = PythonActivity.mActivity
+                vibrator = activity.getSystemService(Context.VIBRATOR_SERVICE)
+                if vibrator:
+                    vibrator.vibrate(duration)
+        except Exception as e:
+            print(f"Erreur vibration: {e}")
+
 else:
     def request_all_permissions():
         pass
@@ -216,6 +231,68 @@ else:
     def is_eink_device():
         """Sur PC, retourne False"""
         return False
+    
+    def vibrate(duration=50):
+        """Vibration - pas disponible sur PC"""
+        pass
+
+
+# === Gestion des préférences ===
+class PreferencesManager:
+    """Gère la sauvegarde et le chargement des préférences utilisateur"""
+    
+    def __init__(self):
+        self.prefs_file = self._get_prefs_path()
+        self.defaults = {
+            'eink_mode': False,
+            'group_by_value': True,
+            'font_size': 11,
+            'status_filter': 'all',  # 'all', 'pending', 'done'
+        }
+        self.prefs = self.defaults.copy()
+        self.load()
+    
+    def _get_prefs_path(self):
+        """Retourne le chemin du fichier de préférences"""
+        if platform == 'android':
+            try:
+                from android.storage import app_storage_path
+                return Path(app_storage_path()) / 'ibom_prefs.json'
+            except:
+                return Path.home() / '.ibom_prefs.json'
+        else:
+            return Path.home() / '.ibom_prefs.json'
+    
+    def load(self):
+        """Charge les préférences depuis le fichier"""
+        try:
+            if self.prefs_file.exists():
+                with open(self.prefs_file, 'r') as f:
+                    saved = json.load(f)
+                    self.prefs.update(saved)
+                    print(f"Préférences chargées: {self.prefs}")
+        except Exception as e:
+            print(f"Erreur chargement préférences: {e}")
+    
+    def save(self):
+        """Sauvegarde les préférences"""
+        try:
+            with open(self.prefs_file, 'w') as f:
+                json.dump(self.prefs, f, indent=2)
+            print(f"Préférences sauvegardées: {self.prefs}")
+        except Exception as e:
+            print(f"Erreur sauvegarde préférences: {e}")
+    
+    def get(self, key, default=None):
+        return self.prefs.get(key, default if default is not None else self.defaults.get(key))
+    
+    def set(self, key, value):
+        self.prefs[key] = value
+        self.save()
+
+
+# Instance globale des préférences
+prefs_manager = PreferencesManager()
 
 
 class LZString:
@@ -697,6 +774,7 @@ class PCBView(Widget):
         self.parser = None
         self.components = []
         self.selected_components = []
+        self.highlighted_components = []  # Composants à mettre en évidence
         self.selection_start = None
         self.selection_rect = None
         self.scale = 1.0
@@ -825,7 +903,20 @@ class PCBView(Widget):
             for comp in self.components:
                 cx, cy = self._board_to_screen(comp['x'], comp['y'])
                 
-                if comp in self.selected_components:
+                # Composants highlightés (depuis la liste)
+                is_highlighted = comp in self.highlighted_components
+                
+                if is_highlighted:
+                    # Highlight pulsant - cercle plus grand et coloré
+                    if EINK_MODE:
+                        Color(0, 0, 0, 1)
+                        size = max(16, 12 * self.zoom_factor)
+                    else:
+                        Color(0, 1, 0, 1)  # Vert vif
+                        size = max(14, 10 * self.zoom_factor)
+                    # Cercle externe
+                    Line(circle=(cx, cy, size/2), width=2)
+                elif comp in self.selected_components:
                     if EINK_MODE:
                         Color(0, 0, 0, 1)  # Noir pour sélectionné
                         size = max(10, 8 * self.zoom_factor)
@@ -1020,12 +1111,84 @@ class PCBView(Widget):
         self._redraw()
         if hasattr(self, 'on_selection_callback') and self.on_selection_callback:
             self.on_selection_callback(self.selected_components)
+    
+    def highlight_components(self, refs_list):
+        """Met en évidence les composants avec les références données"""
+        self.highlighted_components = []
+        for comp in self.components:
+            ref = comp.get('ref', '')
+            # Gérer les refs groupées (ex: "R1, R2, R3")
+            for r in refs_list:
+                if ref == r or ref in r.split(', '):
+                    self.highlighted_components.append(comp)
+                    break
+        self._redraw()
+    
+    def clear_highlight(self):
+        """Efface le highlight"""
+        self.highlighted_components = []
+        self._redraw()
+    
+    def zoom_to_components(self, refs_list):
+        """Zoom sur les composants spécifiés"""
+        if not refs_list or not self.components:
+            return
+        
+        # Trouver les composants correspondants
+        target_comps = []
+        for comp in self.components:
+            ref = comp.get('ref', '')
+            for r in refs_list:
+                if ref == r or ref in r.split(', '):
+                    target_comps.append(comp)
+                    break
+        
+        if not target_comps:
+            return
+        
+        # Calculer le centre et la bounding box
+        min_x = min(c['x'] for c in target_comps)
+        max_x = max(c['x'] for c in target_comps)
+        min_y = min(c['y'] for c in target_comps)
+        max_y = max(c['y'] for c in target_comps)
+        
+        center_x = (min_x + max_x) / 2
+        center_y = (min_y + max_y) / 2
+        
+        # Calculer le zoom nécessaire
+        comp_width = max(max_x - min_x, 10)  # Au moins 10mm
+        comp_height = max(max_y - min_y, 10)
+        
+        if self.parser and self.parser.board_bbox:
+            bbox = self.parser.board_bbox
+            board_width = bbox.get('maxx', 100) - bbox.get('minx', 0)
+            board_height = bbox.get('maxy', 100) - bbox.get('miny', 0)
+            
+            # Zoom pour que les composants occupent ~30% de la vue
+            zoom_x = board_width / (comp_width * 3)
+            zoom_y = board_height / (comp_height * 3)
+            self.zoom_factor = min(zoom_x, zoom_y, 5)  # Max 5x
+            
+            # Centrer sur les composants
+            self._calculate_transform()
+            
+            # Calculer le décalage pour centrer
+            screen_center_x, screen_center_y = self._board_to_screen(center_x, center_y)
+            widget_center_x = self.x + self.width / 2
+            widget_center_y = self.y + self.height / 2
+            
+            self.pan_x += widget_center_x - screen_center_x
+            self.pan_y -= widget_center_y - screen_center_y
+            
+            self._calculate_transform()
+        
+        self._redraw()
 
 
 class ComponentRow(BoxLayout):
     """Ligne de composant avec checkbox pour marquer comme traité"""
     
-    def __init__(self, component, on_toggle=None, **kwargs):
+    def __init__(self, component, on_toggle=None, on_highlight=None, font_size=11, **kwargs):
         global EINK_MODE
         super().__init__(**kwargs)
         self.orientation = 'horizontal'
@@ -1033,9 +1196,12 @@ class ComponentRow(BoxLayout):
         self.height = dp(40)
         self.component = component
         self.on_toggle = on_toggle
+        self.on_highlight = on_highlight  # Callback pour highlight sur PCB
+        self.font_size = font_size
         self.is_processed = False
         self._long_press_event = None
         self._detail_popup = None
+        self._is_touched = False
         
         # Canvas pour le fond coloré
         with self.canvas.before:
@@ -1058,27 +1224,28 @@ class ComponentRow(BoxLayout):
         
         # Couleur du texte selon le mode
         text_color = (0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
+        fs = dp(font_size)
         
         # Infos avec labels tronqués - stocker les références pour mise à jour
         self.labels = []
         
-        lbl_ref = Label(text=ref_text, size_hint_x=0.12, font_size=dp(11), shorten=True, shorten_from='right', color=text_color)
+        lbl_ref = Label(text=ref_text, size_hint_x=0.12, font_size=fs, shorten=True, shorten_from='right', color=text_color)
         self.labels.append(lbl_ref)
         self.add_widget(lbl_ref)
         
-        lbl_value = Label(text=component.get('value', '')[:10], size_hint_x=0.2, font_size=dp(11), shorten=True, color=text_color)
+        lbl_value = Label(text=component.get('value', '')[:10], size_hint_x=0.2, font_size=fs, shorten=True, color=text_color)
         self.labels.append(lbl_value)
         self.add_widget(lbl_value)
         
-        lbl_footprint = Label(text=component.get('footprint', '')[:10], size_hint_x=0.25, font_size=dp(10), shorten=True, color=text_color)
+        lbl_footprint = Label(text=component.get('footprint', '')[:10], size_hint_x=0.25, font_size=dp(font_size - 1), shorten=True, color=text_color)
         self.labels.append(lbl_footprint)
         self.add_widget(lbl_footprint)
         
-        lbl_lcsc = Label(text=component.get('lcsc', ''), size_hint_x=0.2, font_size=dp(11), color=text_color)
+        lbl_lcsc = Label(text=component.get('lcsc', ''), size_hint_x=0.2, font_size=fs, color=text_color)
         self.labels.append(lbl_lcsc)
         self.add_widget(lbl_lcsc)
         
-        lbl_layer = Label(text=component.get('layer', ''), size_hint_x=0.08, font_size=dp(11), color=text_color)
+        lbl_layer = Label(text=component.get('layer', ''), size_hint_x=0.08, font_size=fs, color=text_color)
         self.labels.append(lbl_layer)
         self.add_widget(lbl_layer)
         
@@ -1089,23 +1256,30 @@ class ComponentRow(BoxLayout):
         self.add_widget(lbl_qty)
     
     def on_touch_down(self, touch):
-        """Double-tap pour basculer, appui long pour détails"""
+        """Double-tap pour basculer, appui long pour détails, simple tap pour highlight"""
         if self.collide_point(*touch.pos):
             if touch.is_double_tap:
                 self.checkbox.active = not self.checkbox.active
+                vibrate(30)  # Feedback tactile
                 return True
             # Programmer l'appui long (0.5 secondes)
             self._long_press_event = Clock.schedule_once(self._show_details, 0.5)
+            self._is_touched = True
             touch.grab(self)
         return super().on_touch_down(touch)
     
     def on_touch_up(self, touch):
-        """Annuler l'appui long si on relâche avant"""
+        """Annuler l'appui long si on relâche avant - déclencher highlight"""
         if touch.grab_current is self:
             touch.ungrab(self)
             if self._long_press_event:
                 self._long_press_event.cancel()
                 self._long_press_event = None
+                # C'était un tap court - déclencher le highlight
+                if self._is_touched and self.on_highlight:
+                    refs = self.component.get('ref', '').split(', ')
+                    self.on_highlight(refs)
+            self._is_touched = False
         return super().on_touch_up(touch)
     
     def on_touch_move(self, touch):
@@ -1114,6 +1288,7 @@ class ComponentRow(BoxLayout):
             if self._long_press_event:
                 self._long_press_event.cancel()
                 self._long_press_event = None
+            self._is_touched = False
         return super().on_touch_move(touch)
     
     def _show_details(self, dt):
@@ -1174,6 +1349,8 @@ class ComponentRow(BoxLayout):
     def _on_checkbox(self, checkbox, value):
         self.is_processed = value
         self._update_bg_color()
+        if value:
+            vibrate(30)  # Feedback tactile quand on marque comme traité
         if self.on_toggle:
             self.on_toggle(self.component, value)
     
@@ -1233,13 +1410,18 @@ class ComponentList(BoxLayout):
         self.sort_column = 'ref'
         self.sort_reverse = False
         self.layer_filter = 'all'
+        self.status_filter = 'all'  # 'all', 'pending', 'done'
         self.search_text = ''
         self.group_by_value = True  # Grouper par valeur/footprint
+        self.font_size = 11  # Taille de police par défaut
         self.on_processed_change = None
+        self.on_highlight = None  # Callback pour highlight sur PCB
+        self.current_index = -1  # Index du composant actuel pour navigation
     
     def set_components(self, components):
         """Met à jour la liste des composants"""
         self.components = components
+        self.current_index = -1
         self._refresh_list()
     
     def _refresh_list(self):
@@ -1295,6 +1477,23 @@ class ComponentList(BoxLayout):
                     'group_key': key
                 })
         
+        # Filtre par statut (traité/non traité)
+        if self.status_filter != 'all':
+            def is_processed(comp):
+                if self.group_by_value and 'group_key' in comp:
+                    key = comp['group_key']
+                else:
+                    key = (comp.get('value', ''), comp.get('footprint', ''), comp.get('lcsc', ''))
+                return key in self.processed_items
+            
+            if self.status_filter == 'pending':
+                filtered = [c for c in filtered if not is_processed(c)]
+            elif self.status_filter == 'done':
+                filtered = [c for c in filtered if is_processed(c)]
+        
+        # Stocker la liste filtrée pour navigation
+        self._filtered_list = filtered
+        
         # Trier
         if self.sort_column:
             if self.sort_column == 'qty':
@@ -1327,7 +1526,12 @@ class ComponentList(BoxLayout):
         
         # Composants
         for comp in filtered:
-            row = ComponentRow(comp, on_toggle=self._on_component_toggle)
+            row = ComponentRow(
+                comp, 
+                on_toggle=self._on_component_toggle,
+                on_highlight=self.on_highlight,
+                font_size=self.font_size
+            )
             
             # Restaurer l'état "traité"
             if self.group_by_value and 'group_key' in comp:
@@ -1401,6 +1605,41 @@ class ComponentList(BoxLayout):
         
         if self.on_processed_change:
             self.on_processed_change()
+    
+    def set_status_filter(self, status):
+        """Définit le filtre par statut ('all', 'pending', 'done')"""
+        self.status_filter = status
+        self._refresh_list()
+    
+    def set_font_size(self, size):
+        """Définit la taille de police"""
+        self.font_size = size
+        self._refresh_list()
+    
+    def navigate_next(self):
+        """Navigue vers le composant suivant"""
+        if not self.component_rows:
+            return None
+        self.current_index = (self.current_index + 1) % len(self.component_rows)
+        return self._highlight_current()
+    
+    def navigate_prev(self):
+        """Navigue vers le composant précédent"""
+        if not self.component_rows:
+            return None
+        self.current_index = (self.current_index - 1) % len(self.component_rows)
+        return self._highlight_current()
+    
+    def _highlight_current(self):
+        """Met en évidence le composant actuel et scroll vers lui"""
+        if 0 <= self.current_index < len(self.component_rows):
+            row = self.component_rows[self.current_index]
+            # Scroll vers la ligne
+            self.scroll_view.scroll_to(row)
+            # Retourner les références pour highlight sur PCB
+            refs = row.component.get('ref', '').split(', ')
+            return refs
+        return None
     
     def refresh_display(self):
         """Rafraîchit l'affichage pour le changement de mode (e-ink)"""
@@ -1527,9 +1766,13 @@ class IBomSelectorApp(App):
         self.lcsc_csv_path = None
         self._is_landscape = False
         
-        # Détecter automatiquement si on est sur un appareil e-ink
+        # Charger les préférences
+        EINK_MODE = prefs_manager.get('eink_mode', False)
+        
+        # Détecter automatiquement si on est sur un appareil e-ink (override)
         if is_eink_device():
             EINK_MODE = True
+            prefs_manager.set('eink_mode', True)
             print("Mode E-Ink activé automatiquement")
         
         # Demander les permissions au démarrage (délai plus long pour s'assurer que l'activité est prête)
@@ -1639,24 +1882,54 @@ class IBomSelectorApp(App):
         self.selection_label = Label(text='Sélection: 0 comp.', size_hint_x=0.4, font_size=dp(10))
         self.info_layout.add_widget(self.selection_label)
         
-        self.processed_label = Label(text='Traités: 0/0', size_hint_x=0.25, font_size=dp(10))
+        self.processed_label = Label(text='Traités: 0/0', size_hint_x=0.20, font_size=dp(10))
         self.info_layout.add_widget(self.processed_label)
         
-        mark_all_btn = Button(text='All', size_hint_x=0.15, font_size=dp(10))
+        # Boutons de navigation séquentielle
+        prev_btn = Button(text='<', size_hint_x=0.08, font_size=dp(14))
+        prev_btn.bind(on_press=self.navigate_prev)
+        self.info_layout.add_widget(prev_btn)
+        
+        next_btn = Button(text='>', size_hint_x=0.08, font_size=dp(14))
+        next_btn.bind(on_press=self.navigate_next)
+        self.info_layout.add_widget(next_btn)
+        
+        mark_all_btn = Button(text='All', size_hint_x=0.10, font_size=dp(10))
         mark_all_btn.bind(on_press=lambda x: self.component_list.mark_all_processed(True))
         self.info_layout.add_widget(mark_all_btn)
         
-        clear_proc_btn = Button(text='Clr', size_hint_x=0.1, font_size=dp(10))
+        clear_proc_btn = Button(text='Clr', size_hint_x=0.08, font_size=dp(10))
         clear_proc_btn.bind(on_press=self.clear_processed)
         self.info_layout.add_widget(clear_proc_btn)
+        
+        # === Barre de progression ===
+        self.progress_layout = BoxLayout(size_hint_y=None, height=dp(20), spacing=dp(3))
+        
+        # Widget de barre de progression custom
+        self.progress_bar = Widget(size_hint_x=0.7)
+        self.progress_bar.bind(size=self._update_progress_bar, pos=self._update_progress_bar)
+        self.progress_layout.add_widget(self.progress_bar)
+        
+        # Filtre par statut
+        self.status_spinner = Spinner(
+            text='Tous',
+            values=['Tous', 'A faire', 'Faits'],
+            size_hint_x=0.3,
+            font_size=dp(10)
+        )
+        self.status_spinner.bind(text=self.on_status_filter_change)
+        self.progress_layout.add_widget(self.status_spinner)
         
         # === Liste des composants ===
         self.component_list = ComponentList()
         self.component_list.on_processed_change = self.update_processed_count
+        self.component_list.on_highlight = self.on_component_highlight
+        self.component_list.group_by_value = prefs_manager.get('group_by_value', True)
+        self.component_list.font_size = prefs_manager.get('font_size', 11)
         
         # === Barre de statut ===
         self.status_label = Label(
-            text='Aucun fichier chargé - Tapez "📂 HTML"',
+            text='Aucun fichier charge',
             size_hint_y=None,
             height=dp(25),
             color=(0.7, 0.7, 0.7, 1),
@@ -1688,8 +1961,8 @@ class IBomSelectorApp(App):
     def _detach_all_widgets(self):
         """Détache tous les widgets de leurs parents"""
         widgets = [self.toolbar, self.pcb_view, self.zoom_layout, 
-                   self.filter_layout, self.info_layout, self.component_list, 
-                   self.status_label]
+                   self.filter_layout, self.info_layout, self.progress_layout,
+                   self.component_list, self.status_label]
         
         for widget in widgets:
             if widget.parent:
@@ -1717,6 +1990,9 @@ class IBomSelectorApp(App):
         
         # Info
         self.root_layout.add_widget(self.info_layout)
+        
+        # Barre de progression
+        self.root_layout.add_widget(self.progress_layout)
         
         # Liste composants
         self.component_list.size_hint_y = 0.5
@@ -1748,6 +2024,7 @@ class IBomSelectorApp(App):
         
         right_panel.add_widget(self.filter_layout)
         right_panel.add_widget(self.info_layout)
+        right_panel.add_widget(self.progress_layout)
         
         self.component_list.size_hint_y = 1
         right_panel.add_widget(self.component_list)
@@ -1779,9 +2056,69 @@ class IBomSelectorApp(App):
         """Recherche de composants"""
         self.component_list.set_search_text(text)
     
+    def on_status_filter_change(self, spinner, text):
+        """Filtre par statut de traitement"""
+        if text == 'A faire':
+            self.component_list.set_status_filter('pending')
+        elif text == 'Faits':
+            self.component_list.set_status_filter('done')
+        else:
+            self.component_list.set_status_filter('all')
+    
     def toggle_grouping(self, instance):
         """Active/désactive le groupement"""
         self.component_list.toggle_grouping()
+        prefs_manager.set('group_by_value', self.component_list.group_by_value)
+    
+    def navigate_prev(self, instance):
+        """Navigue vers le composant précédent"""
+        refs = self.component_list.navigate_prev()
+        if refs:
+            self.pcb_view.highlight_components(refs)
+            self.pcb_view.zoom_to_components(refs)
+    
+    def navigate_next(self, instance):
+        """Navigue vers le composant suivant"""
+        refs = self.component_list.navigate_next()
+        if refs:
+            self.pcb_view.highlight_components(refs)
+            self.pcb_view.zoom_to_components(refs)
+    
+    def on_component_highlight(self, refs):
+        """Callback quand on touche un composant dans la liste"""
+        self.pcb_view.highlight_components(refs)
+        self.pcb_view.zoom_to_components(refs)
+    
+    def _update_progress_bar(self, *args):
+        """Dessine la barre de progression"""
+        global EINK_MODE
+        self.progress_bar.canvas.clear()
+        
+        processed, total = self.component_list.get_processed_count()
+        if total == 0:
+            ratio = 0
+        else:
+            ratio = processed / total
+        
+        with self.progress_bar.canvas:
+            # Fond de la barre
+            if EINK_MODE:
+                Color(0.8, 0.8, 0.8, 1)
+            else:
+                Color(0.2, 0.2, 0.25, 1)
+            Rectangle(pos=self.progress_bar.pos, size=self.progress_bar.size)
+            
+            # Partie remplie
+            if EINK_MODE:
+                Color(0.3, 0.3, 0.3, 1)
+            else:
+                Color(0.2, 0.7, 0.3, 1)  # Vert
+            filled_width = self.progress_bar.width * ratio
+            Rectangle(pos=self.progress_bar.pos, size=(filled_width, self.progress_bar.height))
+            
+            # Pourcentage au centre
+            percent = int(ratio * 100)
+            # Le texte sera dans processed_label
     
     def show_preferences_popup(self, instance):
         """Affiche le popup des préférences"""
@@ -1863,6 +2200,46 @@ class IBomSelectorApp(App):
         group_row.add_widget(group_checkbox)
         content.add_widget(group_row)
         
+        # Option Taille de police
+        font_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
+        font_lbl = Label(
+            text='Taille police:',
+            font_size=dp(13),
+            halign='left',
+            valign='middle',
+            size_hint_x=0.4,
+            color=text_color
+        )
+        font_lbl.bind(size=lambda *x: setattr(font_lbl, 'text_size', font_lbl.size))
+        font_row.add_widget(font_lbl)
+        
+        # Slider pour la taille de police
+        font_slider = Slider(
+            min=10,
+            max=20,
+            value=self.component_list.font_size,
+            size_hint_x=0.4,
+            step=1
+        )
+        
+        # Label affichant la valeur
+        font_value_lbl = Label(
+            text=str(int(self.component_list.font_size)),
+            font_size=dp(13),
+            size_hint_x=0.2,
+            color=text_color
+        )
+        
+        def on_font_slider(slider, value):
+            font_value_lbl.text = str(int(value))
+            self.component_list.set_font_size(int(value))
+            prefs_manager.set('font_size', int(value))
+        
+        font_slider.bind(value=on_font_slider)
+        font_row.add_widget(font_slider)
+        font_row.add_widget(font_value_lbl)
+        content.add_widget(font_row)
+        
         # Spacer
         content.add_widget(Widget(size_hint_y=1))
         
@@ -1901,6 +2278,7 @@ class IBomSelectorApp(App):
         """Active/désactive le mode e-ink depuis les préférences"""
         global EINK_MODE
         EINK_MODE = value
+        prefs_manager.set('eink_mode', value)
         
         # Rafraîchit le PCB
         self.pcb_view._redraw()
@@ -1914,11 +2292,14 @@ class IBomSelectorApp(App):
             self.component_list.toggle_grouping()
             # Mettre à jour aussi le bouton Grp dans la barre de filtres
             self.group_btn.state = 'down' if value else 'normal'
+        prefs_manager.set('group_by_value', value)
     
     def update_processed_count(self):
         """Met à jour le compteur de composants traités"""
         processed, total = self.component_list.get_processed_count()
         self.processed_label.text = f'Traités: {processed}/{total}'
+        # Mettre à jour la barre de progression
+        self._update_progress_bar()
     
     def clear_processed(self, instance):
         """Efface les marquages 'traité'"""
