@@ -104,6 +104,7 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
         react-native-svg \
         react-native-gesture-handler \
         react-native-reanimated \
+        react-native-worklets-core \
         react-native-document-picker \
         react-native-fs \
         @react-native-async-storage/async-storage \
