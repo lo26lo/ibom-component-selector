@@ -103,8 +103,7 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
     npm install zustand \
         react-native-svg \
         react-native-gesture-handler \
-        react-native-worklets-core \
-        react-native-reanimated \
+        react-native-reanimated@2.17.0 \
         react-native-document-picker \
         react-native-fs \
         @react-native-async-storage/async-storage \
