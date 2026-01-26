@@ -119,39 +119,16 @@ module.exports = {
 };
 BABELEOF
 
-    # Configurer settings.gradle pour résoudre les dépendances
+    # NE PAS modifier settings.gradle - React Native init le configure correctement
+    # Juste ajouter les configurations supplémentaires dans gradle.properties
     echo "      Configuration de Gradle..."
-    cat > android/settings.gradle << 'SETTINGSEOF'
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-}
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://www.jitpack.io' }
-    }
-}
-
-rootProject.name = 'IBomSelectorBuild'
-include ':app'
-
-// Include react-native modules
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
-applyNativeModulesSettingsGradle(settings)
-SETTINGSEOF
-
-    # Configurer build.gradle pour reanimated
-    echo "      Configuration build.gradle..."
     
-    # Ajouter la configuration Hermes pour reanimated dans gradle.properties
-    echo "reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64" >> android/gradle.properties
+    # Ajouter la configuration pour reanimated dans gradle.properties
+    if ! grep -q "reactNativeArchitectures" android/gradle.properties; then
+        echo "" >> android/gradle.properties
+        echo "# React Native Reanimated config" >> android/gradle.properties
+        echo "reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64" >> android/gradle.properties
+    fi
     
     echo "      ✓ Projet React Native créé"
 else
