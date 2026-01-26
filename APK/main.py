@@ -365,6 +365,31 @@ def get_theme_colors():
         }
 
 
+class ThemedSpinnerOption(Button):
+    """Option de Spinner avec thème e-ink (fond opaque, bordures visibles)"""
+    def __init__(self, **kwargs):
+        theme = get_theme_colors()
+        kwargs.setdefault('background_normal', '')
+        kwargs.setdefault('background_color', theme['bg_primary'])
+        kwargs.setdefault('color', theme['text_primary'])
+        kwargs.setdefault('font_size', dp(12))
+        super().__init__(**kwargs)
+        
+        if EINK_MODE:
+            # Ajouter bordure en bas pour chaque option
+            with self.canvas.after:
+                Color(*theme['border'])
+                self._border_line = Line(
+                    rectangle=[self.x, self.y, self.width, self.height],
+                    width=1
+                )
+            self.bind(pos=self._update_border, size=self._update_border)
+    
+    def _update_border(self, *args):
+        if hasattr(self, '_border_line'):
+            self._border_line.rectangle = [self.x, self.y, self.width, self.height]
+
+
 class LZString:
     """Décompresseur LZ-String pour les données InteractiveHtmlBom"""
     
@@ -1380,6 +1405,9 @@ class ComponentRow(BoxLayout):
     
     def _show_details(self, dt):
         """Affiche une popup avec les détails complets"""
+        global EINK_MODE
+        theme = get_theme_colors()
+        
         self._long_press_event = None
         comp = self.component
         
@@ -1398,7 +1426,7 @@ class ComponentRow(BoxLayout):
         else:
             refs_formatted = refs
         
-        detail_text = f"[b]Références ({qty}):[/b]\n{refs_formatted}\n\n"
+        detail_text = f"[b]References ({qty}):[/b]\n{refs_formatted}\n\n"
         detail_text += f"[b]Valeur:[/b] {comp.get('value', '-')}\n"
         detail_text += f"[b]Footprint:[/b] {comp.get('footprint', '-')}\n"
         detail_text += f"[b]LCSC:[/b] {comp.get('lcsc', '-')}\n"
@@ -1406,13 +1434,23 @@ class ComponentRow(BoxLayout):
         
         content = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(5))
         
+        # Fond opaque
+        with content.canvas.before:
+            Color(*theme['bg_primary'])
+            self._detail_bg = Rectangle(pos=content.pos, size=content.size)
+        content.bind(
+            pos=lambda w, p: setattr(self._detail_bg, 'pos', p),
+            size=lambda w, s: setattr(self._detail_bg, 'size', s)
+        )
+        
         label = Label(
             text=detail_text, 
             markup=True,
             font_size=dp(12),
             halign='left',
             valign='top',
-            size_hint_y=None
+            size_hint_y=None,
+            color=theme['text_primary']
         )
         label.bind(texture_size=label.setter('size'))
         label.bind(size=lambda *x: setattr(label, 'text_size', (label.width, None)))
@@ -1421,14 +1459,26 @@ class ComponentRow(BoxLayout):
         scroll.add_widget(label)
         content.add_widget(scroll)
         
-        close_btn = Button(text='Fermer', size_hint_y=None, height=dp(40), font_size=dp(12))
+        close_btn = Button(
+            text='Fermer',
+            size_hint_y=None,
+            height=dp(40),
+            font_size=dp(12),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         content.add_widget(close_btn)
         
         self._detail_popup = Popup(
-            title='Détails du composant',
+            title='Details du composant',
             content=content,
             size_hint=(0.9, 0.5),
-            auto_dismiss=True
+            auto_dismiss=True,
+            separator_height=0,
+            background='',
+            background_color=theme['bg_primary'],
+            title_color=theme['text_primary']
         )
         close_btn.bind(on_press=lambda x: self._detail_popup.dismiss())
         self._detail_popup.open()
@@ -1584,17 +1634,29 @@ class ComponentList(BoxLayout):
                             reverse=self.sort_reverse)
         
         # En-tête fixe avec boutons de tri
+        theme = get_theme_colors()
         self.header = BoxLayout(size_hint_y=None, height=dp(35))
-        self.header.add_widget(Label(text='Ok', size_hint_x=0.08, font_size=dp(10)))
+        self.header.add_widget(Label(
+            text='Ok',
+            size_hint_x=0.08,
+            font_size=dp(10),
+            color=theme['text_primary']
+        ))
         
-        for col, text, size in [('ref', 'Ref ⏷', 0.12), ('value', 'Valeur', 0.2), 
+        for col, text, size in [('ref', 'Ref', 0.12), ('value', 'Valeur', 0.2), 
                                  ('footprint', 'Footprint', 0.25), ('lcsc', 'LCSC', 0.2),
                                  ('layer', 'L', 0.08), ('qty', 'Qt', 0.07)]:
             indicator = ''
             if self.sort_column == col:
-                indicator = ' ↓' if self.sort_reverse else ' ↑'
-            btn = Button(text=text.replace(' ⏷', '') + indicator, size_hint_x=size, 
-                        background_color=(0.2, 0.2, 0.35, 1), font_size=dp(10))
+                indicator = ' v' if self.sort_reverse else ' ^'
+            btn = Button(
+                text=text + indicator,
+                size_hint_x=size,
+                font_size=dp(10),
+                background_normal='',
+                background_color=theme['bg_button'],
+                color=theme['text_primary']
+            )
             btn.col = col
             btn.bind(on_press=self._on_sort_click)
             self.header.add_widget(btn)
@@ -1860,7 +1922,14 @@ class IBomSelectorApp(App):
         Clock.schedule_once(self._request_permissions_safe, 1.5)
         
         # Container racine qui sera réorganisé selon l'orientation
+        theme = get_theme_colors()
         self.root_layout = BoxLayout(orientation='vertical', padding=dp(5), spacing=dp(3))
+        
+        # Appliquer un fond opaque au layout racine
+        with self.root_layout.canvas.before:
+            Color(*theme['bg_primary'])
+            self.root_bg = Rectangle(pos=self.root_layout.pos, size=self.root_layout.size)
+        self.root_layout.bind(pos=self._update_root_bg, size=self._update_root_bg)
         
         # Créer tous les widgets
         self._create_widgets()
@@ -1874,32 +1943,64 @@ class IBomSelectorApp(App):
         
         return self.root_layout
     
+    def _create_themed_button(self, text, size_hint_x=None, font_size=12):
+        """Crée un bouton avec les couleurs du thème"""
+        global EINK_MODE
+        theme = get_theme_colors()
+        btn = Button(
+            text=text,
+            size_hint_x=size_hint_x,
+            font_size=dp(font_size),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
+        # Bordure en mode e-ink
+        if EINK_MODE:
+            with btn.canvas.after:
+                Color(0, 0, 0, 1)
+                btn._theme_border = Line(rectangle=(0, 0, 1, 1), width=1.5)
+            def update_border(b, *args):
+                if hasattr(b, '_theme_border'):
+                    b._theme_border.rectangle = (b.x, b.y, b.width, b.height)
+            btn.bind(pos=update_border, size=update_border)
+        return btn
+    
+    def _update_root_bg(self, *args):
+        """Met à jour le fond du layout racine"""
+        if hasattr(self, 'root_bg'):
+            self.root_bg.pos = self.root_layout.pos
+            self.root_bg.size = self.root_layout.size
+    
     def _create_widgets(self):
         """Crée tous les widgets une seule fois"""
+        global EINK_MODE
+        theme = get_theme_colors()
+        
         # === Barre d'outils principale ===
         self.toolbar = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(3))
         
-        load_btn = Button(text='HTML', size_hint_x=0.18, font_size=dp(12))
+        load_btn = self._create_themed_button('HTML', 0.18, 12)
         load_btn.bind(on_press=self.show_file_chooser)
         self.toolbar.add_widget(load_btn)
         
-        lcsc_btn = Button(text='LCSC', size_hint_x=0.18, font_size=dp(12))
+        lcsc_btn = self._create_themed_button('LCSC', 0.18, 12)
         lcsc_btn.bind(on_press=self.show_lcsc_file_chooser)
         self.toolbar.add_widget(lcsc_btn)
         
-        history_btn = Button(text='Hist.', size_hint_x=0.14, font_size=dp(12))
+        history_btn = self._create_themed_button('Hist.', 0.14, 12)
         history_btn.bind(on_press=self.show_history_popup)
         self.toolbar.add_widget(history_btn)
         
-        save_btn = Button(text='Save', size_hint_x=0.14, font_size=dp(12))
+        save_btn = self._create_themed_button('Save', 0.14, 12)
         save_btn.bind(on_press=self.save_selection)
         self.toolbar.add_widget(save_btn)
         
-        export_btn = Button(text='Exp', size_hint_x=0.14, font_size=dp(12))
+        export_btn = self._create_themed_button('Exp', 0.14, 12)
         export_btn.bind(on_press=self.show_export_popup)
         self.toolbar.add_widget(export_btn)
         
-        self.settings_btn = Button(text='[=]', size_hint_x=0.12, font_size=dp(12))
+        self.settings_btn = self._create_themed_button('[=]', 0.12, 12)
         self.settings_btn.bind(on_press=self.show_preferences_popup)
         self.toolbar.add_widget(self.settings_btn)
         
@@ -1907,34 +2008,43 @@ class IBomSelectorApp(App):
         self.pcb_view = PCBView()
         self.pcb_view.on_selection_callback = self.on_selection_changed
         
-        # Boutons de contrôle du zoom
+        # Boutons de contrôle du zoom - avec thème
         self.zoom_layout = BoxLayout(orientation='vertical', spacing=dp(5))
         
-        zoom_in_btn = Button(text='+', font_size=dp(20))
+        zoom_in_btn = self._create_themed_button('+', None, 20)
         zoom_in_btn.bind(on_press=lambda x: self.pcb_view.zoom_in())
         self.zoom_layout.add_widget(zoom_in_btn)
         
-        zoom_out_btn = Button(text='-', font_size=dp(20))
+        zoom_out_btn = self._create_themed_button('-', None, 20)
         zoom_out_btn.bind(on_press=lambda x: self.pcb_view.zoom_out())
         self.zoom_layout.add_widget(zoom_out_btn)
         
-        reset_btn = Button(text='R', font_size=dp(16))
+        reset_btn = self._create_themed_button('R', None, 16)
         reset_btn.bind(on_press=lambda x: self.pcb_view.reset_view())
         self.zoom_layout.add_widget(reset_btn)
         
-        select_all_btn = Button(text='All', font_size=dp(12))
+        select_all_btn = self._create_themed_button('All', None, 12)
         select_all_btn.bind(on_press=lambda x: self.pcb_view.select_all())
         self.zoom_layout.add_widget(select_all_btn)
         
         # === Filtres ===
         self.filter_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(3))
         
-        self.filter_layout.add_widget(Label(text='Couche:', size_hint_x=0.12, font_size=dp(10)))
+        self.filter_layout.add_widget(Label(
+            text='Couche:',
+            size_hint_x=0.12,
+            font_size=dp(10),
+            color=theme['text_primary']
+        ))
         self.layer_spinner = Spinner(
             text='Tous',
             values=['Tous', 'Front', 'Back'],
             size_hint_x=0.18,
-            font_size=dp(10)
+            font_size=dp(10),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary'],
+            option_cls=ThemedSpinnerOption
         )
         self.layer_spinner.bind(text=self.on_layer_filter_change)
         self.filter_layout.add_widget(self.layer_spinner)
@@ -1944,42 +2054,66 @@ class IBomSelectorApp(App):
             hint_text='Rechercher...',
             multiline=False,
             size_hint_x=0.40,
-            font_size=dp(11)
+            font_size=dp(11),
+            background_normal='',
+            background_color=(1, 1, 1, 1) if EINK_MODE else (0.2, 0.2, 0.25, 1),
+            foreground_color=(0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
         )
         self.search_input.bind(text=self.on_search_change)
         self.filter_layout.add_widget(self.search_input)
         
-        self.group_btn = ToggleButton(text='Grp', size_hint_x=0.12, state='down', font_size=dp(10))
+        # Le bouton Grp est actif par défaut (state='down')
+        group_is_active = getattr(self, 'group_btn_state', True)
+        self.group_btn = ToggleButton(
+            text='Grp',
+            size_hint_x=0.12,
+            state='down' if group_is_active else 'normal',
+            font_size=dp(10),
+            background_normal='',
+            background_down='',
+            background_color=theme['bg_button_active'] if group_is_active else theme['bg_button'],
+            color=theme['text_primary']
+        )
         self.group_btn.bind(on_press=self.toggle_grouping)
         self.filter_layout.add_widget(self.group_btn)
         
-        clear_btn = Button(text='X', size_hint_x=0.08, font_size=dp(12))
+        clear_btn = self._create_themed_button('X', 0.08, 12)
         clear_btn.bind(on_press=lambda x: setattr(self.search_input, 'text', ''))
         self.filter_layout.add_widget(clear_btn)
         
         # === Info sélection ===
         self.info_layout = BoxLayout(size_hint_y=None, height=dp(30), spacing=dp(5))
         
-        self.selection_label = Label(text='Sélection: 0 comp.', size_hint_x=0.4, font_size=dp(10))
+        self.selection_label = Label(
+            text='Selection: 0 comp.',
+            size_hint_x=0.4,
+            font_size=dp(10),
+            color=theme['text_primary']
+        )
         self.info_layout.add_widget(self.selection_label)
         
-        self.processed_label = Label(text='Traités: 0/0', size_hint_x=0.20, font_size=dp(10))
+        self.processed_label = Label(
+            text='Traites: 0/0',
+            size_hint_x=0.20,
+            font_size=dp(10),
+            color=theme['text_primary']
+        )
         self.info_layout.add_widget(self.processed_label)
         
         # Boutons de navigation séquentielle
-        prev_btn = Button(text='<', size_hint_x=0.08, font_size=dp(14))
+        prev_btn = self._create_themed_button('<', 0.08, 14)
         prev_btn.bind(on_press=self.navigate_prev)
         self.info_layout.add_widget(prev_btn)
         
-        next_btn = Button(text='>', size_hint_x=0.08, font_size=dp(14))
+        next_btn = self._create_themed_button('>', 0.08, 14)
         next_btn.bind(on_press=self.navigate_next)
         self.info_layout.add_widget(next_btn)
         
-        mark_all_btn = Button(text='All', size_hint_x=0.10, font_size=dp(10))
+        mark_all_btn = self._create_themed_button('All', 0.10, 10)
         mark_all_btn.bind(on_press=lambda x: self.component_list.mark_all_processed(True))
         self.info_layout.add_widget(mark_all_btn)
         
-        clear_proc_btn = Button(text='Clr', size_hint_x=0.08, font_size=dp(10))
+        clear_proc_btn = self._create_themed_button('Clr', 0.08, 10)
         clear_proc_btn.bind(on_press=self.clear_processed)
         self.info_layout.add_widget(clear_proc_btn)
         
@@ -1996,7 +2130,11 @@ class IBomSelectorApp(App):
             text='Tous',
             values=['Tous', 'A faire', 'Faits'],
             size_hint_x=0.3,
-            font_size=dp(10)
+            font_size=dp(10),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary'],
+            option_cls=ThemedSpinnerOption
         )
         self.status_spinner.bind(text=self.on_status_filter_change)
         self.progress_layout.add_widget(self.status_spinner)
@@ -2016,7 +2154,7 @@ class IBomSelectorApp(App):
             text='Aucun fichier charge',
             size_hint_y=None,
             height=dp(25),
-            color=(0.7, 0.7, 0.7, 1),
+            color=theme['text_secondary'],
             font_size=dp(10)
         )
     
@@ -2545,10 +2683,21 @@ class IBomSelectorApp(App):
         global EINK_MODE
         theme = get_theme_colors()
         
-        # Container principal avec fond
-        content = BoxLayout(orientation='vertical', spacing=dp(5), padding=dp(5))
+        # Container principal avec fond blanc forcé
+        content = BoxLayout(orientation='vertical', spacing=dp(8), padding=dp(10))
+        
+        # Fond blanc pur pour e-ink
+        if EINK_MODE:
+            bg_color = (1, 1, 1, 1)  # Blanc pur
+            text_color = (0, 0, 0, 1)  # Noir pur
+            btn_color = (0.85, 0.85, 0.85, 1)  # Gris très clair
+        else:
+            bg_color = theme['bg_primary']
+            text_color = theme['text_primary']
+            btn_color = theme['bg_button']
+        
         with content.canvas.before:
-            Color(*theme['bg_primary'])
+            Color(*bg_color)
             self._fc_bg = Rectangle(pos=content.pos, size=content.size)
         content.bind(
             pos=lambda w, p: setattr(self._fc_bg, 'pos', p),
@@ -2556,25 +2705,36 @@ class IBomSelectorApp(App):
         )
         
         # En-tête avec titre
-        header = BoxLayout(size_hint_y=None, height=dp(35))
+        header = BoxLayout(size_hint_y=None, height=dp(40))
         title_lbl = Label(
             text=title,
-            font_size=dp(14),
+            font_size=dp(16),
             bold=True,
-            color=theme['text_primary']
+            color=text_color
         )
         header.add_widget(title_lbl)
         content.add_widget(header)
         
+        # Séparateur
+        sep = Widget(size_hint_y=None, height=dp(2))
+        with sep.canvas:
+            Color(0, 0, 0, 1) if EINK_MODE else Color(0.5, 0.5, 0.5, 1)
+            self._fc_sep = Rectangle(pos=sep.pos, size=sep.size)
+        sep.bind(
+            pos=lambda w, p: setattr(self._fc_sep, 'pos', p),
+            size=lambda w, s: setattr(self._fc_sep, 'size', s)
+        )
+        content.add_widget(sep)
+        
         # Sélecteur de chemin de départ
         storage_paths = get_storage_paths()
         if storage_paths:
-            path_layout = BoxLayout(size_hint_y=None, height=dp(40))
+            path_layout = BoxLayout(size_hint_y=None, height=dp(45))
             path_lbl = Label(
                 text='Emplacement:',
-                size_hint_x=0.3,
-                font_size=dp(12),
-                color=theme['text_primary']
+                size_hint_x=0.35,
+                font_size=dp(13),
+                color=text_color
             )
             path_layout.add_widget(path_lbl)
             
@@ -2582,11 +2742,12 @@ class IBomSelectorApp(App):
             path_spinner = Spinner(
                 text=path_names[0] if path_names else 'Home',
                 values=path_names,
-                size_hint_x=0.7,
-                font_size=dp(12),
+                size_hint_x=0.65,
+                font_size=dp(13),
                 background_normal='',
-                background_color=theme['bg_button'],
-                color=theme['text_primary']
+                background_color=btn_color,
+                color=text_color,
+                option_cls=ThemedSpinnerOption
             )
             path_layout.add_widget(path_spinner)
             content.add_widget(path_layout)
@@ -2595,33 +2756,130 @@ class IBomSelectorApp(App):
         else:
             initial_path = str(Path.home())
         
-        # FileChooser avec style personnalisé
-        file_chooser = FileChooserListView(
-            path=initial_path,
-            filters=filters,
-            filter_dirs=True,
-            size_hint_y=0.75
-        )
+        # Liste des fichiers - ScrollView personnalisé au lieu de FileChooserListView
+        file_scroll = ScrollView(size_hint_y=0.65)
+        file_list_layout = GridLayout(cols=2, spacing=dp(2), size_hint_y=None)
+        file_list_layout.bind(minimum_height=file_list_layout.setter('height'))
         
-        # Appliquer les couleurs au FileChooser en mode e-ink
-        if EINK_MODE:
-            # Forcer le fond blanc
-            with file_chooser.canvas.before:
-                Color(*theme['bg_primary'])
-                self._fc_list_bg = Rectangle(pos=file_chooser.pos, size=file_chooser.size)
-            file_chooser.bind(
-                pos=lambda w, p: setattr(self._fc_list_bg, 'pos', p),
-                size=lambda w, s: setattr(self._fc_list_bg, 'size', s)
-            )
+        # Variable pour stocker la sélection
+        self._fc_selected_file = None
+        self._fc_file_buttons = []
+        self._fc_current_path = initial_path
         
-        content.add_widget(file_chooser)
+        def populate_file_list(path):
+            """Remplit la liste avec les fichiers du dossier"""
+            file_list_layout.clear_widgets()
+            self._fc_file_buttons = []
+            self._fc_selected_file = None
+            self._fc_current_path = path
+            
+            try:
+                p = Path(path)
+                entries = []
+                
+                # Dossier parent
+                if p.parent != p:
+                    entries.append(('..', p.parent, True))
+                
+                # Lister les fichiers et dossiers
+                for item in sorted(p.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())):
+                    try:
+                        if item.is_dir():
+                            entries.append((item.name + '/', item, True))
+                        else:
+                            # Vérifier le filtre
+                            ext = item.suffix.lower()
+                            if filters:
+                                for f in filters:
+                                    if f.startswith('*'):
+                                        if ext == f[1:].lower():
+                                            entries.append((item.name, item, False))
+                                            break
+                            else:
+                                entries.append((item.name, item, False))
+                    except PermissionError:
+                        pass
+                
+                # Créer les boutons pour chaque entrée
+                for name, item_path, is_dir in entries:
+                    # Nom du fichier
+                    btn = Button(
+                        text=name,
+                        size_hint_y=None,
+                        height=dp(45),
+                        font_size=dp(13),
+                        halign='left',
+                        valign='middle',
+                        background_normal='',
+                        background_color=bg_color,
+                        color=text_color
+                    )
+                    btn.bind(size=lambda b, s: setattr(b, 'text_size', (s[0] - dp(10), None)))
+                    
+                    # Taille du fichier
+                    if is_dir:
+                        size_text = '<DIR>'
+                    else:
+                        try:
+                            size_bytes = item_path.stat().st_size
+                            if size_bytes < 1024:
+                                size_text = f'{size_bytes} B'
+                            elif size_bytes < 1024 * 1024:
+                                size_text = f'{size_bytes // 1024} KB'
+                            else:
+                                size_text = f'{size_bytes // (1024 * 1024)} MB'
+                        except:
+                            size_text = ''
+                    
+                    size_lbl = Label(
+                        text=size_text,
+                        size_hint=(0.25, None),
+                        height=dp(45),
+                        font_size=dp(11),
+                        color=text_color
+                    )
+                    
+                    # Action sur clic
+                    def on_item_click(btn, path=item_path, is_directory=is_dir):
+                        if is_directory:
+                            populate_file_list(str(path))
+                            path_label.text = f'Chemin: {path}'
+                        else:
+                            # Sélectionner le fichier
+                            self._fc_selected_file = str(path)
+                            # Mettre en surbrillance
+                            for b in self._fc_file_buttons:
+                                b.background_color = bg_color
+                            btn.background_color = (0.7, 0.7, 0.7, 1) if EINK_MODE else (0.4, 0.5, 0.6, 1)
+                    
+                    btn.bind(on_press=on_item_click)
+                    self._fc_file_buttons.append(btn)
+                    
+                    file_list_layout.add_widget(btn)
+                    file_list_layout.add_widget(size_lbl)
+                    
+            except Exception as e:
+                err_label = Label(
+                    text=f'Erreur: {e}',
+                    size_hint_y=None,
+                    height=dp(50),
+                    color=(1, 0, 0, 1) if not EINK_MODE else (0, 0, 0, 1)
+                )
+                file_list_layout.add_widget(err_label)
+        
+        # Remplir la liste initiale
+        populate_file_list(initial_path)
+        
+        file_scroll.add_widget(file_list_layout)
+        content.add_widget(file_scroll)
         
         # Mettre à jour le path quand on change d'emplacement
         if storage_paths:
             def on_path_change(spinner, text):
                 for name, path in storage_paths:
                     if name == text:
-                        file_chooser.path = path
+                        populate_file_list(path)
+                        path_label.text = f'Chemin: {path}'
                         break
             path_spinner.bind(text=on_path_change)
         
@@ -2629,37 +2887,43 @@ class IBomSelectorApp(App):
         path_label = Label(
             text=f'Chemin: {initial_path}',
             size_hint_y=None,
-            height=dp(25),
+            height=dp(30),
             font_size=dp(10),
             halign='left',
-            color=theme['text_secondary']
+            color=text_color
         )
         path_label.bind(size=path_label.setter('text_size'))
-        
-        def update_path_label(*args):
-            path_label.text = f'Chemin: {file_chooser.path}'
-        file_chooser.bind(path=update_path_label)
         content.add_widget(path_label)
         
-        # Boutons avec style
-        buttons = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        # Boutons avec bordure en mode e-ink
+        buttons = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(15))
         
         select_btn = Button(
             text='Selectionner',
-            font_size=dp(14),
+            font_size=dp(15),
             bold=True,
             background_normal='',
-            background_color=theme['bg_button'],
-            color=theme['text_primary']
+            background_color=btn_color,
+            color=text_color
         )
         cancel_btn = Button(
             text='Annuler',
-            font_size=dp(14),
+            font_size=dp(15),
             bold=True,
             background_normal='',
-            background_color=theme['bg_button'],
-            color=theme['text_primary']
+            background_color=btn_color,
+            color=text_color
         )
+        
+        # Bordures en mode e-ink
+        if EINK_MODE:
+            for btn in [select_btn, cancel_btn]:
+                with btn.canvas.after:
+                    Color(0, 0, 0, 1)
+                    btn._border = Line(rectangle=(0, 0, 1, 1), width=2)
+                def update_border(b, *args):
+                    b._border.rectangle = (b.x, b.y, b.width, b.height)
+                btn.bind(pos=update_border, size=update_border)
         
         buttons.add_widget(select_btn)
         buttons.add_widget(cancel_btn)
@@ -2668,15 +2932,15 @@ class IBomSelectorApp(App):
         popup = Popup(
             title='',
             content=content,
-            size_hint=(0.95, 0.9),
+            size_hint=(0.95, 0.92),
             separator_height=0,
             background='',
-            background_color=theme['bg_primary']
+            background_color=bg_color
         )
         
         def on_select(btn):
-            if file_chooser.selection:
-                callback(file_chooser.selection[0])
+            if self._fc_selected_file:
+                callback(self._fc_selected_file)
             popup.dismiss()
         
         select_btn.bind(on_press=on_select)
@@ -2725,16 +2989,32 @@ class IBomSelectorApp(App):
     
     def show_history_popup(self, instance):
         """Affiche la popup de l'historique"""
+        global EINK_MODE
+        theme = get_theme_colors()
+        
         if not self.parser:
             self.show_error("Chargez d'abord un fichier HTML")
             return
         
         content = BoxLayout(orientation='vertical', spacing=dp(8), padding=dp(8))
         
+        # Fond opaque
+        with content.canvas.before:
+            Color(*theme['bg_primary'])
+            self._history_bg = Rectangle(pos=content.pos, size=content.size)
+        content.bind(
+            pos=lambda w, p: setattr(self._history_bg, 'pos', p),
+            size=lambda w, s: setattr(self._history_bg, 'size', s)
+        )
+        
         entries = self.history_manager.get_entries_list()
         
         if not entries:
-            content.add_widget(Label(text="Aucun historique disponible", font_size=dp(12)))
+            content.add_widget(Label(
+                text="Aucun historique disponible",
+                font_size=dp(12),
+                color=theme['text_primary']
+            ))
         else:
             scroll = ScrollView(size_hint_y=0.8)
             entries_layout = GridLayout(cols=1, spacing=dp(5), size_hint_y=None)
@@ -2743,10 +3023,24 @@ class IBomSelectorApp(App):
             for i, entry_text in enumerate(entries):
                 row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(5))
                 
-                btn = Button(text=entry_text, size_hint_x=0.75, font_size=dp(10))
+                btn = Button(
+                    text=entry_text,
+                    size_hint_x=0.75,
+                    font_size=dp(10),
+                    background_normal='',
+                    background_color=theme['bg_button'],
+                    color=theme['text_primary']
+                )
                 btn.entry_index = i
                 
-                del_btn = Button(text='🗑', size_hint_x=0.15, font_size=dp(14))
+                del_btn = Button(
+                    text='X',  # Remplacé emoji par X
+                    size_hint_x=0.15,
+                    font_size=dp(14),
+                    background_normal='',
+                    background_color=theme['bg_button'],
+                    color=theme['text_primary']
+                )
                 del_btn.entry_index = i
                 
                 row.add_widget(btn)
@@ -2767,17 +3061,36 @@ class IBomSelectorApp(App):
         # Boutons
         buttons = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(10))
         
-        update_btn = Button(text='Mettre à jour', font_size=dp(11))
+        update_btn = Button(
+            text='Mettre a jour',
+            font_size=dp(11),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         update_btn.bind(on_press=lambda x: self.update_current_history(popup))
         buttons.add_widget(update_btn)
         
-        close_btn = Button(text='Fermer', font_size=dp(11))
+        close_btn = Button(
+            text='Fermer',
+            font_size=dp(11),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         buttons.add_widget(close_btn)
         
         content.add_widget(buttons)
         
-        popup = Popup(title='Historique des sélections', content=content,
-                     size_hint=(0.95, 0.85))
+        popup = Popup(
+            title='Historique des selections',
+            content=content,
+            size_hint=(0.95, 0.85),
+            separator_height=0,
+            background='',
+            background_color=theme['bg_primary'],
+            title_color=theme['text_primary']
+        )
         close_btn.bind(on_press=lambda x: popup.dismiss())
         popup.open()
     
@@ -2843,34 +3156,72 @@ class IBomSelectorApp(App):
     
     def save_selection(self, instance):
         """Sauvegarde la sélection actuelle"""
+        global EINK_MODE
+        theme = get_theme_colors()
+        
         selected = self.pcb_view.selected_components
         
         if not selected:
-            self.show_error("Aucune sélection à sauvegarder")
+            self.show_error("Aucune selection a sauvegarder")
             return
         
         # Popup pour le nom
         content = BoxLayout(orientation='vertical', spacing=dp(10), padding=dp(10))
         
-        content.add_widget(Label(text="Nom de la sélection:", font_size=dp(12)))
+        # Fond opaque
+        with content.canvas.before:
+            Color(*theme['bg_primary'])
+            self._save_bg = Rectangle(pos=content.pos, size=content.size)
+        content.bind(
+            pos=lambda w, p: setattr(self._save_bg, 'pos', p),
+            size=lambda w, s: setattr(self._save_bg, 'size', s)
+        )
+        
+        content.add_widget(Label(
+            text="Nom de la selection:",
+            font_size=dp(12),
+            color=theme['text_primary']
+        ))
         name_input = TextInput(
             text=f"Zone {len(self.history_manager.history) + 1}",
             multiline=False,
             size_hint_y=None,
             height=dp(40),
-            font_size=dp(12)
+            font_size=dp(12),
+            background_normal='',
+            background_color=(1, 1, 1, 1) if EINK_MODE else (0.2, 0.2, 0.25, 1),
+            foreground_color=(0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
         )
         content.add_widget(name_input)
         
         buttons = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(10))
-        save_btn = Button(text='Sauvegarder', font_size=dp(12))
-        cancel_btn = Button(text='Annuler', font_size=dp(12))
+        save_btn = Button(
+            text='Sauvegarder',
+            font_size=dp(12),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
+        cancel_btn = Button(
+            text='Annuler',
+            font_size=dp(12),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         buttons.add_widget(save_btn)
         buttons.add_widget(cancel_btn)
         content.add_widget(buttons)
         
-        popup = Popup(title='Sauvegarder la sélection', content=content,
-                     size_hint=(0.85, 0.35))
+        popup = Popup(
+            title='Sauvegarder la selection',
+            content=content,
+            size_hint=(0.85, 0.35),
+            separator_height=0,
+            background='',
+            background_color=theme['bg_primary'],
+            title_color=theme['text_primary']
+        )
         
         def on_save(btn):
             name = name_input.text or f"Zone {len(self.history_manager.history) + 1}"
@@ -2889,33 +3240,81 @@ class IBomSelectorApp(App):
     
     def show_export_popup(self, instance):
         """Affiche la popup d'export"""
+        global EINK_MODE
+        theme = get_theme_colors()
+        
         selected = self.pcb_view.selected_components
         
         if not selected:
-            self.show_error("Aucun composant à exporter")
+            self.show_error("Aucun composant a exporter")
             return
         
         content = BoxLayout(orientation='vertical', spacing=dp(10), padding=dp(10))
+        
+        # Fond opaque
+        with content.canvas.before:
+            Color(*theme['bg_primary'])
+            self._export_bg = Rectangle(pos=content.pos, size=content.size)
+        content.bind(
+            pos=lambda w, p: setattr(self._export_bg, 'pos', p),
+            size=lambda w, s: setattr(self._export_bg, 'size', s)
+        )
         
         # Appliquer le filtre de couche
         filtered = selected
         if self.component_list.layer_filter != 'all':
             filtered = [c for c in selected if c.get('layer') == self.component_list.layer_filter]
         
-        content.add_widget(Label(text=f"{len(filtered)} composants à exporter", font_size=dp(12)))
+        content.add_widget(Label(
+            text=f"{len(filtered)} composants a exporter",
+            font_size=dp(12),
+            color=theme['text_primary']
+        ))
         
-        csv_btn = Button(text='📄 Export CSV', size_hint_y=None, height=dp(50), font_size=dp(13))
+        csv_btn = Button(
+            text='Export CSV',
+            size_hint_y=None,
+            height=dp(50),
+            font_size=dp(13),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         csv_btn.bind(on_press=lambda x: self.export_csv(popup))
         content.add_widget(csv_btn)
         
-        csv_lcsc_btn = Button(text='📄 Export CSV format LCSC', size_hint_y=None, height=dp(50), font_size=dp(13))
+        csv_lcsc_btn = Button(
+            text='Export CSV format LCSC',
+            size_hint_y=None,
+            height=dp(50),
+            font_size=dp(13),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         csv_lcsc_btn.bind(on_press=lambda x: self.export_csv_lcsc(popup))
         content.add_widget(csv_lcsc_btn)
         
-        cancel_btn = Button(text='Annuler', size_hint_y=None, height=dp(45), font_size=dp(12))
+        cancel_btn = Button(
+            text='Annuler',
+            size_hint_y=None,
+            height=dp(45),
+            font_size=dp(12),
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         content.add_widget(cancel_btn)
         
-        popup = Popup(title='Exporter', content=content, size_hint=(0.85, 0.5))
+        popup = Popup(
+            title='Exporter',
+            content=content,
+            size_hint=(0.85, 0.5),
+            separator_height=0,
+            background='',
+            background_color=theme['bg_primary'],
+            title_color=theme['text_primary']
+        )
         cancel_btn.bind(on_press=lambda x: popup.dismiss())
         popup.open()
     
@@ -3041,14 +3440,64 @@ class IBomSelectorApp(App):
     
     def show_error(self, message):
         """Affiche une popup d'erreur"""
-        content = Label(text=message, font_size=dp(12))
-        popup = Popup(title='Erreur', content=content, size_hint=(0.85, 0.3))
+        global EINK_MODE
+        theme = get_theme_colors()
+        
+        content = BoxLayout(orientation='vertical', padding=dp(10))
+        with content.canvas.before:
+            Color(*theme['bg_primary'])
+            self._err_bg = Rectangle(pos=content.pos, size=content.size)
+        content.bind(
+            pos=lambda w, p: setattr(self._err_bg, 'pos', p),
+            size=lambda w, s: setattr(self._err_bg, 'size', s)
+        )
+        
+        content.add_widget(Label(
+            text=message,
+            font_size=dp(12),
+            color=theme['text_primary']
+        ))
+        
+        popup = Popup(
+            title='Erreur',
+            content=content,
+            size_hint=(0.85, 0.3),
+            separator_height=0,
+            background='',
+            background_color=theme['bg_primary'],
+            title_color=theme['text_primary']
+        )
         popup.open()
     
     def show_message(self, message):
         """Affiche une popup de message"""
-        content = Label(text=message, font_size=dp(12))
-        popup = Popup(title='Information', content=content, size_hint=(0.85, 0.3))
+        global EINK_MODE
+        theme = get_theme_colors()
+        
+        content = BoxLayout(orientation='vertical', padding=dp(10))
+        with content.canvas.before:
+            Color(*theme['bg_primary'])
+            self._msg_bg = Rectangle(pos=content.pos, size=content.size)
+        content.bind(
+            pos=lambda w, p: setattr(self._msg_bg, 'pos', p),
+            size=lambda w, s: setattr(self._msg_bg, 'size', s)
+        )
+        
+        content.add_widget(Label(
+            text=message,
+            font_size=dp(12),
+            color=theme['text_primary']
+        ))
+        
+        popup = Popup(
+            title='Information',
+            content=content,
+            size_hint=(0.85, 0.3),
+            separator_height=0,
+            background='',
+            background_color=theme['bg_primary'],
+            title_color=theme['text_primary']
+        )
         popup.open()
 
 
