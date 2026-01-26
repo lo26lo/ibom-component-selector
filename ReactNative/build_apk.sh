@@ -70,6 +70,45 @@ if ! command_exists java; then
 fi
 echo "      ✓ Java $(java --version 2>&1 | head -1)"
 
+# Vérifier/Configurer Android SDK
+ANDROID_SDK_ROOT="${ANDROID_HOME:-$HOME/Android/Sdk}"
+if [ ! -d "$ANDROID_SDK_ROOT/platforms" ]; then
+    echo "      Android SDK non trouvé. Installation..."
+    
+    # Créer le répertoire SDK
+    mkdir -p "$ANDROID_SDK_ROOT"
+    
+    # Télécharger commandlinetools
+    CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+    CMDLINE_TOOLS_ZIP="/tmp/cmdline-tools.zip"
+    
+    echo "      Téléchargement des Android Command Line Tools..."
+    curl -L -o "$CMDLINE_TOOLS_ZIP" "$CMDLINE_TOOLS_URL"
+    
+    # Extraire
+    unzip -q "$CMDLINE_TOOLS_ZIP" -d "$ANDROID_SDK_ROOT"
+    mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+    mv "$ANDROID_SDK_ROOT/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools-tmp" 2>/dev/null || true
+    mv "$ANDROID_SDK_ROOT/cmdline-tools-tmp" "$ANDROID_SDK_ROOT/cmdline-tools/latest" 2>/dev/null || \
+    mv "$ANDROID_SDK_ROOT/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest" 2>/dev/null || true
+    
+    # Accepter les licences et installer les composants nécessaires
+    export ANDROID_HOME="$ANDROID_SDK_ROOT"
+    export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
+    
+    echo "      Installation des composants SDK (cela peut prendre quelques minutes)..."
+    yes | sdkmanager --licenses > /dev/null 2>&1 || true
+    sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" > /dev/null 2>&1
+    
+    rm -f "$CMDLINE_TOOLS_ZIP"
+    echo "      ✓ Android SDK installé"
+fi
+
+# Exporter ANDROID_HOME
+export ANDROID_HOME="$ANDROID_SDK_ROOT"
+export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools"
+echo "      ✓ Android SDK: $ANDROID_HOME"
+
 # ============================================
 # [2/6] Créer un projet React Native propre
 # ============================================
@@ -130,10 +169,18 @@ BABELEOF
         echo "reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64" >> android/gradle.properties
     fi
     
+    # Créer local.properties avec le chemin du SDK
+    echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+    
     echo "      ✓ Projet React Native créé"
 else
     echo "      ✓ Projet React Native existant trouvé"
     cd "$BUILD_DIR/$PROJECT_NAME"
+    
+    # S'assurer que local.properties existe
+    if [ ! -f "android/local.properties" ]; then
+        echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+    fi
 fi
 
 # ============================================
