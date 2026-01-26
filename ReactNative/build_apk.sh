@@ -111,10 +111,19 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
         react-native-haptic-feedback \
         react-native-device-info
     
+    # Installer react-native-worklets-core séparément (requis par reanimated)
+    npm install react-native-worklets-core
+    
     echo "      ✓ Projet React Native créé"
 else
     echo "      ✓ Projet React Native existant trouvé"
     cd "$BUILD_DIR/$PROJECT_NAME"
+    
+    # S'assurer que worklets-core est installé
+    if [ ! -d "node_modules/react-native-worklets-core" ]; then
+        echo "      Installation de react-native-worklets-core..."
+        npm install react-native-worklets-core
+    fi
 fi
 
 # ============================================
