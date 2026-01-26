@@ -150,17 +150,17 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
     
     cd "$PROJECT_NAME"
     
-    # Installer les dépendances additionnelles
+    # Installer les dépendances additionnelles (versions compatibles avec RN 0.73.4)
     echo "      Installation des dépendances..."
-    npm install zustand \
-        react-native-svg \
-        react-native-gesture-handler \
+    npm install zustand@4.5.0 \
+        react-native-svg@13.14.0 \
+        react-native-gesture-handler@2.14.0 \
         react-native-reanimated@2.17.0 \
-        react-native-document-picker \
-        react-native-fs \
-        @react-native-async-storage/async-storage \
-        react-native-haptic-feedback \
-        react-native-device-info
+        react-native-document-picker@9.1.0 \
+        react-native-fs@2.20.0 \
+        @react-native-async-storage/async-storage@1.21.0 \
+        react-native-haptic-feedback@2.2.0 \
+        react-native-device-info@10.12.0
     
     # Configurer Babel pour react-native-reanimated
     echo "      Configuration de Babel pour reanimated..."
