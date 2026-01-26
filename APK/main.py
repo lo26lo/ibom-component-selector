@@ -174,11 +174,20 @@ if platform == 'android':
         """Retourne une liste de chemins de stockage disponibles"""
         paths = []
         
-        # Stockage interne de l'app
+        # Download folder - EN PREMIER pour accès rapide
         try:
-            app_path = app_storage_path()
-            if app_path and os.path.exists(app_path):
-                paths.append(('App Storage', app_path))
+            download_path = os.path.join(primary_external_storage_path(), 'Download')
+            if os.path.exists(download_path):
+                paths.append(('Downloads', download_path))
+                print(f"Downloads folder found: {download_path}")
+        except Exception as e:
+            print(f"Error accessing Downloads: {e}")
+        
+        # Documents folder
+        try:
+            docs_path = os.path.join(primary_external_storage_path(), 'Documents')
+            if os.path.exists(docs_path):
+                paths.append(('Documents', docs_path))
         except:
             pass
         
@@ -190,21 +199,23 @@ if platform == 'android':
         except:
             pass
         
-        # Download folder
+        # Stockage interne de l'app - en dernier
         try:
-            download_path = os.path.join(primary_external_storage_path(), 'Download')
-            if os.path.exists(download_path):
-                paths.append(('Downloads', download_path))
+            app_path = app_storage_path()
+            if app_path and os.path.exists(app_path):
+                paths.append(('App Storage', app_path))
         except:
             pass
         
-        # Documents folder
-        try:
-            docs_path = os.path.join(primary_external_storage_path(), 'Documents')
-            if os.path.exists(docs_path):
-                paths.append(('Documents', docs_path))
-        except:
-            pass
+        # Si aucun chemin trouvé, ajouter au moins App Storage
+        if not paths:
+            try:
+                app_path = app_storage_path()
+                if app_path:
+                    os.makedirs(app_path, exist_ok=True)
+                    paths.append(('App Storage', app_path))
+            except:
+                pass
         
         return paths
     
@@ -1909,6 +1920,12 @@ class IBomSelectorApp(App):
         self.lcsc_csv_path = None
         self._is_landscape = False
         
+        # Containers intermédiaires pour le layout (initialisés à None)
+        self._pcb_container = None
+        self._main_container = None
+        self._left_panel = None
+        self._right_panel = None
+        
         # Charger les préférences
         EINK_MODE = prefs_manager.get('eink_mode', False)
         
@@ -2182,6 +2199,16 @@ class IBomSelectorApp(App):
     
     def _detach_all_widgets(self):
         """Détache tous les widgets de leurs parents"""
+        # D'abord détacher les widgets des containers intermédiaires
+        if hasattr(self, '_pcb_container') and self._pcb_container:
+            self._pcb_container.clear_widgets()
+        if hasattr(self, '_left_panel') and self._left_panel:
+            self._left_panel.clear_widgets()
+        if hasattr(self, '_right_panel') and self._right_panel:
+            self._right_panel.clear_widgets()
+        if hasattr(self, '_main_container') and self._main_container:
+            self._main_container.clear_widgets()
+        
         widgets = [self.toolbar, self.pcb_view, self.zoom_layout, 
                    self.filter_layout, self.info_layout, self.progress_layout,
                    self.component_list, self.status_label]
@@ -2199,13 +2226,13 @@ class IBomSelectorApp(App):
         # Toolbar
         self.root_layout.add_widget(self.toolbar)
         
-        # PCB + Zoom
-        pcb_container = BoxLayout(orientation='horizontal', size_hint_y=0.35)
+        # PCB + Zoom - utiliser un container stocké comme attribut
+        self._pcb_container = BoxLayout(orientation='horizontal', size_hint_y=0.35)
         self.pcb_view.size_hint = (0.85, 1)
         self.zoom_layout.size_hint = (0.15, 1)
-        pcb_container.add_widget(self.pcb_view)
-        pcb_container.add_widget(self.zoom_layout)
-        self.root_layout.add_widget(pcb_container)
+        self._pcb_container.add_widget(self.pcb_view)
+        self._pcb_container.add_widget(self.zoom_layout)
+        self.root_layout.add_widget(self._pcb_container)
         
         # Filtres
         self.root_layout.add_widget(self.filter_layout)
@@ -2230,30 +2257,30 @@ class IBomSelectorApp(App):
         # Toolbar en haut
         self.root_layout.add_widget(self.toolbar)
         
-        # Conteneur principal horizontal
-        main_container = BoxLayout(orientation='horizontal', spacing=dp(5))
+        # Conteneur principal horizontal - stocké comme attribut
+        self._main_container = BoxLayout(orientation='horizontal', spacing=dp(5))
         
         # === Partie gauche: PCB + Zoom ===
-        left_panel = BoxLayout(orientation='horizontal', size_hint_x=0.5)
+        self._left_panel = BoxLayout(orientation='horizontal', size_hint_x=0.5)
         self.pcb_view.size_hint = (0.88, 1)
         self.zoom_layout.size_hint = (0.12, 1)
-        left_panel.add_widget(self.pcb_view)
-        left_panel.add_widget(self.zoom_layout)
-        main_container.add_widget(left_panel)
+        self._left_panel.add_widget(self.pcb_view)
+        self._left_panel.add_widget(self.zoom_layout)
+        self._main_container.add_widget(self._left_panel)
         
         # === Partie droite: Filtres + Info + Liste ===
-        right_panel = BoxLayout(orientation='vertical', size_hint_x=0.5, spacing=dp(3))
+        self._right_panel = BoxLayout(orientation='vertical', size_hint_x=0.5, spacing=dp(3))
         
-        right_panel.add_widget(self.filter_layout)
-        right_panel.add_widget(self.info_layout)
-        right_panel.add_widget(self.progress_layout)
+        self._right_panel.add_widget(self.filter_layout)
+        self._right_panel.add_widget(self.info_layout)
+        self._right_panel.add_widget(self.progress_layout)
         
         self.component_list.size_hint_y = 1
-        right_panel.add_widget(self.component_list)
+        self._right_panel.add_widget(self.component_list)
         
-        main_container.add_widget(right_panel)
+        self._main_container.add_widget(self._right_panel)
         
-        self.root_layout.add_widget(main_container)
+        self.root_layout.add_widget(self._main_container)
         
         # Status en bas
         self.root_layout.add_widget(self.status_label)
