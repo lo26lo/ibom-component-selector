@@ -296,6 +296,75 @@ class PreferencesManager:
 prefs_manager = PreferencesManager()
 
 
+def get_theme_colors():
+    """Retourne le dictionnaire de couleurs selon le mode e-ink ou normal.
+    Pas de transparence en mode e-ink pour un rendu net."""
+    global EINK_MODE
+    
+    if EINK_MODE:
+        return {
+            # Fonds
+            'bg_primary': (1, 1, 1, 1),           # Blanc pur
+            'bg_secondary': (0.95, 0.95, 0.95, 1), # Gris très clair
+            'bg_selected': (0.85, 0.85, 0.85, 1),  # Gris clair (sélection)
+            'bg_processed': (0.8, 0.8, 0.8, 1),    # Gris moyen (traité)
+            'bg_button': (0.9, 0.9, 0.9, 1),       # Bouton fond
+            'bg_button_active': (0.75, 0.75, 0.75, 1),  # Bouton actif
+            
+            # Texte
+            'text_primary': (0, 0, 0, 1),          # Noir pur
+            'text_secondary': (0.3, 0.3, 0.3, 1),  # Gris foncé
+            
+            # Bordures
+            'border': (0, 0, 0, 1),                # Noir
+            'border_light': (0.5, 0.5, 0.5, 1),    # Gris
+            
+            # PCB
+            'pcb_bg': (1, 1, 1, 1),                # Blanc
+            'pcb_board': (0.9, 0.9, 0.9, 1),       # Gris très clair
+            'pcb_pad': (0.6, 0.6, 0.6, 1),         # Gris
+            'pcb_comp_front': (0.2, 0.2, 0.2, 1),  # Gris foncé
+            'pcb_comp_back': (0.5, 0.5, 0.5, 1),   # Gris moyen
+            'pcb_selected': (0, 0, 0, 1),          # Noir
+            'pcb_highlight': (0, 0, 0, 1),         # Noir
+            
+            # Checkbox simulé
+            'checkbox_on': '[X]',
+            'checkbox_off': '[  ]',
+        }
+    else:
+        return {
+            # Fonds
+            'bg_primary': (0.15, 0.15, 0.2, 1),    # Sombre
+            'bg_secondary': (0.2, 0.2, 0.25, 1),   # Sombre légèrement plus clair
+            'bg_selected': (0.5, 0.5, 0.1, 1),     # Jaune foncé (sélection)
+            'bg_processed': (0.4, 0.4, 0.1, 1),    # Jaune (traité)
+            'bg_button': (0.35, 0.45, 0.6, 1),     # Bleu-gris
+            'bg_button_active': (0.45, 0.55, 0.7, 1),  # Bleu-gris plus clair
+            
+            # Texte
+            'text_primary': (1, 1, 1, 1),          # Blanc
+            'text_secondary': (0.8, 0.8, 0.8, 1),  # Gris clair
+            
+            # Bordures
+            'border': (0.5, 0.5, 0.6, 1),          # Gris bleuté
+            'border_light': (0.3, 0.3, 0.35, 1),   # Sombre
+            
+            # PCB
+            'pcb_bg': (0.12, 0.12, 0.15, 1),       # Très sombre
+            'pcb_board': (0.1, 0.3, 0.1, 1),       # Vert foncé
+            'pcb_pad': (0.7, 0.6, 0.2, 1),         # Jaune/or
+            'pcb_comp_front': (0.8, 0.2, 0.2, 1),  # Rouge
+            'pcb_comp_back': (0.2, 0.2, 0.8, 1),   # Bleu
+            'pcb_selected': (1, 0.5, 0, 1),        # Orange
+            'pcb_highlight': (1, 0, 0, 1),         # Rouge vif
+            
+            # Checkbox simulé
+            'checkbox_on': '[X]',
+            'checkbox_off': '[  ]',
+        }
+
+
 class LZString:
     """Décompresseur LZ-String pour les données InteractiveHtmlBom"""
     
@@ -924,27 +993,27 @@ class PCBView(Widget):
                     if EINK_MODE:
                         Color(0.5, 0.5, 0.5, 1)
                     else:
-                        Color(1, 1, 0, 0.8)  # Jaune
+                        Color(1, 1, 0, 1)  # Jaune
                     Line(circle=(cx, cy, size/3), width=2)
                 elif comp in self.selected_components:
                     if EINK_MODE:
                         Color(0, 0, 0, 1)  # Noir pour sélectionné
-                        size = max(10, 8 * self.zoom_factor)
+                        size = max(12, 10 * self.zoom_factor)
                     else:
-                        Color(1, 0.5, 0, 0.9)
-                        size = max(8, 6 * self.zoom_factor)
+                        Color(1, 0.5, 0, 1)  # Orange vif
+                        size = max(10, 8 * self.zoom_factor)
                 elif comp['layer'] == 'F':
                     if EINK_MODE:
-                        Color(0.3, 0.3, 0.3, 1)  # Gris foncé
+                        Color(0.2, 0.2, 0.2, 1)  # Gris foncé
                     else:
-                        Color(0.8, 0.2, 0.2, 0.7)
-                    size = max(5, 4 * self.zoom_factor)
+                        Color(0.8, 0.2, 0.2, 1)  # Rouge
+                    size = max(6, 5 * self.zoom_factor)
                 else:
                     if EINK_MODE:
-                        Color(0.6, 0.6, 0.6, 1)  # Gris clair
+                        Color(0.5, 0.5, 0.5, 1)  # Gris moyen
                     else:
-                        Color(0.2, 0.2, 0.8, 0.7)
-                    size = max(5, 4 * self.zoom_factor)
+                        Color(0.2, 0.2, 0.8, 1)  # Bleu
+                    size = max(6, 5 * self.zoom_factor)
                 
                 Ellipse(pos=(cx - size/2, cy - size/2), size=(size, size))
                 
@@ -953,7 +1022,7 @@ class PCBView(Widget):
                     if EINK_MODE:
                         Color(0, 0, 0, 1)
                     else:
-                        Color(1, 1, 1, 0.8)
+                        Color(1, 1, 1, 1)
             
             # Rectangle de la dernière sélection (persistant, en coordonnées PCB)
             if self.last_selection_pcb and not self.selection_rect:
@@ -965,26 +1034,27 @@ class PCBView(Widget):
                 w = abs(sx2 - sx1)
                 h = abs(sy2 - sy1)
                 if EINK_MODE:
-                    Color(0, 0, 0, 0.3)
-                else:
-                    Color(1, 1, 0, 0.2)
-                Rectangle(pos=(x, y), size=(w, h))
-                if EINK_MODE:
+                    # Pas de fond rempli en e-ink, juste bordure
                     Color(0, 0, 0, 1)
                     Line(rectangle=(x, y, w, h), width=2)
                 else:
-                    Color(1, 1, 0, 0.7)
+                    Color(1, 1, 0, 0.2)
+                    Rectangle(pos=(x, y), size=(w, h))
+                    Color(1, 1, 0, 1)
                     Line(rectangle=(x, y, w, h), width=1.5)
             
             # Rectangle de sélection en cours
             if self.selection_rect:
                 if EINK_MODE:
-                    Color(0, 0, 0, 0.2)
+                    Color(0.7, 0.7, 0.7, 1)  # Gris clair rempli
                 else:
                     Color(1, 1, 0, 0.3)
                 x, y, w, h = self.selection_rect
                 Rectangle(pos=(x, y), size=(w, h))
-                Color(1, 1, 0, 1)
+                if EINK_MODE:
+                    Color(0, 0, 0, 1)
+                else:
+                    Color(1, 1, 0, 1)
                 Line(rectangle=(x, y, w, h), width=2)
     
     def _draw_pads(self):
@@ -1008,10 +1078,17 @@ class PCBView(Widget):
                 w = max(2, size[0] * self.scale / 2)
                 h = max(2, size[1] * self.scale / 2)
                 
-                if 'F' in layers:
-                    Color(0.5, 0.1, 0.1, 0.4)
+                # Couleurs sans transparence pour e-ink
+                if EINK_MODE:
+                    if 'F' in layers:
+                        Color(0.6, 0.6, 0.6, 1)  # Gris
+                    else:
+                        Color(0.75, 0.75, 0.75, 1)  # Gris clair
                 else:
-                    Color(0.1, 0.1, 0.5, 0.4)
+                    if 'F' in layers:
+                        Color(0.6, 0.5, 0.2, 1)  # Or foncé
+                    else:
+                        Color(0.3, 0.3, 0.6, 1)  # Bleu foncé
                 
                 Rectangle(pos=(cx - w/2, cy - h/2), size=(w, h))
     
@@ -1370,27 +1447,21 @@ class ComponentRow(BoxLayout):
         self._bg_rect.size = self.size
     
     def _update_bg_color(self):
-        """Met à jour la couleur du fond selon l'état"""
+        """Met à jour la couleur du fond selon l'état - sans transparence"""
         global EINK_MODE
+        theme = get_theme_colors()
         if self.is_processed:
-            if EINK_MODE:
-                self._bg_color.rgba = (0.7, 0.7, 0.7, 1)  # Gris moyen
-            else:
-                self._bg_color.rgba = (0.6, 0.6, 0.1, 0.8)  # Jaune
+            self._bg_color.rgba = theme['bg_processed']
         else:
-            if EINK_MODE:
-                self._bg_color.rgba = (1, 1, 1, 1)  # Blanc
-            else:
-                self._bg_color.rgba = (0.15, 0.15, 0.2, 1)  # Normal
+            self._bg_color.rgba = theme['bg_primary']
         # Mettre à jour aussi la couleur du texte
         self._update_label_colors()
     
     def _update_label_colors(self):
         """Met à jour la couleur du texte des labels selon le mode e-ink"""
-        global EINK_MODE
-        text_color = (0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
+        theme = get_theme_colors()
         for label in self.labels:
-            label.color = text_color
+            label.color = theme['text_primary']
     
     def set_processed(self, value):
         self.checkbox.active = value
@@ -2136,203 +2207,223 @@ class IBomSelectorApp(App):
             # Le texte sera dans processed_label
     
     def show_preferences_popup(self, instance):
-        """Affiche le popup des préférences"""
+        """Affiche le popup des préférences avec ToggleButtons visibles"""
         global EINK_MODE
-        
-        # Couleurs selon le mode - améliorées pour meilleure visibilité
-        if EINK_MODE:
-            bg_color = (1, 1, 1, 1)  # Blanc
-            text_color = (0, 0, 0, 1)  # Noir
-            btn_bg = (0.7, 0.7, 0.7, 1)  # Gris moyen (plus visible)
-            checkbox_color = (0.2, 0.2, 0.2, 1)  # Foncé pour contraste
-        else:
-            bg_color = (0.2, 0.2, 0.25, 1)  # Sombre mais pas trop
-            text_color = (1, 1, 1, 1)  # Blanc
-            btn_bg = (0.4, 0.5, 0.7, 1)  # Bleu-gris clair (plus visible)
-            checkbox_color = (0.9, 0.9, 0.9, 1)  # Clair pour contraste
+        theme = get_theme_colors()
         
         # Container principal avec fond
-        content = BoxLayout(orientation='vertical', padding=dp(15), spacing=dp(15))
+        content = BoxLayout(orientation='vertical', padding=dp(15), spacing=dp(12))
         with content.canvas.before:
-            Color(*bg_color)
+            Color(*theme['bg_primary'])
             self._prefs_bg_rect = Rectangle(pos=content.pos, size=content.size)
         content.bind(pos=self._update_prefs_bg, size=self._update_prefs_bg)
         
         # Titre
         title_lbl = Label(
             text='Preferences',
-            font_size=dp(18),
+            font_size=dp(20),
             size_hint_y=None,
-            height=dp(40),
+            height=dp(45),
             bold=True,
-            color=text_color
+            color=theme['text_primary']
         )
         content.add_widget(title_lbl)
         
         # Ligne de séparation
         sep = Widget(size_hint_y=None, height=dp(2))
         with sep.canvas:
-            Color(0.5, 0.5, 0.5, 1)
+            Color(*theme['border'])
             self._sep_rect = Rectangle(pos=sep.pos, size=sep.size)
         sep.bind(pos=lambda w, p: setattr(self._sep_rect, 'pos', p),
                  size=lambda w, s: setattr(self._sep_rect, 'size', s))
         content.add_widget(sep)
         
-        # Option Mode E-Ink
-        eink_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
+        # === Option Mode E-Ink ===
+        eink_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
         eink_lbl = Label(
-            text='Mode E-Ink\n(haut contraste)',
-            font_size=dp(13),
+            text='Mode E-Ink (haut contraste)',
+            font_size=dp(14),
             halign='left',
             valign='middle',
-            size_hint_x=0.7,
-            color=text_color
+            size_hint_x=0.65,
+            color=theme['text_primary']
         )
         eink_lbl.bind(size=lambda *x: setattr(eink_lbl, 'text_size', eink_lbl.size))
         eink_row.add_widget(eink_lbl)
         
-        # Conteneur avec fond pour checkbox visible
-        eink_cb_container = BoxLayout(size_hint_x=0.3)
-        with eink_cb_container.canvas.before:
-            Color(*checkbox_color)
-            self._eink_cb_bg = Rectangle(pos=eink_cb_container.pos, size=eink_cb_container.size)
-        eink_cb_container.bind(
-            pos=lambda w, p: setattr(self._eink_cb_bg, 'pos', p),
-            size=lambda w, s: setattr(self._eink_cb_bg, 'size', s)
+        self.eink_toggle = ToggleButton(
+            text=theme['checkbox_on'] if EINK_MODE else theme['checkbox_off'],
+            state='down' if EINK_MODE else 'normal',
+            size_hint_x=0.35,
+            font_size=dp(18),
+            bold=True,
+            background_normal='',
+            background_down='',
+            background_color=theme['bg_button_active'] if EINK_MODE else theme['bg_button'],
+            color=theme['text_primary']
         )
-        self.eink_checkbox = CheckBox(active=EINK_MODE, color=(0, 0.8, 0, 1) if not EINK_MODE else (0, 0, 0, 1))
-        self.eink_checkbox.bind(active=self._on_eink_toggle)
-        eink_cb_container.add_widget(self.eink_checkbox)
-        eink_row.add_widget(eink_cb_container)
+        self.eink_toggle.bind(state=self._on_eink_toggle_btn)
+        eink_row.add_widget(self.eink_toggle)
         content.add_widget(eink_row)
         
-        # Option Grouper par valeur
-        group_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
+        # === Option Grouper par valeur ===
+        group_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
         group_lbl = Label(
-            text='Grouper composants\npar valeur/footprint',
-            font_size=dp(13),
+            text='Grouper par valeur',
+            font_size=dp(14),
             halign='left',
             valign='middle',
-            size_hint_x=0.7,
-            color=text_color
+            size_hint_x=0.65,
+            color=theme['text_primary']
         )
         group_lbl.bind(size=lambda *x: setattr(group_lbl, 'text_size', group_lbl.size))
         group_row.add_widget(group_lbl)
         
-        # Conteneur avec fond pour checkbox visible
-        group_cb_container = BoxLayout(size_hint_x=0.3)
-        with group_cb_container.canvas.before:
-            Color(*checkbox_color)
-            self._group_cb_bg = Rectangle(pos=group_cb_container.pos, size=group_cb_container.size)
-        group_cb_container.bind(
-            pos=lambda w, p: setattr(self._group_cb_bg, 'pos', p),
-            size=lambda w, s: setattr(self._group_cb_bg, 'size', s)
+        group_active = self.component_list.group_by_value
+        self.group_toggle = ToggleButton(
+            text=theme['checkbox_on'] if group_active else theme['checkbox_off'],
+            state='down' if group_active else 'normal',
+            size_hint_x=0.35,
+            font_size=dp(18),
+            bold=True,
+            background_normal='',
+            background_down='',
+            background_color=theme['bg_button_active'] if group_active else theme['bg_button'],
+            color=theme['text_primary']
         )
-        group_checkbox = CheckBox(
-            active=self.component_list.group_by_value,
-            color=(0, 0.8, 0, 1) if not EINK_MODE else (0, 0, 0, 1)
-        )
-        group_checkbox.bind(active=self._on_group_toggle)
-        group_cb_container.add_widget(group_checkbox)
-        group_row.add_widget(group_cb_container)
+        self.group_toggle.bind(state=self._on_group_toggle_btn)
+        group_row.add_widget(self.group_toggle)
         content.add_widget(group_row)
         
-        # Option Highlight auto sur PCB
-        highlight_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
+        # === Option Highlight auto ===
+        highlight_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
         highlight_lbl = Label(
-            text='Highlight auto\nsur le PCB',
-            font_size=dp(13),
+            text='Highlight auto sur PCB',
+            font_size=dp(14),
             halign='left',
             valign='middle',
-            size_hint_x=0.7,
-            color=text_color
+            size_hint_x=0.65,
+            color=theme['text_primary']
         )
         highlight_lbl.bind(size=lambda *x: setattr(highlight_lbl, 'text_size', highlight_lbl.size))
         highlight_row.add_widget(highlight_lbl)
         
-        # Conteneur avec fond pour checkbox visible
-        highlight_cb_container = BoxLayout(size_hint_x=0.3)
-        with highlight_cb_container.canvas.before:
-            Color(*checkbox_color)
-            self._highlight_cb_bg = Rectangle(pos=highlight_cb_container.pos, size=highlight_cb_container.size)
-        highlight_cb_container.bind(
-            pos=lambda w, p: setattr(self._highlight_cb_bg, 'pos', p),
-            size=lambda w, s: setattr(self._highlight_cb_bg, 'size', s)
+        highlight_active = getattr(self, 'auto_highlight', True)
+        self.highlight_toggle = ToggleButton(
+            text=theme['checkbox_on'] if highlight_active else theme['checkbox_off'],
+            state='down' if highlight_active else 'normal',
+            size_hint_x=0.35,
+            font_size=dp(18),
+            bold=True,
+            background_normal='',
+            background_down='',
+            background_color=theme['bg_button_active'] if highlight_active else theme['bg_button'],
+            color=theme['text_primary']
         )
-        self.auto_highlight = prefs_manager.get('auto_highlight', True)
-        highlight_checkbox = CheckBox(
-            active=self.auto_highlight,
-            color=(0, 0.8, 0, 1) if not EINK_MODE else (0, 0, 0, 1)
-        )
-        highlight_checkbox.bind(active=self._on_highlight_toggle)
-        highlight_cb_container.add_widget(highlight_checkbox)
-        highlight_row.add_widget(highlight_cb_container)
+        self.highlight_toggle.bind(state=self._on_highlight_toggle_btn)
+        highlight_row.add_widget(self.highlight_toggle)
         content.add_widget(highlight_row)
         
-        # Option Taille de police
-        font_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
+        # === Option Taille de police ===
+        font_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
         font_lbl = Label(
             text='Taille police:',
-            font_size=dp(13),
+            font_size=dp(14),
             halign='left',
             valign='middle',
-            size_hint_x=0.4,
-            color=text_color
+            size_hint_x=0.35,
+            color=theme['text_primary']
         )
         font_lbl.bind(size=lambda *x: setattr(font_lbl, 'text_size', font_lbl.size))
         font_row.add_widget(font_lbl)
         
-        # Slider pour la taille de police
-        font_slider = Slider(
-            min=10,
-            max=20,
-            value=self.component_list.font_size,
-            size_hint_x=0.4,
-            step=1
+        # Boutons - / +
+        minus_btn = Button(
+            text='-',
+            size_hint_x=0.15,
+            font_size=dp(20),
+            bold=True,
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
         )
+        font_row.add_widget(minus_btn)
         
-        # Label affichant la valeur
-        font_value_lbl = Label(
+        self.font_value_lbl = Label(
             text=str(int(self.component_list.font_size)),
-            font_size=dp(13),
+            font_size=dp(16),
             size_hint_x=0.2,
-            color=text_color
+            bold=True,
+            color=theme['text_primary']
         )
+        font_row.add_widget(self.font_value_lbl)
         
-        def on_font_slider(slider, value):
-            font_value_lbl.text = str(int(value))
-            self.component_list.set_font_size(int(value))
-            prefs_manager.set('font_size', int(value))
+        plus_btn = Button(
+            text='+',
+            size_hint_x=0.15,
+            font_size=dp(20),
+            bold=True,
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
+        font_row.add_widget(plus_btn)
         
-        font_slider.bind(value=on_font_slider)
-        font_row.add_widget(font_slider)
-        font_row.add_widget(font_value_lbl)
+        # Spacer
+        font_row.add_widget(Widget(size_hint_x=0.15))
+        
+        def on_minus(btn):
+            current = int(self.font_value_lbl.text)
+            if current > 10:
+                current -= 1
+                self.font_value_lbl.text = str(current)
+                self.component_list.set_font_size(current)
+                prefs_manager.set('font_size', current)
+        
+        def on_plus(btn):
+            current = int(self.font_value_lbl.text)
+            if current < 20:
+                current += 1
+                self.font_value_lbl.text = str(current)
+                self.component_list.set_font_size(current)
+                prefs_manager.set('font_size', current)
+        
+        minus_btn.bind(on_press=on_minus)
+        plus_btn.bind(on_press=on_plus)
         content.add_widget(font_row)
         
         # Spacer
         content.add_widget(Widget(size_hint_y=1))
         
-        # Bouton Fermer - avec fond dessiné pour meilleure visibilité
+        # Bouton Fermer
         close_btn = Button(
             text='Fermer',
             size_hint_y=None,
-            height=dp(50),
-            font_size=dp(16),
+            height=dp(55),
+            font_size=dp(18),
             bold=True,
             background_normal='',
-            background_color=btn_bg,
-            color=(0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
         )
+        # Bordure pour le bouton en mode e-ink
+        if EINK_MODE:
+            with close_btn.canvas.after:
+                Color(*theme['border'])
+                self._close_btn_border = Line(rectangle=(0, 0, 1, 1), width=2)
+            def update_btn_border(btn, *args):
+                self._close_btn_border.rectangle = (btn.x, btn.y, btn.width, btn.height)
+            close_btn.bind(pos=update_btn_border, size=update_btn_border)
         content.add_widget(close_btn)
         
         self._prefs_popup = Popup(
             title='',
             content=content,
-            size_hint=(0.85, 0.5),
+            size_hint=(0.9, 0.55),
             auto_dismiss=True,
             separator_height=0,
-            background='',  # Supprimer l'image de fond par défaut
-            background_color=bg_color  # Utiliser notre couleur de fond
+            background='',
+            background_color=theme['bg_primary']
         )
         close_btn.bind(on_press=lambda x: self._prefs_popup.dismiss())
         self._prefs_popup.open()
@@ -2345,28 +2436,70 @@ class IBomSelectorApp(App):
                 self._prefs_bg_rect.pos = content.pos
                 self._prefs_bg_rect.size = content.size
     
-    def _on_eink_toggle(self, checkbox, value):
-        """Active/désactive le mode e-ink depuis les préférences"""
+    def _on_eink_toggle_btn(self, toggle, state):
+        """Active/désactive le mode e-ink via ToggleButton"""
         global EINK_MODE
+        value = (state == 'down')
         EINK_MODE = value
         prefs_manager.set('eink_mode', value)
         
-        # Rafraîchit le PCB
-        self.pcb_view._redraw()
+        # Mettre à jour le texte du toggle
+        theme = get_theme_colors()
+        toggle.text = theme['checkbox_on'] if value else theme['checkbox_off']
+        toggle.background_color = theme['bg_button_active'] if value else theme['bg_button']
         
-        # Rafraîchit les lignes de composants
+        # Fermer le popup et le rouvrir pour appliquer les nouvelles couleurs
+        if hasattr(self, '_prefs_popup'):
+            self._prefs_popup.dismiss()
+        
+        # Rafraîchit le PCB et la liste
+        self.pcb_view._redraw()
+        self.component_list.refresh_display()
+        
+        # Rouvrir le popup avec les nouvelles couleurs
+        Clock.schedule_once(lambda dt: self.show_preferences_popup(None), 0.1)
+    
+    def _on_group_toggle_btn(self, toggle, state):
+        """Active/désactive le groupement via ToggleButton"""
+        value = (state == 'down')
+        theme = get_theme_colors()
+        toggle.text = theme['checkbox_on'] if value else theme['checkbox_off']
+        toggle.background_color = theme['bg_button_active'] if value else theme['bg_button']
+        
+        if self.component_list.group_by_value != value:
+            self.component_list.toggle_grouping()
+            self.group_btn.state = 'down' if value else 'normal'
+        prefs_manager.set('group_by_value', value)
+    
+    def _on_highlight_toggle_btn(self, toggle, state):
+        """Active/désactive le highlight auto via ToggleButton"""
+        value = (state == 'down')
+        theme = get_theme_colors()
+        toggle.text = theme['checkbox_on'] if value else theme['checkbox_off']
+        toggle.background_color = theme['bg_button_active'] if value else theme['bg_button']
+        
+        self.auto_highlight = value
+        prefs_manager.set('auto_highlight', value)
+        if not value:
+            self.pcb_view.clear_highlight()
+    
+    def _on_eink_toggle(self, checkbox, value):
+        """Active/désactive le mode e-ink depuis les préférences (legacy)"""
+        global EINK_MODE
+        EINK_MODE = value
+        prefs_manager.set('eink_mode', value)
+        self.pcb_view._redraw()
         self.component_list.refresh_display()
     
     def _on_group_toggle(self, checkbox, value):
-        """Active/désactive le groupement depuis les préférences"""
+        """Active/désactive le groupement depuis les préférences (legacy)"""
         if self.component_list.group_by_value != value:
             self.component_list.toggle_grouping()
-            # Mettre à jour aussi le bouton Grp dans la barre de filtres
             self.group_btn.state = 'down' if value else 'normal'
         prefs_manager.set('group_by_value', value)
     
     def _on_highlight_toggle(self, checkbox, value):
-        """Active/désactive le highlight auto sur PCB"""
+        """Active/désactive le highlight auto sur PCB (legacy)"""
         self.auto_highlight = value
         prefs_manager.set('auto_highlight', value)
         if not value:
@@ -2408,21 +2541,52 @@ class IBomSelectorApp(App):
         )
     
     def _show_file_chooser_popup(self, title, filters, callback):
-        """Affiche un popup de sélection de fichier"""
-        content = BoxLayout(orientation='vertical', spacing=dp(5))
+        """Affiche un popup de sélection de fichier avec couleurs adaptées"""
+        global EINK_MODE
+        theme = get_theme_colors()
+        
+        # Container principal avec fond
+        content = BoxLayout(orientation='vertical', spacing=dp(5), padding=dp(5))
+        with content.canvas.before:
+            Color(*theme['bg_primary'])
+            self._fc_bg = Rectangle(pos=content.pos, size=content.size)
+        content.bind(
+            pos=lambda w, p: setattr(self._fc_bg, 'pos', p),
+            size=lambda w, s: setattr(self._fc_bg, 'size', s)
+        )
+        
+        # En-tête avec titre
+        header = BoxLayout(size_hint_y=None, height=dp(35))
+        title_lbl = Label(
+            text=title,
+            font_size=dp(14),
+            bold=True,
+            color=theme['text_primary']
+        )
+        header.add_widget(title_lbl)
+        content.add_widget(header)
         
         # Sélecteur de chemin de départ
         storage_paths = get_storage_paths()
         if storage_paths:
             path_layout = BoxLayout(size_hint_y=None, height=dp(40))
-            path_layout.add_widget(Label(text='Emplacement:', size_hint_x=0.3, font_size=dp(11)))
+            path_lbl = Label(
+                text='Emplacement:',
+                size_hint_x=0.3,
+                font_size=dp(12),
+                color=theme['text_primary']
+            )
+            path_layout.add_widget(path_lbl)
             
             path_names = [name for name, path in storage_paths]
             path_spinner = Spinner(
                 text=path_names[0] if path_names else 'Home',
                 values=path_names,
                 size_hint_x=0.7,
-                font_size=dp(11)
+                font_size=dp(12),
+                background_normal='',
+                background_color=theme['bg_button'],
+                color=theme['text_primary']
             )
             path_layout.add_widget(path_spinner)
             content.add_widget(path_layout)
@@ -2431,13 +2595,25 @@ class IBomSelectorApp(App):
         else:
             initial_path = str(Path.home())
         
-        # FileChooser - SANS filtre pour voir tous les fichiers
+        # FileChooser avec style personnalisé
         file_chooser = FileChooserListView(
             path=initial_path,
             filters=filters,
             filter_dirs=True,
-            size_hint_y=0.8
+            size_hint_y=0.75
         )
+        
+        # Appliquer les couleurs au FileChooser en mode e-ink
+        if EINK_MODE:
+            # Forcer le fond blanc
+            with file_chooser.canvas.before:
+                Color(*theme['bg_primary'])
+                self._fc_list_bg = Rectangle(pos=file_chooser.pos, size=file_chooser.size)
+            file_chooser.bind(
+                pos=lambda w, p: setattr(self._fc_list_bg, 'pos', p),
+                size=lambda w, s: setattr(self._fc_list_bg, 'size', s)
+            )
+        
         content.add_widget(file_chooser)
         
         # Mettre à jour le path quand on change d'emplacement
@@ -2450,8 +2626,14 @@ class IBomSelectorApp(App):
             path_spinner.bind(text=on_path_change)
         
         # Info chemin actuel
-        path_label = Label(text=f'Chemin: {initial_path}', size_hint_y=None, height=dp(25), 
-                          font_size=dp(9), halign='left')
+        path_label = Label(
+            text=f'Chemin: {initial_path}',
+            size_hint_y=None,
+            height=dp(25),
+            font_size=dp(10),
+            halign='left',
+            color=theme['text_secondary']
+        )
         path_label.bind(size=path_label.setter('text_size'))
         
         def update_path_label(*args):
@@ -2459,17 +2641,38 @@ class IBomSelectorApp(App):
         file_chooser.bind(path=update_path_label)
         content.add_widget(path_label)
         
-        # Boutons
-        buttons = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(10))
+        # Boutons avec style
+        buttons = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
         
-        select_btn = Button(text='Sélectionner', font_size=dp(12))
-        cancel_btn = Button(text='Annuler', font_size=dp(12))
+        select_btn = Button(
+            text='Selectionner',
+            font_size=dp(14),
+            bold=True,
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
+        cancel_btn = Button(
+            text='Annuler',
+            font_size=dp(14),
+            bold=True,
+            background_normal='',
+            background_color=theme['bg_button'],
+            color=theme['text_primary']
+        )
         
         buttons.add_widget(select_btn)
         buttons.add_widget(cancel_btn)
         content.add_widget(buttons)
         
-        popup = Popup(title=title, content=content, size_hint=(0.95, 0.9))
+        popup = Popup(
+            title='',
+            content=content,
+            size_hint=(0.95, 0.9),
+            separator_height=0,
+            background='',
+            background_color=theme['bg_primary']
+        )
         
         def on_select(btn):
             if file_chooser.selection:
