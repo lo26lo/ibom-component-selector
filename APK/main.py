@@ -1006,16 +1006,37 @@ class ComponentRow(BoxLayout):
         if len(ref_text) > 15:
             ref_text = ref_text[:12] + '...'
         
-        # Infos avec labels tronqués
-        self.add_widget(Label(text=ref_text, size_hint_x=0.12, font_size=dp(11), shorten=True, shorten_from='right'))
-        self.add_widget(Label(text=component.get('value', '')[:10], size_hint_x=0.2, font_size=dp(11), shorten=True))
-        self.add_widget(Label(text=component.get('footprint', '')[:10], size_hint_x=0.25, font_size=dp(10), shorten=True))
-        self.add_widget(Label(text=component.get('lcsc', ''), size_hint_x=0.2, font_size=dp(11)))
-        self.add_widget(Label(text=component.get('layer', ''), size_hint_x=0.08, font_size=dp(11)))
+        # Couleur du texte selon le mode
+        text_color = (0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
+        
+        # Infos avec labels tronqués - stocker les références pour mise à jour
+        self.labels = []
+        
+        lbl_ref = Label(text=ref_text, size_hint_x=0.12, font_size=dp(11), shorten=True, shorten_from='right', color=text_color)
+        self.labels.append(lbl_ref)
+        self.add_widget(lbl_ref)
+        
+        lbl_value = Label(text=component.get('value', '')[:10], size_hint_x=0.2, font_size=dp(11), shorten=True, color=text_color)
+        self.labels.append(lbl_value)
+        self.add_widget(lbl_value)
+        
+        lbl_footprint = Label(text=component.get('footprint', '')[:10], size_hint_x=0.25, font_size=dp(10), shorten=True, color=text_color)
+        self.labels.append(lbl_footprint)
+        self.add_widget(lbl_footprint)
+        
+        lbl_lcsc = Label(text=component.get('lcsc', ''), size_hint_x=0.2, font_size=dp(11), color=text_color)
+        self.labels.append(lbl_lcsc)
+        self.add_widget(lbl_lcsc)
+        
+        lbl_layer = Label(text=component.get('layer', ''), size_hint_x=0.08, font_size=dp(11), color=text_color)
+        self.labels.append(lbl_layer)
+        self.add_widget(lbl_layer)
         
         # Quantité (pour les groupes)
         qty = component.get('qty', 1)
-        self.add_widget(Label(text=str(qty) if qty > 1 else '', size_hint_x=0.07, font_size=dp(11)))
+        lbl_qty = Label(text=str(qty) if qty > 1 else '', size_hint_x=0.07, font_size=dp(11), color=text_color)
+        self.labels.append(lbl_qty)
+        self.add_widget(lbl_qty)
     
     def on_touch_down(self, touch):
         """Double-tap pour basculer, appui long pour détails"""
@@ -1124,6 +1145,15 @@ class ComponentRow(BoxLayout):
                 self._bg_color.rgba = (1, 1, 1, 1)  # Blanc
             else:
                 self._bg_color.rgba = (0.15, 0.15, 0.2, 1)  # Normal
+        # Mettre à jour aussi la couleur du texte
+        self._update_label_colors()
+    
+    def _update_label_colors(self):
+        """Met à jour la couleur du texte des labels selon le mode e-ink"""
+        global EINK_MODE
+        text_color = (0, 0, 0, 1) if EINK_MODE else (1, 1, 1, 1)
+        for label in self.labels:
+            label.color = text_color
     
     def set_processed(self, value):
         self.checkbox.active = value
@@ -1488,9 +1518,9 @@ class IBomSelectorApp(App):
         export_btn.bind(on_press=self.show_export_popup)
         self.toolbar.add_widget(export_btn)
         
-        self.eink_btn = Button(text='📟', size_hint_x=0.14, font_size=dp(14))
-        self.eink_btn.bind(on_press=self.toggle_eink_mode)
-        self.toolbar.add_widget(self.eink_btn)
+        self.settings_btn = Button(text='⚙️', size_hint_x=0.14, font_size=dp(14))
+        self.settings_btn.bind(on_press=self.show_preferences_popup)
+        self.toolbar.add_widget(self.settings_btn)
         
         # === Zone PCB ===
         self.pcb_view = PCBView()
@@ -1696,22 +1726,101 @@ class IBomSelectorApp(App):
         """Active/désactive le groupement"""
         self.component_list.toggle_grouping()
     
-    def toggle_eink_mode(self, instance):
-        """Active/désactive le mode e-ink (haut contraste)"""
+    def show_preferences_popup(self, instance):
+        """Affiche le popup des préférences"""
         global EINK_MODE
-        EINK_MODE = not EINK_MODE
         
-        # Met à jour le bouton
-        if EINK_MODE:
-            self.eink_btn.text = '🌙'  # Icône pour mode actif
-        else:
-            self.eink_btn.text = '📟'  # Icône pour mode inactif
+        content = BoxLayout(orientation='vertical', padding=dp(15), spacing=dp(15))
+        
+        # Titre
+        title_lbl = Label(
+            text='Préférences',
+            font_size=dp(18),
+            size_hint_y=None,
+            height=dp(40),
+            bold=True
+        )
+        content.add_widget(title_lbl)
+        
+        # Option Mode E-Ink
+        eink_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        eink_lbl = Label(
+            text='Mode E-Ink\n(haut contraste)',
+            font_size=dp(12),
+            halign='left',
+            valign='middle',
+            size_hint_x=0.7
+        )
+        eink_lbl.bind(size=lambda *x: setattr(eink_lbl, 'text_size', eink_lbl.size))
+        eink_row.add_widget(eink_lbl)
+        
+        self.eink_checkbox = CheckBox(active=EINK_MODE, size_hint_x=0.3)
+        self.eink_checkbox.bind(active=self._on_eink_toggle)
+        eink_row.add_widget(self.eink_checkbox)
+        content.add_widget(eink_row)
+        
+        # Séparateur visuel
+        content.add_widget(Widget(size_hint_y=None, height=dp(10)))
+        
+        # Option Grouper par valeur
+        group_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        group_lbl = Label(
+            text='Grouper composants\npar valeur/footprint',
+            font_size=dp(12),
+            halign='left',
+            valign='middle',
+            size_hint_x=0.7
+        )
+        group_lbl.bind(size=lambda *x: setattr(group_lbl, 'text_size', group_lbl.size))
+        group_row.add_widget(group_lbl)
+        
+        group_checkbox = CheckBox(
+            active=self.component_list.group_by_value,
+            size_hint_x=0.3
+        )
+        group_checkbox.bind(active=self._on_group_toggle)
+        group_row.add_widget(group_checkbox)
+        content.add_widget(group_row)
+        
+        # Spacer
+        content.add_widget(Widget(size_hint_y=1))
+        
+        # Bouton Fermer
+        close_btn = Button(
+            text='Fermer',
+            size_hint_y=None,
+            height=dp(45),
+            font_size=dp(14)
+        )
+        content.add_widget(close_btn)
+        
+        self._prefs_popup = Popup(
+            title='',
+            content=content,
+            size_hint=(0.85, 0.55),
+            auto_dismiss=True,
+            separator_height=0
+        )
+        close_btn.bind(on_press=lambda x: self._prefs_popup.dismiss())
+        self._prefs_popup.open()
+    
+    def _on_eink_toggle(self, checkbox, value):
+        """Active/désactive le mode e-ink depuis les préférences"""
+        global EINK_MODE
+        EINK_MODE = value
         
         # Rafraîchit le PCB
         self.pcb_view._redraw()
         
         # Rafraîchit les lignes de composants
         self.component_list.refresh_display()
+    
+    def _on_group_toggle(self, checkbox, value):
+        """Active/désactive le groupement depuis les préférences"""
+        if self.component_list.group_by_value != value:
+            self.component_list.toggle_grouping()
+            # Mettre à jour aussi le bouton Grp dans la barre de filtres
+            self.group_btn.state = 'down' if value else 'normal'
     
     def update_processed_count(self):
         """Met à jour le compteur de composants traités"""
