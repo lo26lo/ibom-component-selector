@@ -12,12 +12,12 @@ import {
   Alert,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useTheme } from '../../theme';
-import { useAppStore, usePreferencesStore, useHistoryStore } from '../../store';
-import { useHaptic } from '../../hooks';
-import { PCBView } from '../PCBView';
-import { ComponentList } from '../ComponentList';
-import { ThemedButton, ProgressBar } from '../common';
+import { useTheme } from '../theme';
+import { useAppStore, usePreferencesStore, useHistoryStore } from '../store';
+import { useHaptic } from '../hooks';
+import { PCBView } from '../components/PCBView';
+import { ComponentList } from '../components/ComponentList';
+import { ThemedButton, ProgressBar } from '../components/common';
 import {
   PreferencesModal,
   HistoryModal,
@@ -25,9 +25,9 @@ import {
   ExportModal,
   ComponentDetailModal,
   FilePicker,
-} from '../Modals';
-import { spacing } from '../../theme/spacing';
-import type { Component } from '../../core/types';
+} from '../components/Modals';
+import { spacing } from '../theme/spacing';
+import type { Component } from '../core/types';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
