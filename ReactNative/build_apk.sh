@@ -110,6 +110,49 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
         react-native-haptic-feedback \
         react-native-device-info
     
+    # Configurer Babel pour react-native-reanimated
+    echo "      Configuration de Babel pour reanimated..."
+    cat > babel.config.js << 'BABELEOF'
+module.exports = {
+  presets: ['module:@react-native/babel-preset'],
+  plugins: ['react-native-reanimated/plugin'],
+};
+BABELEOF
+
+    # Configurer settings.gradle pour résoudre les dépendances
+    echo "      Configuration de Gradle..."
+    cat > android/settings.gradle << 'SETTINGSEOF'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+}
+
+rootProject.name = 'IBomSelectorBuild'
+include ':app'
+
+// Include react-native modules
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+applyNativeModulesSettingsGradle(settings)
+SETTINGSEOF
+
+    # Configurer build.gradle pour reanimated
+    echo "      Configuration build.gradle..."
+    
+    # Ajouter la configuration Hermes pour reanimated dans gradle.properties
+    echo "reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64" >> android/gradle.properties
+    
     echo "      ✓ Projet React Native créé"
 else
     echo "      ✓ Projet React Native existant trouvé"
@@ -158,6 +201,24 @@ if ! grep -q "READ_EXTERNAL_STORAGE" "$MANIFEST_FILE"; then
     sed -i 's/<uses-permission android:name="android.permission.INTERNET" \/>/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" \/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>/g' "$MANIFEST_FILE"
 fi
 
+# S'assurer que proguard ne supprime pas reanimated
+PROGUARD_FILE="android/app/proguard-rules.pro"
+if ! grep -q "reanimated" "$PROGUARD_FILE" 2>/dev/null; then
+    cat >> "$PROGUARD_FILE" << 'PROGUARDEOF'
+
+# React Native Reanimated
+-keep class com.swmansion.reanimated.** { *; }
+-keep class com.facebook.react.turbomodule.** { *; }
+PROGUARDEOF
+fi
+
+# Configurer MainApplication.kt pour reanimated si nécessaire
+MAIN_APP_FILE="android/app/src/main/java/com/ibomselectorbuild/MainApplication.kt"
+if [ -f "$MAIN_APP_FILE" ] && ! grep -q "reanimated" "$MAIN_APP_FILE"; then
+    # Le plugin react-native-reanimated configure automatiquement avec autolinking
+    echo "      ✓ Reanimated configuré via autolinking"
+fi
+
 echo "      ✓ Application configurée"
 
 # ============================================
@@ -167,7 +228,24 @@ echo -e "${YELLOW}[5/6] Build APK Release...${NC}"
 
 cd android
 chmod +x gradlew
-./gradlew assembleRelease
+
+# Nettoyer le cache si demandé
+if [ "$1" == "--clean" ] || [ "$2" == "--clean" ]; then
+    echo "      Nettoyage du cache Gradle..."
+    ./gradlew clean
+fi
+
+# Build avec gestion d'erreur détaillée
+echo "      Compilation en cours (peut prendre plusieurs minutes)..."
+if ! ./gradlew assembleRelease --stacktrace; then
+    echo -e "${RED}❌ Erreur lors du build${NC}"
+    echo ""
+    echo "Essayez:"
+    echo "  1. ./build_apk.sh --clean"
+    echo "  2. Vérifiez que Java 17 est installé: java --version"
+    echo "  3. Supprimez ~/.gradle/caches et réessayez"
+    exit 1
+fi
 
 # ============================================
 # [6/6] Copier l'APK
