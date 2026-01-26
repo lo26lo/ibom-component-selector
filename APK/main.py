@@ -1255,7 +1255,7 @@ class ComponentList(BoxLayout):
         
         # En-tête fixe avec boutons de tri
         self.header = BoxLayout(size_hint_y=None, height=dp(35))
-        self.header.add_widget(Label(text='✓', size_hint_x=0.08, font_size=dp(10)))
+        self.header.add_widget(Label(text='Ok', size_hint_x=0.08, font_size=dp(10)))
         
         for col, text, size in [('ref', 'Ref ⏷', 0.12), ('value', 'Valeur', 0.2), 
                                  ('footprint', 'Footprint', 0.25), ('lcsc', 'LCSC', 0.2),
@@ -1498,27 +1498,27 @@ class IBomSelectorApp(App):
         # === Barre d'outils principale ===
         self.toolbar = BoxLayout(size_hint_y=None, height=dp(45), spacing=dp(3))
         
-        load_btn = Button(text='📂 HTML', size_hint_x=0.20, font_size=dp(12))
+        load_btn = Button(text='HTML', size_hint_x=0.18, font_size=dp(12))
         load_btn.bind(on_press=self.show_file_chooser)
         self.toolbar.add_widget(load_btn)
         
-        lcsc_btn = Button(text='📋 LCSC', size_hint_x=0.20, font_size=dp(12))
+        lcsc_btn = Button(text='LCSC', size_hint_x=0.18, font_size=dp(12))
         lcsc_btn.bind(on_press=self.show_lcsc_file_chooser)
         self.toolbar.add_widget(lcsc_btn)
         
-        history_btn = Button(text='📜 Hist.', size_hint_x=0.16, font_size=dp(12))
+        history_btn = Button(text='Hist.', size_hint_x=0.14, font_size=dp(12))
         history_btn.bind(on_press=self.show_history_popup)
         self.toolbar.add_widget(history_btn)
         
-        save_btn = Button(text='💾', size_hint_x=0.10, font_size=dp(14))
+        save_btn = Button(text='Save', size_hint_x=0.14, font_size=dp(12))
         save_btn.bind(on_press=self.save_selection)
         self.toolbar.add_widget(save_btn)
         
-        export_btn = Button(text='📤 Exp', size_hint_x=0.20, font_size=dp(12))
+        export_btn = Button(text='Exp', size_hint_x=0.14, font_size=dp(12))
         export_btn.bind(on_press=self.show_export_popup)
         self.toolbar.add_widget(export_btn)
         
-        self.settings_btn = Button(text='⚙️', size_hint_x=0.14, font_size=dp(14))
+        self.settings_btn = Button(text='[=]', size_hint_x=0.12, font_size=dp(12))
         self.settings_btn.bind(on_press=self.show_preferences_popup)
         self.toolbar.add_widget(self.settings_btn)
         
@@ -1537,7 +1537,7 @@ class IBomSelectorApp(App):
         zoom_out_btn.bind(on_press=lambda x: self.pcb_view.zoom_out())
         self.zoom_layout.add_widget(zoom_out_btn)
         
-        reset_btn = Button(text='⟲', font_size=dp(18))
+        reset_btn = Button(text='R', font_size=dp(16))
         reset_btn.bind(on_press=lambda x: self.pcb_view.reset_view())
         self.zoom_layout.add_widget(reset_btn)
         
@@ -1558,11 +1558,11 @@ class IBomSelectorApp(App):
         self.layer_spinner.bind(text=self.on_layer_filter_change)
         self.filter_layout.add_widget(self.layer_spinner)
         
-        self.filter_layout.add_widget(Label(text='🔍', size_hint_x=0.08, font_size=dp(12)))
+        # Champ de recherche (sans icône emoji)
         self.search_input = TextInput(
             hint_text='Rechercher...',
             multiline=False,
-            size_hint_x=0.35,
+            size_hint_x=0.40,
             font_size=dp(11)
         )
         self.search_input.bind(text=self.on_search_change)
@@ -1572,7 +1572,7 @@ class IBomSelectorApp(App):
         self.group_btn.bind(on_press=self.toggle_grouping)
         self.filter_layout.add_widget(self.group_btn)
         
-        clear_btn = Button(text='✕', size_hint_x=0.08, font_size=dp(12))
+        clear_btn = Button(text='X', size_hint_x=0.08, font_size=dp(12))
         clear_btn.bind(on_press=lambda x: setattr(self.search_input, 'text', ''))
         self.filter_layout.add_widget(clear_btn)
         
@@ -1585,11 +1585,11 @@ class IBomSelectorApp(App):
         self.processed_label = Label(text='Traités: 0/0', size_hint_x=0.25, font_size=dp(10))
         self.info_layout.add_widget(self.processed_label)
         
-        mark_all_btn = Button(text='✓All', size_hint_x=0.15, font_size=dp(10))
+        mark_all_btn = Button(text='All', size_hint_x=0.15, font_size=dp(10))
         mark_all_btn.bind(on_press=lambda x: self.component_list.mark_all_processed(True))
         self.info_layout.add_widget(mark_all_btn)
         
-        clear_proc_btn = Button(text='↻', size_hint_x=0.1, font_size=dp(14))
+        clear_proc_btn = Button(text='Clr', size_hint_x=0.1, font_size=dp(10))
         clear_proc_btn.bind(on_press=self.clear_processed)
         self.info_layout.add_widget(clear_proc_btn)
         
@@ -1730,26 +1730,52 @@ class IBomSelectorApp(App):
         """Affiche le popup des préférences"""
         global EINK_MODE
         
+        # Couleurs selon le mode
+        if EINK_MODE:
+            bg_color = (1, 1, 1, 1)  # Blanc
+            text_color = (0, 0, 0, 1)  # Noir
+            btn_bg = (0.85, 0.85, 0.85, 1)  # Gris clair
+        else:
+            bg_color = (0.15, 0.15, 0.2, 1)  # Sombre
+            text_color = (1, 1, 1, 1)  # Blanc
+            btn_bg = (0.3, 0.3, 0.4, 1)  # Gris foncé
+        
+        # Container principal avec fond
         content = BoxLayout(orientation='vertical', padding=dp(15), spacing=dp(15))
+        with content.canvas.before:
+            Color(*bg_color)
+            self._prefs_bg_rect = Rectangle(pos=content.pos, size=content.size)
+        content.bind(pos=self._update_prefs_bg, size=self._update_prefs_bg)
         
         # Titre
         title_lbl = Label(
-            text='Préférences',
+            text='Preferences',
             font_size=dp(18),
             size_hint_y=None,
             height=dp(40),
-            bold=True
+            bold=True,
+            color=text_color
         )
         content.add_widget(title_lbl)
         
+        # Ligne de séparation
+        sep = Widget(size_hint_y=None, height=dp(2))
+        with sep.canvas:
+            Color(0.5, 0.5, 0.5, 1)
+            self._sep_rect = Rectangle(pos=sep.pos, size=sep.size)
+        sep.bind(pos=lambda w, p: setattr(self._sep_rect, 'pos', p),
+                 size=lambda w, s: setattr(self._sep_rect, 'size', s))
+        content.add_widget(sep)
+        
         # Option Mode E-Ink
-        eink_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        eink_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
         eink_lbl = Label(
             text='Mode E-Ink\n(haut contraste)',
-            font_size=dp(12),
+            font_size=dp(13),
             halign='left',
             valign='middle',
-            size_hint_x=0.7
+            size_hint_x=0.7,
+            color=text_color
         )
         eink_lbl.bind(size=lambda *x: setattr(eink_lbl, 'text_size', eink_lbl.size))
         eink_row.add_widget(eink_lbl)
@@ -1759,17 +1785,15 @@ class IBomSelectorApp(App):
         eink_row.add_widget(self.eink_checkbox)
         content.add_widget(eink_row)
         
-        # Séparateur visuel
-        content.add_widget(Widget(size_hint_y=None, height=dp(10)))
-        
         # Option Grouper par valeur
-        group_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        group_row = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(10))
         group_lbl = Label(
             text='Grouper composants\npar valeur/footprint',
-            font_size=dp(12),
+            font_size=dp(13),
             halign='left',
             valign='middle',
-            size_hint_x=0.7
+            size_hint_x=0.7,
+            color=text_color
         )
         group_lbl.bind(size=lambda *x: setattr(group_lbl, 'text_size', group_lbl.size))
         group_row.add_widget(group_lbl)
@@ -1789,20 +1813,31 @@ class IBomSelectorApp(App):
         close_btn = Button(
             text='Fermer',
             size_hint_y=None,
-            height=dp(45),
-            font_size=dp(14)
+            height=dp(50),
+            font_size=dp(14),
+            background_color=btn_bg,
+            color=text_color
         )
         content.add_widget(close_btn)
         
         self._prefs_popup = Popup(
             title='',
             content=content,
-            size_hint=(0.85, 0.55),
+            size_hint=(0.85, 0.5),
             auto_dismiss=True,
-            separator_height=0
+            separator_height=0,
+            background_color=(0, 0, 0, 0)  # Transparent pour utiliser notre fond
         )
         close_btn.bind(on_press=lambda x: self._prefs_popup.dismiss())
         self._prefs_popup.open()
+    
+    def _update_prefs_bg(self, *args):
+        """Met à jour le fond du popup préférences"""
+        if hasattr(self, '_prefs_bg_rect'):
+            content = args[0] if args else None
+            if content:
+                self._prefs_bg_rect.pos = content.pos
+                self._prefs_bg_rect.size = content.size
     
     def _on_eink_toggle(self, checkbox, value):
         """Active/désactive le mode e-ink depuis les préférences"""
