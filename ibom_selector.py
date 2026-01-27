@@ -1524,8 +1524,14 @@ class IBomSelectorApp:
         self.history_file = None
         self.current_history_index = None
         self.current_item_index = 0  # Pour navigation
-        self.view_mode = 'normal'  # 'normal', 'split', 'pcb_only'
-        self.split_window = None  # Fenêtre split
+        self.view_mode = 'split'  # 'split', 'list', 'pcb'
+        self.highlighted_refs = set()  # Pour highlight PCB
+        self.pcb_scale = 1.0
+        self.pcb_offset_x = 50
+        self.pcb_offset_y = 50
+        self.show_pads_var = None
+        self.show_tracks_var = None
+        self.show_silk_var = None
         
         # Variables
         self.layer_filter = tk.StringVar(value="all")
@@ -1575,7 +1581,10 @@ class IBomSelectorApp:
         
         tk.Button(header_frame, text="🌙 Thème", command=self._toggle_theme, **btn_style).pack(side=tk.RIGHT, padx=5)
         tk.Button(header_frame, text="⚙️ Options", command=self._show_options, **btn_style).pack(side=tk.RIGHT, padx=5)
-        tk.Button(header_frame, text="📐 Split PCB/Liste", command=self._open_split_view, **btn_style).pack(side=tk.RIGHT, padx=5)
+        
+        self.view_mode_btn = tk.Button(header_frame, text="📱 SPLIT", command=self._toggle_view_mode, 
+                                       width=10, **btn_style)
+        self.view_mode_btn.pack(side=tk.RIGHT, padx=5)
         
         # Frame pour le fichier
         file_frame = tk.LabelFrame(main_frame, text="Fichier HTML", 
@@ -1595,140 +1604,154 @@ class IBomSelectorApp:
         tk.Button(file_inner, text="Parcourir...", command=self._browse_file, **btn_style).pack(side=tk.LEFT, padx=2)
         tk.Button(file_inner, text="Charger", command=self._load_file, **btn_style).pack(side=tk.LEFT, padx=2)
         
-        # Frame PCB miniature + boutons
-        pcb_frame = tk.LabelFrame(main_frame, text="PCB - Cliquez pour sélectionner",
-                                  bg=self.theme['bg_secondary'], fg=self.theme['text_primary'],
-                                  font=('Segoe UI', 10, 'bold'))
-        pcb_frame.pack(fill=tk.X, pady=10)
+        # Barre d'actions rapides
+        action_bar = tk.Frame(main_frame, bg=self.theme['bg_secondary'])
+        action_bar.pack(fill=tk.X, pady=5)
         
-        pcb_inner = tk.Frame(pcb_frame, bg=self.theme['bg_secondary'])
-        pcb_inner.pack(fill=tk.X, padx=10, pady=10)
+        self.clear_btn = tk.Button(action_bar, text="Effacer sélection", command=self._clear_selection,
+                                   state=tk.DISABLED, width=15, **btn_style)
+        self.clear_btn.pack(side=tk.LEFT, padx=5)
         
-        # Canvas miniature
-        self.pcb_canvas = tk.Canvas(pcb_inner, width=750, height=200, bg=self.theme['pcb_board'],
-                                     highlightthickness=1, highlightbackground=self.theme['border'])
-        self.pcb_canvas.pack(side=tk.LEFT, pady=5)
-        self.pcb_canvas.bind('<Button-1>', self._on_pcb_click)
-        self.pcb_canvas.create_text(375, 100, text="Chargez un fichier pour voir le PCB",
-                                    fill=self.theme['text_secondary'], font=('Segoe UI', 12))
+        self.export_btn = tk.Button(action_bar, text="Exporter Excel", command=self._export_excel,
+                                    state=tk.DISABLED, width=12, **btn_style)
+        self.export_btn.pack(side=tk.LEFT, padx=5)
         
-        # Boutons à droite du PCB
-        btn_side_frame = tk.Frame(pcb_inner, bg=self.theme['bg_secondary'])
-        btn_side_frame.pack(side=tk.LEFT, fill=tk.Y, padx=20)
-        
-        self.clear_btn = tk.Button(btn_side_frame, text="Effacer sélection", command=self._clear_selection,
-                                   state=tk.DISABLED, width=18, **btn_style)
-        self.clear_btn.pack(pady=5)
-        
-        self.export_btn = tk.Button(btn_side_frame, text="Exporter Excel", command=self._export_excel,
-                                    state=tk.DISABLED, width=18, **btn_style)
-        self.export_btn.pack(pady=5)
-        
-        self.export_csv_btn = tk.Button(btn_side_frame, text="Exporter CSV", command=self._export_csv,
-                                        state=tk.DISABLED, width=18, **btn_style)
-        self.export_csv_btn.pack(pady=5)
+        self.export_csv_btn = tk.Button(action_bar, text="Exporter CSV", command=self._export_csv,
+                                        state=tk.DISABLED, width=12, **btn_style)
+        self.export_csv_btn.pack(side=tk.LEFT, padx=5)
         
         self.status_var = tk.StringVar(value="Chargez un fichier HTML pour commencer")
-        tk.Label(btn_side_frame, textvariable=self.status_var, font=('Segoe UI', 9),
-                bg=self.theme['bg_secondary'], fg=self.theme['text_secondary'],
-                wraplength=150).pack(pady=15)
+        tk.Label(action_bar, textvariable=self.status_var, font=('Segoe UI', 9),
+                bg=self.theme['bg_secondary'], fg=self.theme['text_secondary']).pack(side=tk.LEFT, padx=20)
         
         # Barre de progression
-        progress_frame = tk.Frame(main_frame, bg=self.theme['bg_primary'])
-        progress_frame.pack(fill=tk.X, pady=5)
+        tk.Label(action_bar, text="Progression:", bg=self.theme['bg_secondary'],
+                fg=self.theme['text_primary'], font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(20, 5))
         
-        tk.Label(progress_frame, text="Progression:", bg=self.theme['bg_primary'],
-                fg=self.theme['text_primary'], font=('Segoe UI', 9)).pack(side=tk.LEFT)
-        
-        self.progress_canvas = tk.Canvas(progress_frame, height=20, bg=self.theme['progress_bg'],
+        self.progress_canvas = tk.Canvas(action_bar, width=200, height=18, bg=self.theme['progress_bg'],
                                          highlightthickness=0)
-        self.progress_canvas.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)
+        self.progress_canvas.pack(side=tk.LEFT, padx=5)
         
-        self.progress_label = tk.Label(progress_frame, text="0%", bg=self.theme['bg_primary'],
+        self.progress_label = tk.Label(action_bar, text="0%", bg=self.theme['bg_secondary'],
                                        fg=self.theme['text_primary'], font=('Segoe UI', 9, 'bold'))
         self.progress_label.pack(side=tk.LEFT)
         
-        # Frame historique
-        history_frame = tk.LabelFrame(main_frame, text="Historique",
-                                      bg=self.theme['bg_secondary'], fg=self.theme['text_primary'],
-                                      font=('Segoe UI', 10, 'bold'))
-        history_frame.pack(fill=tk.X, pady=5)
+        # ========== CONTENU PRINCIPAL: PanedWindow PCB/Liste ==========
+        self.content_paned = tk.PanedWindow(main_frame, orient=tk.VERTICAL, bg=self.theme['bg_primary'],
+                                           sashwidth=6, sashrelief=tk.RAISED)
+        self.content_paned.pack(fill=tk.BOTH, expand=True, pady=5)
         
-        history_inner = tk.Frame(history_frame, bg=self.theme['bg_secondary'])
-        history_inner.pack(fill=tk.X, padx=10, pady=5)
+        # ----- Panneau PCB -----
+        self.pcb_frame = tk.LabelFrame(self.content_paned, text="PCB (clic = sélection zone, sélection liste = highlight)",
+                                       bg=self.theme['bg_secondary'], fg=self.theme['text_primary'],
+                                       font=('Segoe UI', 10, 'bold'))
+        self.content_paned.add(self.pcb_frame, height=350)
         
-        self.history_var = tk.StringVar()
-        self.history_combo = ttk.Combobox(history_inner, textvariable=self.history_var, 
-                                           state='readonly', width=50)
-        self.history_combo.pack(side=tk.LEFT, padx=5)
+        # Toolbar PCB
+        pcb_toolbar = tk.Frame(self.pcb_frame, bg=self.theme['bg_secondary'])
+        pcb_toolbar.pack(fill=tk.X, padx=5, pady=2)
         
-        tk.Button(history_inner, text="Charger", command=self._load_history_selection, width=10, **btn_style).pack(side=tk.LEFT, padx=2)
-        tk.Button(history_inner, text="Sauvegarder", command=self._save_current_to_history, width=12, **btn_style).pack(side=tk.LEFT, padx=2)
-        tk.Button(history_inner, text="Supprimer", command=self._delete_history_selection, width=10, **btn_style).pack(side=tk.LEFT, padx=2)
+        self.show_pads_var = tk.BooleanVar(value=True)
+        self.show_tracks_var = tk.BooleanVar(value=True)
+        self.show_silk_var = tk.BooleanVar(value=True)
         
-        # Frame filtres
-        filter_frame = tk.LabelFrame(main_frame, text="Filtres",
-                                     bg=self.theme['bg_secondary'], fg=self.theme['text_primary'],
-                                     font=('Segoe UI', 10, 'bold'))
-        filter_frame.pack(fill=tk.X, pady=5)
+        tk.Checkbutton(pcb_toolbar, text="Pads", variable=self.show_pads_var,
+                       command=self._draw_main_pcb, bg=self.theme['bg_secondary'],
+                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
+                       ).pack(side=tk.LEFT, padx=5)
+        tk.Checkbutton(pcb_toolbar, text="Tracks", variable=self.show_tracks_var,
+                       command=self._draw_main_pcb, bg=self.theme['bg_secondary'],
+                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
+                       ).pack(side=tk.LEFT, padx=5)
+        tk.Checkbutton(pcb_toolbar, text="Silk", variable=self.show_silk_var,
+                       command=self._draw_main_pcb, bg=self.theme['bg_secondary'],
+                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
+                       ).pack(side=tk.LEFT, padx=5)
         
-        filter_inner = tk.Frame(filter_frame, bg=self.theme['bg_secondary'])
-        filter_inner.pack(fill=tk.X, padx=10, pady=5)
+        tk.Button(pcb_toolbar, text="Reset", command=self._reset_pcb_view, width=6, **btn_style).pack(side=tk.RIGHT, padx=2)
+        tk.Button(pcb_toolbar, text="Zoom -", command=self._zoom_out_pcb, width=6, **btn_style).pack(side=tk.RIGHT, padx=2)
+        tk.Button(pcb_toolbar, text="Zoom +", command=self._zoom_in_pcb, width=6, **btn_style).pack(side=tk.RIGHT, padx=2)
         
-        # Filtre couche
-        tk.Label(filter_inner, text="Couche:", bg=self.theme['bg_secondary'],
-                fg=self.theme['text_primary']).pack(side=tk.LEFT)
+        # Légende
+        tk.Label(pcb_toolbar, text="●", fg=self.theme['pad_front'], bg=self.theme['bg_secondary'],
+                font=('Segoe UI', 10)).pack(side=tk.RIGHT, padx=(10, 0))
+        tk.Label(pcb_toolbar, text="Front", fg=self.theme['text_secondary'], bg=self.theme['bg_secondary'],
+                font=('Segoe UI', 8)).pack(side=tk.RIGHT)
+        tk.Label(pcb_toolbar, text="●", fg=self.theme['pad_back'], bg=self.theme['bg_secondary'],
+                font=('Segoe UI', 10)).pack(side=tk.RIGHT, padx=(10, 0))
+        tk.Label(pcb_toolbar, text="Back", fg=self.theme['text_secondary'], bg=self.theme['bg_secondary'],
+                font=('Segoe UI', 8)).pack(side=tk.RIGHT)
+        tk.Label(pcb_toolbar, text="●", fg=self.theme['pad_highlight'], bg=self.theme['bg_secondary'],
+                font=('Segoe UI', 10)).pack(side=tk.RIGHT, padx=(10, 0))
+        tk.Label(pcb_toolbar, text="Sélection", fg=self.theme['text_secondary'], bg=self.theme['bg_secondary'],
+                font=('Segoe UI', 8)).pack(side=tk.RIGHT)
         
-        for text, value in [("Toutes", "all"), ("Front", "F"), ("Back", "B")]:
-            tk.Radiobutton(filter_inner, text=text, variable=self.layer_filter, value=value,
+        # Canvas PCB principal
+        self.pcb_canvas = tk.Canvas(self.pcb_frame, bg=self.theme['pcb_board'], highlightthickness=0)
+        self.pcb_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.pcb_canvas.bind('<Button-1>', self._on_pcb_click)
+        self.pcb_canvas.bind('<MouseWheel>', self._on_pcb_mousewheel)
+        self.pcb_canvas.bind('<Button-3>', self._on_pcb_pan_start)
+        self.pcb_canvas.bind('<B3-Motion>', self._on_pcb_pan_drag)
+        self.pcb_pan_start_x = None
+        self.pcb_pan_start_y = None
+        
+        # ----- Panneau Liste -----
+        self.list_frame = tk.LabelFrame(self.content_paned, text="Composants (double-clic = marquer fait)",
+                                        bg=self.theme['bg_secondary'], fg=self.theme['text_primary'],
+                                        font=('Segoe UI', 10, 'bold'))
+        self.content_paned.add(self.list_frame, height=350)
+        
+        # Toolbar Liste (filtres)
+        list_toolbar = tk.Frame(self.list_frame, bg=self.theme['bg_secondary'])
+        list_toolbar.pack(fill=tk.X, padx=5, pady=2)
+        
+        tk.Label(list_toolbar, text="Couche:", bg=self.theme['bg_secondary'],
+                fg=self.theme['text_primary'], font=('Segoe UI', 9)).pack(side=tk.LEFT)
+        for text, value in [("All", "all"), ("F", "F"), ("B", "B")]:
+            tk.Radiobutton(list_toolbar, text=text, variable=self.layer_filter, value=value,
                           command=self._apply_filters, bg=self.theme['bg_secondary'],
                           fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary'],
-                          activebackground=self.theme['bg_secondary']
-                          ).pack(side=tk.LEFT, padx=5)
+                          font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=2)
         
-        ttk.Separator(filter_inner, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
+        ttk.Separator(list_toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
         
-        # Filtre statut
-        tk.Label(filter_inner, text="Statut:", bg=self.theme['bg_secondary'],
-                fg=self.theme['text_primary']).pack(side=tk.LEFT)
-        
-        for text, value in [("Tous", "all"), ("Faits", "done"), ("À faire", "pending")]:
-            tk.Radiobutton(filter_inner, text=text, variable=self.status_filter, value=value,
+        tk.Label(list_toolbar, text="Statut:", bg=self.theme['bg_secondary'],
+                fg=self.theme['text_primary'], font=('Segoe UI', 9)).pack(side=tk.LEFT)
+        for text, value in [("Tous", "all"), ("✓", "done"), ("○", "pending")]:
+            tk.Radiobutton(list_toolbar, text=text, variable=self.status_filter, value=value,
                           command=self._apply_filters, bg=self.theme['bg_secondary'],
                           fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary'],
-                          activebackground=self.theme['bg_secondary']
-                          ).pack(side=tk.LEFT, padx=5)
+                          font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=2)
         
-        ttk.Separator(filter_inner, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
+        ttk.Separator(list_toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
         
-        # Recherche
-        tk.Label(filter_inner, text="Recherche:", bg=self.theme['bg_secondary'],
-                fg=self.theme['text_primary']).pack(side=tk.LEFT)
-        
-        self.search_entry = tk.Entry(filter_inner, textvariable=self.search_var, width=20,
+        self.search_entry = tk.Entry(list_toolbar, textvariable=self.search_var, width=15,
                                     bg=self.theme['bg_primary'], fg=self.theme['text_primary'],
-                                    insertbackground=self.theme['text_primary'])
-        self.search_entry.pack(side=tk.LEFT, padx=5)
+                                    insertbackground=self.theme['text_primary'], font=('Segoe UI', 9))
+        self.search_entry.pack(side=tk.LEFT, padx=2)
         self.search_var.trace('w', lambda *args: self._apply_filters())
         
-        tk.Button(filter_inner, text="✕", width=3, command=lambda: self.search_var.set(""), **btn_style).pack(side=tk.LEFT)
+        tk.Button(list_toolbar, text="✕", width=2, command=lambda: self.search_var.set(""),
+                 bg=self.theme['bg_tertiary'], fg=self.theme['text_primary'], relief=tk.FLAT
+                 ).pack(side=tk.LEFT, padx=2)
         
-        # Checkbox grouper
-        tk.Checkbutton(filter_inner, text="Grouper par valeur", variable=self.group_by_value_var,
+        tk.Checkbutton(list_toolbar, text="Grouper", variable=self.group_by_value_var,
                       command=self._apply_filters, bg=self.theme['bg_secondary'],
-                      fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
-                      ).pack(side=tk.LEFT, padx=15)
+                      fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary'],
+                      font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
         
-        # Stats
         self.stats_var = tk.StringVar()
-        tk.Label(filter_inner, textvariable=self.stats_var, bg=self.theme['bg_secondary'],
-                fg=self.theme['text_secondary'], font=('Segoe UI', 9, 'italic')).pack(side=tk.RIGHT)
+        tk.Label(list_toolbar, textvariable=self.stats_var, bg=self.theme['bg_secondary'],
+                fg=self.theme['text_secondary'], font=('Segoe UI', 8, 'italic')).pack(side=tk.RIGHT, padx=5)
         
-        # Liste des composants
-        list_frame = tk.LabelFrame(main_frame, text="Composants (double-clic pour marquer)",
-                                   bg=self.theme['bg_secondary'], fg=self.theme['text_primary'],
-                                   font=('Segoe UI', 10, 'bold'))
-        list_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        # Historique
+        self.history_var = tk.StringVar()
+        self.history_combo = ttk.Combobox(list_toolbar, textvariable=self.history_var, 
+                                           state='readonly', width=20, font=('Segoe UI', 8))
+        self.history_combo.pack(side=tk.RIGHT, padx=2)
+        tk.Label(list_toolbar, text="Hist:", bg=self.theme['bg_secondary'],
+                fg=self.theme['text_primary'], font=('Segoe UI', 8)).pack(side=tk.RIGHT)
         
         # Treeview
         style = ttk.Style()
@@ -1745,7 +1768,7 @@ class IBomSelectorApp:
         style.map('Treeview', background=[('selected', self.theme['accent'])])
         
         columns = ('done', 'qty', 'ref', 'value', 'footprint', 'lcsc')
-        self.tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=12)
+        self.tree = ttk.Treeview(self.list_frame, columns=columns, show='headings', height=10)
         
         self.tree.tag_configure('done', background=self.theme['row_done'])
         self.tree.tag_configure('pending', background=self.theme['row_pending'])
@@ -1767,41 +1790,278 @@ class IBomSelectorApp:
         
         self.tree.bind('<Double-1>', self._toggle_processed)
         self.tree.bind('<space>', self._toggle_processed)
+        self.tree.bind('<<TreeviewSelect>>', self._on_tree_select)
         
-        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.tree.yview)
+        scrollbar = ttk.Scrollbar(self.list_frame, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
         
-        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0), pady=10)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 10), pady=10)
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 5), pady=5)
         
-        # Boutons de navigation et actions
-        nav_frame = tk.Frame(main_frame, bg=self.theme['bg_primary'])
-        nav_frame.pack(fill=tk.X, pady=5)
+        # Boutons de navigation et actions en bas de la liste
+        nav_frame = tk.Frame(self.list_frame, bg=self.theme['bg_secondary'])
+        nav_frame.pack(fill=tk.X, padx=5, pady=2)
         
         # Navigation
         nav_btn_style = {'bg': self.theme['bg_tertiary'], 'fg': self.theme['text_primary'],
                         'activebackground': self.theme['accent'], 'activeforeground': '#ffffff',
-                        'relief': tk.FLAT, 'padx': 15, 'pady': 5, 'font': ('Segoe UI', 10)}
+                        'relief': tk.FLAT, 'padx': 10, 'pady': 2, 'font': ('Segoe UI', 9)}
         
-        tk.Button(nav_frame, text="◀ Précédent", command=self._navigate_prev, **nav_btn_style).pack(side=tk.LEFT, padx=5)
-        tk.Button(nav_frame, text="Suivant ▶", command=self._navigate_next, **nav_btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(nav_frame, text="◀ Préc", command=self._navigate_prev, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        tk.Button(nav_frame, text="Suiv ▶", command=self._navigate_next, **nav_btn_style).pack(side=tk.LEFT, padx=2)
         
-        ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=15)
+        ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
         
-        tk.Button(nav_frame, text="✓ Marquer fait", command=self._mark_selected_processed, **btn_style).pack(side=tk.LEFT, padx=5)
-        tk.Button(nav_frame, text="✗ Démarquer", command=self._unmark_selected_processed, **btn_style).pack(side=tk.LEFT, padx=5)
-        tk.Button(nav_frame, text="Tout démarquer", command=self._unmark_all_processed, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(nav_frame, text="✓ Fait", command=self._mark_selected_processed, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        tk.Button(nav_frame, text="✗ Défaire", command=self._unmark_selected_processed, **nav_btn_style).pack(side=tk.LEFT, padx=2)
         
-        self.nav_label = tk.Label(nav_frame, text="", bg=self.theme['bg_primary'],
-                                 fg=self.theme['text_secondary'], font=('Segoe UI', 10))
-        self.nav_label.pack(side=tk.RIGHT, padx=10)
+        ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
+        
+        tk.Button(nav_frame, text="Sauver", command=self._save_current_to_history, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        tk.Button(nav_frame, text="Charger", command=self._load_history_selection, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        
+        self.nav_label = tk.Label(nav_frame, text="", bg=self.theme['bg_secondary'],
+                                 fg=self.theme['text_secondary'], font=('Segoe UI', 9))
+        self.nav_label.pack(side=tk.RIGHT, padx=5)
     
-    def _open_split_view(self):
-        """Ouvre la vue Split PCB/Liste"""
+    def _toggle_view_mode(self):
+        """Bascule entre les modes SPLIT, LIST, PCB"""
+        modes = ['split', 'list', 'pcb']
+        current_idx = modes.index(self.view_mode)
+        self.view_mode = modes[(current_idx + 1) % 3]
+        
+        # Mettre à jour le bouton
+        mode_icons = {'split': '📱 SPLIT', 'list': '📋 LIST', 'pcb': '🔌 PCB'}
+        self.view_mode_btn.config(text=mode_icons[self.view_mode])
+        
+        # Mettre à jour la visibilité
+        self._update_view_layout()
+    
+    def _update_view_layout(self):
+        """Met à jour le layout selon le mode"""
+        if self.view_mode == 'split':
+            # Les deux panneaux visibles
+            self.content_paned.paneconfig(self.pcb_frame, height=350)
+            self.content_paned.paneconfig(self.list_frame, height=350)
+            try:
+                self.content_paned.add(self.pcb_frame)
+            except:
+                pass
+            try:
+                self.content_paned.add(self.list_frame)
+            except:
+                pass
+        elif self.view_mode == 'list':
+            # Seulement la liste
+            try:
+                self.content_paned.forget(self.pcb_frame)
+            except:
+                pass
+            try:
+                self.content_paned.add(self.list_frame)
+            except:
+                pass
+        elif self.view_mode == 'pcb':
+            # Seulement le PCB
+            try:
+                self.content_paned.forget(self.list_frame)
+            except:
+                pass
+            try:
+                self.content_paned.add(self.pcb_frame)
+            except:
+                pass
+        
+        # Redessiner le PCB après changement
+        self.root.after(100, self._draw_main_pcb)
+    
+    def _on_tree_select(self, event=None):
+        """Highlight les composants sélectionnés sur le PCB"""
+        self.highlighted_refs.clear()
+        
+        for item in self.tree.selection():
+            values = self.tree.item(item, 'values')
+            if len(values) >= 3:
+                refs_str = values[2]
+                for ref in refs_str.split(', '):
+                    ref = ref.strip()
+                    if ref:
+                        self.highlighted_refs.add(ref)
+        
+        self._draw_main_pcb(recalculate_scale=False)
+        self._update_nav_label()
+    
+    # ========== MÉTHODES PCB PRINCIPAL ==========
+    
+    def _pcb_to_canvas_main(self, x, y):
+        """Convertit coordonnées PCB -> canvas principal"""
         if not self.parser:
-            messagebox.showwarning("Attention", "Chargez d'abord un fichier HTML")
+            return 0, 0
+        bbox = self.parser.board_bbox
+        canvas_height = self.pcb_canvas.winfo_height() or 300
+        cx = self.pcb_offset_x + (x - bbox['minx']) * self.pcb_scale
+        cy = canvas_height - (self.pcb_offset_y + (y - bbox['miny']) * self.pcb_scale)
+        return cx, cy
+    
+    def _canvas_to_pcb_main(self, canvas_x, canvas_y):
+        """Convertit canvas -> PCB"""
+        if not self.parser:
+            return 0, 0
+        bbox = self.parser.board_bbox
+        canvas_height = self.pcb_canvas.winfo_height() or 300
+        x = (canvas_x - self.pcb_offset_x) / self.pcb_scale + bbox['minx']
+        y = (canvas_height - canvas_y - self.pcb_offset_y) / self.pcb_scale + bbox['miny']
+        return x, y
+    
+    def _draw_main_pcb(self, recalculate_scale=True):
+        """Dessine le PCB principal avec highlight"""
+        self.pcb_canvas.delete('all')
+        
+        if not self.parser:
+            self.pcb_canvas.create_text(
+                self.pcb_canvas.winfo_width() // 2 or 300,
+                self.pcb_canvas.winfo_height() // 2 or 150,
+                text="Chargez un fichier pour voir le PCB",
+                fill=self.theme['text_secondary'], font=('Segoe UI', 12)
+            )
             return
         
+        bbox = self.parser.board_bbox
+        width = bbox['maxx'] - bbox['minx']
+        height = bbox['maxy'] - bbox['miny']
+        
+        canvas_width = self.pcb_canvas.winfo_width() or 600
+        canvas_height = self.pcb_canvas.winfo_height() or 300
+        
+        if recalculate_scale:
+            scale_x = (canvas_width - 40) / width if width > 0 else 1
+            scale_y = (canvas_height - 40) / height if height > 0 else 1
+            self.pcb_scale = min(scale_x, scale_y) * 0.9
+            self.pcb_offset_x = (canvas_width - width * self.pcb_scale) / 2
+            self.pcb_offset_y = (canvas_height - height * self.pcb_scale) / 2
+        
+        # Fond
+        x1, y1 = self._pcb_to_canvas_main(bbox['minx'], bbox['miny'])
+        x2, y2 = self._pcb_to_canvas_main(bbox['maxx'], bbox['maxy'])
+        self.pcb_canvas.create_rectangle(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2),
+                                         outline=self.theme['pcb_edge'], fill=self.theme['pcb_board'], width=2)
+        
+        # Tracks
+        if self.show_tracks_var and self.show_tracks_var.get():
+            for layer, layer_tracks in self.parser.tracks.items():
+                if not isinstance(layer_tracks, list):
+                    continue
+                is_front = layer.startswith('F') or layer == 'F.Cu'
+                color = self.theme['track_front'] if is_front else self.theme['track_back']
+                for track in layer_tracks:
+                    start = track.get('start')
+                    end = track.get('end')
+                    if start and end:
+                        tx1, ty1 = self._pcb_to_canvas_main(start[0], start[1])
+                        tx2, ty2 = self._pcb_to_canvas_main(end[0], end[1])
+                        w = max(0.5, track.get('width', 0.2) * self.pcb_scale)
+                        self.pcb_canvas.create_line(tx1, ty1, tx2, ty2, fill=color, width=w, capstyle=tk.ROUND)
+        
+        # Pads avec highlight
+        if self.show_pads_var and self.show_pads_var.get():
+            for fp in self.parser.footprints:
+                ref = fp.get('ref', '')
+                fp_layer = fp.get('layer', 'F')
+                is_highlighted = ref in self.highlighted_refs
+                
+                for pad in fp.get('pads', []):
+                    self._draw_main_pad(pad, fp_layer, is_highlighted)
+        
+        # Silkscreen + refs
+        if self.show_silk_var and self.show_silk_var.get():
+            for fp in self.parser.footprints:
+                ref = fp.get('ref', '')
+                bbox_fp = fp.get('bbox', {})
+                if ref and bbox_fp:
+                    is_highlighted = ref in self.highlighted_refs
+                    self._draw_main_ref(ref, bbox_fp, is_highlighted)
+        
+        # Zone de sélection
+        if self.selection_rect:
+            sx1, sy1, sx2, sy2 = self.selection_rect
+            cx1, cy1 = self._pcb_to_canvas_main(sx1, sy1)
+            cx2, cy2 = self._pcb_to_canvas_main(sx2, sy2)
+            self.pcb_canvas.create_rectangle(min(cx1, cx2), min(cy1, cy2), max(cx1, cx2), max(cy1, cy2),
+                                            outline=self.theme['selection_rect'], width=2, dash=(5, 3))
+    
+    def _draw_main_pad(self, pad, fp_layer, is_highlighted=False):
+        """Dessine un pad sur le canvas principal"""
+        pos = pad.get('pos', [0, 0])
+        size = pad.get('size', [0.5, 0.5])
+        shape = pad.get('shape', 'rect')
+        layers = pad.get('layers', [fp_layer])
+        
+        cx, cy = self._pcb_to_canvas_main(pos[0], pos[1])
+        w = max(2, size[0] * self.pcb_scale)
+        h = max(2, size[1] * self.pcb_scale)
+        
+        if is_highlighted:
+            color = self.theme['pad_highlight']
+        else:
+            is_front = 'F' in layers or any(l.startswith('F.') for l in layers)
+            color = self.theme['pad_front'] if is_front else self.theme['pad_back']
+        
+        if shape == 'circle':
+            r = w / 2
+            self.pcb_canvas.create_oval(cx - r, cy - r, cx + r, cy + r, fill=color, outline='')
+        else:
+            self.pcb_canvas.create_rectangle(cx - w/2, cy - h/2, cx + w/2, cy + h/2, fill=color, outline='')
+    
+    def _draw_main_ref(self, ref, bbox, is_highlighted=False):
+        """Dessine la référence d'un composant"""
+        if not ref or ref == 'REF**':
+            return
+        
+        pos = bbox.get('pos', [0, 0])
+        relpos = bbox.get('relpos', [0, 0])
+        size = bbox.get('size', [1, 1])
+        
+        center_x = pos[0] + relpos[0] + size[0] / 2
+        center_y = pos[1] + relpos[1] + size[1] / 2
+        cx, cy = self._pcb_to_canvas_main(center_x, center_y)
+        
+        font_size = max(5, min(9, int(min(size[0], size[1]) * self.pcb_scale * 0.4)))
+        color = self.theme['pad_highlight'] if is_highlighted else self.theme['silk_text']
+        
+        self.pcb_canvas.create_text(cx, cy, text=ref, fill=color, font=('Consolas', font_size, 'bold'))
+    
+    def _zoom_in_pcb(self):
+        self.pcb_scale *= 1.2
+        self._draw_main_pcb(recalculate_scale=False)
+    
+    def _zoom_out_pcb(self):
+        self.pcb_scale /= 1.2
+        self._draw_main_pcb(recalculate_scale=False)
+    
+    def _reset_pcb_view(self):
+        self._draw_main_pcb(recalculate_scale=True)
+    
+    def _on_pcb_mousewheel(self, event):
+        if event.delta > 0:
+            self._zoom_in_pcb()
+        else:
+            self._zoom_out_pcb()
+    
+    def _on_pcb_pan_start(self, event):
+        self.pcb_pan_start_x = event.x
+        self.pcb_pan_start_y = event.y
+    
+    def _on_pcb_pan_drag(self, event):
+        if self.pcb_pan_start_x is None:
+            return
+        self.pcb_offset_x += event.x - self.pcb_pan_start_x
+        self.pcb_offset_y -= event.y - self.pcb_pan_start_y
+        self.pcb_pan_start_x = event.x
+        self.pcb_pan_start_y = event.y
+        self._draw_main_pcb(recalculate_scale=False)
+    
+    def _show_split_view(self):
+        """Affiche la vue split PCB/Liste dans une fenêtre séparée"""
         if not self.selected_components:
             messagebox.showwarning("Attention", "Sélectionnez d'abord des composants sur le PCB")
             return
@@ -1955,7 +2215,7 @@ class IBomSelectorApp:
             
             self.status_var.set(f"Chargé: {len(self.parser.components)} composants")
             self._load_history()
-            self._draw_pcb_preview()
+            self._draw_main_pcb()
             
             messagebox.showinfo(
                 "Succès",
@@ -1975,68 +2235,6 @@ class IBomSelectorApp:
             viewer.transient(self.root)
             viewer.grab_set()
     
-    def _draw_pcb_preview(self):
-        """Dessine une miniature du PCB"""
-        self.pcb_canvas.delete('all')
-        
-        if not self.parser:
-            return
-        
-        bbox = self.parser.board_bbox
-        pcb_width = bbox['maxx'] - bbox['minx']
-        pcb_height = bbox['maxy'] - bbox['miny']
-        
-        canvas_width = self.pcb_canvas.winfo_width() or 750
-        canvas_height = self.pcb_canvas.winfo_height() or 200
-        
-        scale_x = (canvas_width - 20) / pcb_width if pcb_width > 0 else 1
-        scale_y = (canvas_height - 20) / pcb_height if pcb_height > 0 else 1
-        scale = min(scale_x, scale_y)
-        
-        offset_x = (canvas_width - pcb_width * scale) / 2
-        offset_y = (canvas_height - pcb_height * scale) / 2
-        
-        def to_canvas(x, y):
-            cx = offset_x + (x - bbox['minx']) * scale
-            cy = canvas_height - (offset_y + (y - bbox['miny']) * scale)
-            return cx, cy
-        
-        # Fond
-        x1, y1 = to_canvas(bbox['minx'], bbox['miny'])
-        x2, y2 = to_canvas(bbox['maxx'], bbox['maxy'])
-        self.pcb_canvas.create_rectangle(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2),
-                                        outline=self.theme['pcb_edge'], fill=self.theme['pcb_board'], width=2)
-        
-        # Pads (simplifiés)
-        for fp in self.parser.footprints:
-            layer = fp.get('layer', 'F')
-            for pad in fp.get('pads', []):
-                pos = pad.get('pos', [0, 0])
-                size = pad.get('size', [0.5, 0.5])
-                layers = pad.get('layers', [layer])
-                
-                px, py = to_canvas(pos[0], pos[1])
-                w = max(2, size[0] * scale / 2)
-                h = max(2, size[1] * scale / 2)
-                
-                is_front = 'F' in layers or any(l.startswith('F.') for l in layers)
-                color = self.theme['pad_front'] if is_front else self.theme['pad_back']
-                
-                self.pcb_canvas.create_rectangle(px - w, py - h, px + w, py + h, fill=color, outline='')
-        
-        # Zone de sélection
-        if self.selection_rect:
-            sx1, sy1, sx2, sy2 = self.selection_rect
-            cx1, cy1 = to_canvas(sx1, sy1)
-            cx2, cy2 = to_canvas(sx2, sy2)
-            self.pcb_canvas.create_rectangle(min(cx1, cx2), min(cy1, cy2), max(cx1, cx2), max(cy1, cy2),
-                                            outline=self.theme['selection_rect'], width=2, dash=(5, 3))
-        
-        # Texte
-        self.pcb_canvas.create_text(canvas_width / 2, canvas_height - 10,
-                                    text="Cliquez pour sélectionner une zone",
-                                    fill=self.theme['text_secondary'], font=('Segoe UI', 9))
-    
     def _on_selection(self, selected_components, selection_rect=None):
         """Callback de sélection"""
         self.selected_components = selected_components
@@ -2044,7 +2242,7 @@ class IBomSelectorApp:
         self.current_item_index = 0
         
         self._apply_filters()
-        self._draw_pcb_preview()
+        self._draw_main_pcb()
         
         self.export_btn.config(state=tk.NORMAL)
         self.export_csv_btn.config(state=tk.NORMAL)
@@ -2253,7 +2451,7 @@ class IBomSelectorApp:
         self._update_statistics()
         self._update_progress()
         self._update_nav_label()
-        self._draw_pcb_preview()
+        self._draw_main_pcb()
         self.export_btn.config(state=tk.DISABLED)
         self.export_csv_btn.config(state=tk.DISABLED)
         self.clear_btn.config(state=tk.DISABLED)
@@ -2444,7 +2642,7 @@ class IBomSelectorApp:
                 self.processed_items.add(tuple(proc))
         
         self._apply_filters()
-        self._draw_pcb_preview()
+        self._draw_main_pcb()
         
         self.export_btn.config(state=tk.NORMAL)
         self.export_csv_btn.config(state=tk.NORMAL)
@@ -2502,7 +2700,7 @@ class IBomSelectorApp:
         self.root.bind('<Control-l>', lambda e: self._load_file())
         self.root.bind('<Escape>', lambda e: self._clear_selection())
         self.root.bind('<Control-f>', lambda e: self.search_entry.focus_set())
-        self.root.bind('<F5>', lambda e: self._draw_pcb_preview() if self.parser else None)
+        self.root.bind('<F5>', lambda e: self._draw_main_pcb() if self.parser else None)
         self.root.bind('<Left>', lambda e: self._navigate_prev())
         self.root.bind('<Right>', lambda e: self._navigate_next())
         self.root.bind('<space>', lambda e: self._toggle_processed())
