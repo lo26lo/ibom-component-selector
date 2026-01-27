@@ -24,6 +24,7 @@ interface PCBViewProps {
   showPads?: boolean;
   showSilkscreen?: boolean;
   showEdges?: boolean;
+  showTracks?: boolean;
 }
 
 export function PCBView({ 
@@ -31,6 +32,7 @@ export function PCBView({
   showPads = true,
   showSilkscreen = true,
   showEdges = true,
+  showTracks = true,
 }: PCBViewProps) {
   const { theme, isEinkMode } = useTheme();
   const containerRef = useRef<View>(null);
@@ -49,6 +51,7 @@ export function PCBView({
   const footprints = useMemo(() => parser?.getFootprints() || [], [parser]);
   const edges = useMemo(() => parser?.getEdges() || [], [parser]);
   const drawings = useMemo(() => parser?.getDrawings() || {}, [parser]);
+  const tracks = useMemo(() => parser?.getTracks() || {}, [parser]);
 
   // Gesture values
   const scale = useSharedValue(1);
@@ -226,35 +229,78 @@ export function PCBView({
     setSelectionEnd(null);
   }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setSelectionRect, onSelectionComplete]);
 
-  // Render component
+  // Render component - discret par défaut, visible si sélectionné/highlighté
   const renderComponent = useCallback(
     (comp: Component, index: number) => {
       const pos = boardToScreen(comp.x, comp.y);
       const isSelected = selectedComponents.some((c) => c.ref === comp.ref);
       const isHighlighted = highlightedComponents.some((c) => c.ref === comp.ref);
 
-      let color = comp.layer === 'F' ? theme.pcbCompFront : theme.pcbCompBack;
-      if (isHighlighted) {
-        color = theme.pcbHighlight;
-      } else if (isSelected) {
-        color = theme.pcbSelected;
+      // Ne pas afficher les composants non sélectionnés/highlightés (les pads sont déjà visibles)
+      if (!isSelected && !isHighlighted) {
+        return null;
       }
 
-      const size = 4 * scale.value;
+      if (isHighlighted) {
+        // Highlight très visible - grand cercle + croix
+        const size = 12 * scale.value;
+        return (
+          <G key={`comp-${comp.ref}-${index}`}>
+            {/* Cercle externe */}
+            <Circle
+              cx={pos.x}
+              cy={pos.y}
+              r={size}
+              fill="none"
+              stroke={isEinkMode ? '#000000' : '#FF0000'}
+              strokeWidth={3}
+            />
+            {/* Croix au centre */}
+            <Line
+              x1={pos.x - size * 0.6}
+              y1={pos.y}
+              x2={pos.x + size * 0.6}
+              y2={pos.y}
+              stroke={isEinkMode ? '#000000' : '#FF0000'}
+              strokeWidth={2}
+            />
+            <Line
+              x1={pos.x}
+              y1={pos.y - size * 0.6}
+              x2={pos.x}
+              y2={pos.y + size * 0.6}
+              stroke={isEinkMode ? '#000000' : '#FF0000'}
+              strokeWidth={2}
+            />
+            {/* Cercle interne */}
+            <Circle
+              cx={pos.x}
+              cy={pos.y}
+              r={size * 0.5}
+              fill="none"
+              stroke={isEinkMode ? '#555555' : '#FFFF00'}
+              strokeWidth={2}
+            />
+          </G>
+        );
+      } else if (isSelected) {
+        // Sélectionné - petit cercle orange
+        const size = 3 * scale.value;
+        return (
+          <Circle
+            key={`comp-${comp.ref}-${index}`}
+            cx={pos.x}
+            cy={pos.y}
+            r={size}
+            fill={isEinkMode ? '#000000' : '#FF8800'}
+            opacity={0.8}
+          />
+        );
+      }
 
-      return (
-        <Circle
-          key={`comp-${comp.ref}-${index}`}
-          cx={pos.x}
-          cy={pos.y}
-          r={size}
-          fill={color}
-          stroke={isHighlighted ? theme.pcbHighlight : 'none'}
-          strokeWidth={isHighlighted ? 2 : 0}
-        />
-      );
+      return null;
     },
-    [boardToScreen, selectedComponents, highlightedComponents, theme, scale]
+    [boardToScreen, selectedComponents, highlightedComponents, scale, isEinkMode]
   );
 
   // Render board outline
@@ -516,6 +562,55 @@ export function PCBView({
     return silkElements;
   }, [showSilkscreen, footprints, boardToScreen, transform.scale, isEinkMode]);
 
+  // Render tracks (pistes de cuivre)
+  const renderTracks = useMemo(() => {
+    if (!showTracks || !tracks || Object.keys(tracks).length === 0) return null;
+
+    const trackElements: React.ReactNode[] = [];
+    let trackIndex = 0;
+    
+    // Parcourir les layers (F.Cu, B.Cu, etc.)
+    Object.entries(tracks).forEach(([layer, layerTracks]: [string, any]) => {
+      if (!Array.isArray(layerTracks)) return;
+      
+      // Couleur selon la couche
+      let strokeColor: string;
+      if (isEinkMode) {
+        strokeColor = layer.startsWith('F') ? '#555555' : '#888888';
+      } else {
+        strokeColor = layer.startsWith('F') ? '#CC4444' : '#4444CC';
+      }
+      
+      layerTracks.forEach((track: any) => {
+        const start = track.start;
+        const end = track.end;
+        const width = track.width || 0.2;
+        
+        if (start && end && Array.isArray(start) && Array.isArray(end)) {
+          const startScreen = boardToScreen(start[0], start[1]);
+          const endScreen = boardToScreen(end[0], end[1]);
+          const strokeWidth = Math.max(0.5, width * transform.scale * 0.5);
+          
+          trackElements.push(
+            <Line
+              key={`track-${trackIndex++}`}
+              x1={startScreen.x}
+              y1={startScreen.y}
+              x2={endScreen.x}
+              y2={endScreen.y}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              opacity={0.6}
+            />
+          );
+        }
+      });
+    });
+    
+    return trackElements;
+  }, [showTracks, tracks, boardToScreen, transform.scale, isEinkMode]);
+
   return (
     <View style={styles.container}>
       <View
@@ -539,6 +634,9 @@ export function PCBView({
 
                 {/* Edges (contour PCB) */}
                 {renderEdges}
+
+                {/* Tracks (pistes de cuivre) */}
+                {renderTracks}
 
                 {/* Pads des footprints */}
                 {renderPads}
