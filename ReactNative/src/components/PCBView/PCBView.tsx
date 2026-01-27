@@ -231,102 +231,14 @@ export function PCBView({
     setSelectionEnd(null);
   }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setSelectionRect, onSelectionComplete]);
 
-  // Render component - utilise la bounding box du footprint pour le highlight
+  // Render component - les pads sont déjà colorés en rouge dans renderPads
+  // Plus besoin de dessiner quoi que ce soit ici
   const renderComponent = useCallback(
-    (comp: Component, index: number) => {
-      const isSelected = selectedComponents.some((c) => c.ref === comp.ref);
-      const isHighlighted = highlightedComponents.some((c) => c.ref === comp.ref);
-
-      // Ne pas afficher les composants non sélectionnés/highlightés
-      if (!isSelected && !isHighlighted) {
-        return null;
-      }
-
-      // Trouver le footprint correspondant pour avoir la bounding box
-      const footprint = footprints.find((fp: any) => fp.ref === comp.ref);
-      
-      if (isHighlighted && footprint?.bbox) {
-        // Highlight avec la bounding box du footprint (comme ibom.html)
-        // Les pads sont déjà en rouge via renderPads, on dessine juste la bbox
-        const bbox = footprint.bbox;
-        const bboxPos = bbox.pos || [0, 0];
-        const bboxRelpos = bbox.relpos || [0, 0];
-        const bboxSize = bbox.size || [1, 1];
-        const bboxAngle = bbox.angle || 0;
-        
-        // Calculer les coins de la bounding box
-        const x = bboxPos[0] + bboxRelpos[0];
-        const y = bboxPos[1] + bboxRelpos[1];
-        const w = bboxSize[0];
-        const h = bboxSize[1];
-        
-        // Transformer en coordonnées écran
-        const topLeft = boardToScreen(x, y + h);
-        const bottomRight = boardToScreen(x + w, y);
-        const screenW = bottomRight.x - topLeft.x;
-        const screenH = bottomRight.y - topLeft.y;
-        
-        // Couleurs highlight comme ibom.html - fond semi-transparent, bordure rouge
-        const fillColor = isEinkMode ? 'rgba(128, 128, 128, 0.2)' : 'rgba(208, 64, 64, 0.2)';
-        const strokeColor = isEinkMode ? '#000000' : '#D04040';
-        
-        return (
-          <G key={`comp-${comp.ref}-${index}`}>
-            {/* Rectangle de highlight avec fond semi-transparent */}
-            <Rect
-              x={topLeft.x}
-              y={topLeft.y}
-              width={screenW}
-              height={screenH}
-              fill={fillColor}
-              stroke={strokeColor}
-              strokeWidth={3}
-            />
-          </G>
-        );
-      } else if (isHighlighted) {
-        // Fallback: croix au centre si pas de bbox
-        const pos = boardToScreen(comp.x, comp.y);
-        const size = 10 * scale.value;
-        return (
-          <G key={`comp-${comp.ref}-${index}`}>
-            <Line
-              x1={pos.x - size}
-              y1={pos.y}
-              x2={pos.x + size}
-              y2={pos.y}
-              stroke={isEinkMode ? '#000000' : '#D04040'}
-              strokeWidth={3}
-            />
-            <Line
-              x1={pos.x}
-              y1={pos.y - size}
-              x2={pos.x}
-              y2={pos.y + size}
-              stroke={isEinkMode ? '#000000' : '#D04040'}
-              strokeWidth={3}
-            />
-          </G>
-        );
-      } else if (isSelected) {
-        // Sélectionné - petit marqueur discret
-        const pos = boardToScreen(comp.x, comp.y);
-        const size = 3 * scale.value;
-        return (
-          <Circle
-            key={`comp-${comp.ref}-${index}`}
-            cx={pos.x}
-            cy={pos.y}
-            r={size}
-            fill={isEinkMode ? '#000000' : '#FF8800'}
-            opacity={0.8}
-          />
-        );
-      }
-
+    (_comp: Component, _index: number) => {
+      // Les composants selected/highlighted ont leurs pads en rouge via renderPads
       return null;
     },
-    [boardToScreen, selectedComponents, highlightedComponents, footprints, scale, isEinkMode]
+    []
   );
 
   // Render board outline
@@ -469,14 +381,15 @@ export function PCBView({
     const backColor = isEinkMode ? '#606060' : '#5050A0';   // Bleu pour B
     const highlightColor = isEinkMode ? '#404040' : '#D04040';  // Rouge pour highlight
     
-    // Créer un Set des refs highlighted pour lookup rapide
+    // Créer des Sets pour lookup rapide
     const highlightedRefs = new Set(highlightedComponents.map(c => c.ref));
+    const selectedRefs = new Set(selectedComponents.map(c => c.ref));
     
     footprints.forEach((fp: any, fpIndex: number) => {
       const pads = fp.pads || [];
       const fpLayer = fp.layer || 'F';
       const fpRef = fp.ref || '';
-      const isHighlighted = highlightedRefs.has(fpRef);
+      const isHighlighted = highlightedRefs.has(fpRef) || selectedRefs.has(fpRef);
       
       pads.forEach((pad: any, padIndex: number) => {
         const pos = pad.pos || [0, 0];
@@ -596,7 +509,7 @@ export function PCBView({
     });
     
     return padElements;
-  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents]);
+  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents, selectedComponents]);
 
   // Render silkscreen drawings from footprints - avec texte des références
   const renderSilkscreen = useMemo(() => {
