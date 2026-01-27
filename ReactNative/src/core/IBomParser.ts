@@ -173,14 +173,36 @@ export class IBomParser {
     const ref = module.ref || '';
     if (!ref) return;
 
+    // Calculer les coordonnées comme dans Kivy
+    let x = 0, y = 0;
+    const bbox = module.bbox as any;
+    
+    if (bbox) {
+      if (bbox.pos && Array.isArray(bbox.pos) && bbox.pos.length >= 2) {
+        // bbox.pos existe
+        x = bbox.pos[0];
+        y = bbox.pos[1];
+      } else if (typeof bbox.minx === 'number' && typeof bbox.maxx === 'number') {
+        // Calculer le centre à partir de minx/maxx
+        x = (bbox.minx + bbox.maxx) / 2;
+        y = (bbox.miny + bbox.maxy) / 2;
+      }
+    }
+    
+    // Fallback sur center si disponible
+    if (x === 0 && y === 0 && module.center) {
+      x = module.center[0] || 0;
+      y = module.center[1] || 0;
+    }
+
     const component: Component = {
       ref,
       value: '',
       footprint: '',
       lcsc: this.lcscData[ref] || '',
       layer,
-      x: module.center?.[0] || 0,
-      y: module.center?.[1] || 0,
+      x,
+      y,
       rotation: 0,
       qty: 1,
       bbox: module.bbox,
@@ -197,14 +219,46 @@ export class IBomParser {
     const ref = fp.ref || '';
     if (!ref) return;
 
+    // Calculer les coordonnées comme dans Kivy
+    let x = 0, y = 0;
+    const bbox = fp.bbox;
+    
+    // Méthode 1: bbox.pos
+    if (bbox && bbox.pos && Array.isArray(bbox.pos) && bbox.pos.length >= 2) {
+      x = bbox.pos[0];
+      y = bbox.pos[1];
+    }
+    // Méthode 2: center
+    else if (fp.center && Array.isArray(fp.center) && fp.center.length >= 2) {
+      x = fp.center[0];
+      y = fp.center[1];
+    }
+    // Méthode 3: bbox minx/maxx
+    else if (bbox && typeof bbox.minx === 'number') {
+      x = (bbox.minx + bbox.maxx) / 2;
+      y = (bbox.miny + bbox.maxy) / 2;
+    }
+    // Méthode 4: moyenne des positions des pads
+    else if (fp.pads && Array.isArray(fp.pads) && fp.pads.length > 0) {
+      let sumX = 0, sumY = 0;
+      for (const pad of fp.pads) {
+        if (pad.pos && Array.isArray(pad.pos) && pad.pos.length >= 2) {
+          sumX += pad.pos[0];
+          sumY += pad.pos[1];
+        }
+      }
+      x = sumX / fp.pads.length;
+      y = sumY / fp.pads.length;
+    }
+
     const component: Component = {
       ref,
       value: fp.val || '',
       footprint: fp.footprint || '',
       lcsc: this.lcscData[ref] || '',
       layer: fp.layer || 'F',
-      x: fp.center?.[0] || 0,
-      y: fp.center?.[1] || 0,
+      x,
+      y,
       rotation: fp.angle || 0,
       qty: 1,
       bbox: fp.bbox,
