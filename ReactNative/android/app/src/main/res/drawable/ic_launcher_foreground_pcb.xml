@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style 1: PCB/Circuit Design -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- PCB Board Background (green) -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M24,24h60v60h-60z" />
+    
+    <!-- Circuit traces -->
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="2"
+        android:pathData="M30,40 L45,40 L45,55 L60,55" />
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="2"
+        android:pathData="M30,50 L40,50 L40,65 L55,65" />
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="2"
+        android:pathData="M30,60 L35,60 L35,75 L50,75" />
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="2"
+        android:pathData="M78,35 L65,35 L65,45" />
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="2"
+        android:pathData="M78,50 L70,50 L70,60 L60,60" />
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="2"
+        android:pathData="M78,65 L72,65 L72,70 L65,70" />
+    
+    <!-- Component pads (vias) -->
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="45"
+        android:cy="40"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="60"
+        android:cy="55"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="40"
+        android:cy="50"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="55"
+        android:cy="65"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="35"
+        android:cy="60"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="50"
+        android:cy="75"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="65"
+        android:cy="45"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="70"
+        android:cy="60"
+        android:r="3" />
+    <circle
+        android:fillColor="#FFD700"
+        android:cx="65"
+        android:cy="70"
+        android:r="3" />
+    
+    <!-- SMD Component (IC chip) -->
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M48,42h12v16h-12z" />
+    <!-- IC pins -->
+    <path
+        android:fillColor="#C0C0C0"
+        android:pathData="M46,44h2v3h-2z" />
+    <path
+        android:fillColor="#C0C0C0"
+        android:pathData="M46,49h2v3h-2z" />
+    <path
+        android:fillColor="#C0C0C0"
+        android:pathData="M46,54h2v3h-2z" />
+    <path
+        android:fillColor="#C0C0C0"
+        android:pathData="M60,44h2v3h-2z" />
+    <path
+        android:fillColor="#C0C0C0"
+        android:pathData="M60,49h2v3h-2z" />
+    <path
+        android:fillColor="#C0C0C0"
+        android:pathData="M60,54h2v3h-2z" />
+    
+    <!-- Checkmark overlay (selection indicator) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,28 L76,32 L82,24"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <circle
+        android:fillColor="#4CAF50"
+        android:cx="77"
+        android:cy="28"
+        android:r="10" />
+    <path
+        android:pathData="M73,28 L76,31 L82,24"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style 3: BOM Stylized Design -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background rounded square -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M28,24 L80,24 Q84,24 84,28 L84,80 Q84,84 80,84 L28,84 Q24,84 24,80 L24,28 Q24,24 28,24 Z" />
+    
+    <!-- Inner gradient effect -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M30,26 L78,26 Q82,26 82,30 L82,78 Q82,82 78,82 L30,82 Q26,82 26,78 L26,30 Q26,26 30,26 Z" />
+    
+    <!-- "B" Letter -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,35 L32,73 L45,73 Q52,73 52,66 Q52,61 48,59 Q51,57 51,53 Q51,46 45,46 L32,46 L32,35 L45,35 Q55,35 55,48 Q55,52 52,55 Q57,58 57,65 Q57,78 45,78 L27,78 L27,35 Z
+                          M37,50 L37,55 L44,55 Q47,55 47,52.5 Q47,50 44,50 Z
+                          M37,59 L37,69 L44,69 Q49,69 49,64 Q49,59 44,59 Z" />
+    
+    <!-- "O" Letter -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54 Q54,35 67,35 Q80,35 80,54 Q80,73 67,73 Q54,73 54,54 Z
+                          M59,54 Q59,68 67,68 Q75,68 75,54 Q75,40 67,40 Q59,40 59,54 Z" />
+    
+    <!-- "M" Letter (smaller, below) -->
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M60,75 L60,85 L63,85 L63,79 L66,82 L69,79 L69,85 L72,85 L72,75 L69,75 L66,78 L63,75 Z" />
+    
+    <!-- Circuit accent lines -->
+    <path
+        android:strokeColor="#64B5F6"
+        android:strokeWidth="1.5"
+        android:pathData="M24,40 L20,40" />
+    <path
+        android:strokeColor="#64B5F6"
+        android:strokeWidth="1.5"
+        android:pathData="M24,54 L18,54" />
+    <path
+        android:strokeColor="#64B5F6"
+        android:strokeWidth="1.5"
+        android:pathData="M24,68 L20,68" />
+    <path
+        android:strokeColor="#64B5F6"
+        android:strokeWidth="1.5"
+        android:pathData="M84,40 L88,40" />
+    <path
+        android:strokeColor="#64B5F6"
+        android:strokeWidth="1.5"
+        android:pathData="M84,54 L90,54" />
+    <path
+        android:strokeColor="#64B5F6"
+        android:strokeWidth="1.5"
+        android:pathData="M84,68 L88,68" />
+    
+    <!-- Small circuit dots -->
+    <circle
+        android:fillColor="#64B5F6"
+        android:cx="20"
+        android:cy="40"
+        android:r="2" />
+    <circle
+        android:fillColor="#64B5F6"
+        android:cx="18"
+        android:cy="54"
+        android:r="2" />
+    <circle
+        android:fillColor="#64B5F6"
+        android:cx="20"
+        android:cy="68"
+        android:r="2" />
+    <circle
+        android:fillColor="#64B5F6"
+        android:cx="88"
+        android:cy="40"
+        android:r="2" />
+    <circle
+        android:fillColor="#64B5F6"
+        android:cx="90"
+        android:cy="54"
+        android:r="2" />
+    <circle
+        android:fillColor="#64B5F6"
+        android:cx="88"
+        android:cy="68"
+        android:r="2" />
+</vector>
