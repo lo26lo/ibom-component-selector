@@ -2,7 +2,7 @@
  * IBomParser - Parse les fichiers HTML InteractiveHtmlBom
  */
 
-import { decompressFromBase64 } from './LZString';
+import { decompressFromBase64, decompress } from './LZString';
 import type {
   Component,
   PCBData,
@@ -26,36 +26,88 @@ export class IBomParser {
     this.htmlContent = htmlContent;
 
     try {
-      // Chercher les données compressées (format LZ-String)
-      const lzMatch = htmlContent.match(
-        /LZString\.decompressFromBase64\(["']([^"']+)["']\)/
+      let parsed = false;
+      
+      // Méthode 1: Format LZString.decompressFromBase64("...")
+      const lzBase64Match = htmlContent.match(
+        /LZString\.decompressFromBase64\s*\(\s*["']([^"']+)["']\s*\)/
       );
-
-      if (lzMatch) {
-        const compressed = lzMatch[1];
-        console.log(`Données compressées trouvées (${compressed.length} chars)`);
-
+      
+      if (lzBase64Match && !parsed) {
+        const compressed = lzBase64Match[1];
+        console.log(`Format LZ-Base64 trouvé (${compressed.length} chars)`);
+        
         const decompressed = decompressFromBase64(compressed);
-        if (decompressed) {
-          this.pcbData = JSON.parse(decompressed);
-          console.log('Décompression réussie!');
-        } else {
-          throw new Error('Échec de la décompression des données');
+        if (decompressed && decompressed.length > 0) {
+          try {
+            this.pcbData = JSON.parse(decompressed);
+            parsed = true;
+            console.log('Décompression Base64 réussie!');
+          } catch (e) {
+            console.warn('JSON parse failed after Base64 decompress:', e);
+          }
         }
-      } else {
-        // Essayer le format non compressé
-        const pcbMatch = htmlContent.match(
-          /var\s+pcbdata\s*=\s*(\{[\s\S]*?\});/
-        );
-        if (pcbMatch) {
-          // Nettoyer le JSON (trailing commas)
-          let jsonStr = pcbMatch[1];
-          jsonStr = jsonStr.replace(/,\s*}/g, '}');
-          jsonStr = jsonStr.replace(/,\s*]/g, ']');
-          this.pcbData = JSON.parse(jsonStr);
-        } else {
-          throw new Error('Données pcbdata non trouvées dans le fichier HTML');
+      }
+      
+      // Méthode 2: Format avec variable pcbdata directe (JSON non compressé)
+      if (!parsed) {
+        // Essayer plusieurs patterns pour pcbdata
+        const patterns = [
+          /var\s+pcbdata\s*=\s*(\{[\s\S]*?\});\s*(?:var|function|<\/script>)/,
+          /var\s+pcbdata\s*=\s*(\{[\s\S]*?\});/,
+          /pcbdata\s*=\s*(\{[\s\S]*?\});/,
+        ];
+        
+        for (const pattern of patterns) {
+          const pcbMatch = htmlContent.match(pattern);
+          if (pcbMatch) {
+            console.log('Format pcbdata non-compressé trouvé');
+            try {
+              // Nettoyer le JSON (trailing commas, etc.)
+              let jsonStr = pcbMatch[1];
+              jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+              jsonStr = jsonStr.replace(/'/g, '"');
+              // Gérer les propriétés sans guillemets
+              jsonStr = jsonStr.replace(/(\w+):/g, '"$1":');
+              jsonStr = jsonStr.replace(/""/g, '"');
+              
+              this.pcbData = JSON.parse(jsonStr);
+              parsed = true;
+              console.log('Parsing JSON direct réussi!');
+              break;
+            } catch (e) {
+              console.warn('Pattern matched but JSON parse failed:', e);
+            }
+          }
         }
+      }
+      
+      // Méthode 3: Chercher dans des scripts encodés
+      if (!parsed) {
+        // Chercher n'importe quelle chaîne base64 longue qui pourrait être les données
+        const base64Pattern = /["']([A-Za-z0-9+/=]{1000,})["']/g;
+        let match;
+        
+        while ((match = base64Pattern.exec(htmlContent)) !== null) {
+          const potentialData = match[1];
+          console.log(`Essai décompression chaîne base64 (${potentialData.length} chars)`);
+          
+          const decompressed = decompressFromBase64(potentialData);
+          if (decompressed && decompressed.startsWith('{')) {
+            try {
+              this.pcbData = JSON.parse(decompressed);
+              parsed = true;
+              console.log('Décompression alternative réussie!');
+              break;
+            } catch (e) {
+              // Continuer à chercher
+            }
+          }
+        }
+      }
+
+      if (!parsed || !this.pcbData) {
+        throw new Error('Format de fichier IBom non reconnu. Assurez-vous que c\'est un fichier InteractiveHtmlBom valide.');
       }
 
       // Extraire la bounding box
