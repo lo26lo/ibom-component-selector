@@ -1,12 +1,11 @@
 /**
- * ComponentRow - Ligne de composant avec checkbox
+ * ComponentRow - Ligne de composant avec double-tap pour marquer traité
  */
 
-import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo, useRef } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   Pressable,
 } from 'react-native';
@@ -34,21 +33,30 @@ export const ComponentRow = memo(function ComponentRow({
 }: ComponentRowProps) {
   const { theme, isEinkMode } = useTheme();
   const haptic = useHaptic();
+  const lastTapRef = useRef<number>(0);
 
   const componentKey = `${component.value}|${component.footprint}|${component.lcsc}`;
 
-  const handleCheckboxPress = useCallback(() => {
-    onToggleProcessed(componentKey);
-    if (!isProcessed) {
-      haptic.trigger('selection');
-    }
-  }, [componentKey, onToggleProcessed, isProcessed, haptic]);
-
+  // Double-tap pour basculer l'état traité
   const handlePress = useCallback(() => {
-    if (onPress) {
-      onPress(component);
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double-tap détecté - basculer traité
+      onToggleProcessed(componentKey);
+      if (!isProcessed) {
+        haptic.trigger('selection');
+      }
+      lastTapRef.current = 0; // Reset pour éviter les triples
+    } else {
+      // Premier tap - appeler onPress si défini
+      lastTapRef.current = now;
+      if (onPress) {
+        onPress(component);
+      }
     }
-  }, [component, onPress]);
+  }, [componentKey, onToggleProcessed, isProcessed, haptic, onPress, component]);
 
   const handleLongPress = useCallback(() => {
     haptic.trigger('medium');
@@ -74,25 +82,20 @@ export const ComponentRow = memo(function ComponentRow({
         {
           backgroundColor: bgColor,
           borderBottomColor: theme.borderLight,
+          borderLeftWidth: isProcessed ? 4 : 0,
+          borderLeftColor: isProcessed ? theme.bgButtonActive : 'transparent',
         },
       ]}
     >
-      {/* Checkbox */}
-      <TouchableOpacity
-        onPress={handleCheckboxPress}
-        style={[
-          styles.checkbox,
-          {
-            backgroundColor: isProcessed ? theme.bgButtonActive : theme.bgButton,
-            borderColor: isEinkMode ? theme.border : 'transparent',
-            borderWidth: isEinkMode ? 1 : 0,
-          },
-        ]}
-      >
-        <Text style={[styles.checkboxText, { color: theme.textPrimary }]}>
-          {isProcessed ? 'X' : ' '}
+      {/* Indicateur traité (icône X si traité) */}
+      <View style={styles.processedIndicator}>
+        <Text style={[styles.processedText, { 
+          color: isProcessed ? theme.textPrimary : theme.textSecondary,
+          opacity: isProcessed ? 1 : 0.3,
+        }]}>
+          {isProcessed ? '✓' : '○'}
         </Text>
-      </TouchableOpacity>
+      </View>
 
       {/* Ref */}
       <Text
@@ -151,16 +154,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderBottomWidth: 1,
   },
-  checkbox: {
-    width: 28,
-    height: 28,
+  processedIndicator: {
+    width: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.sm,
-    borderRadius: 4,
+    marginRight: spacing.xs,
   },
-  checkboxText: {
-    fontWeight: 'bold',
+  processedText: {
     fontSize: fontSize.md,
   },
   ref: {

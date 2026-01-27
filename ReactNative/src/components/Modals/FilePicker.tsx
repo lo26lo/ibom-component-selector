@@ -60,8 +60,7 @@ export function FilePicker({
   const handleConfirm = useCallback(() => {
     if (htmlPath) {
       onFilesLoaded(htmlPath, csvPath || undefined);
-      // Ne pas effacer les données, juste réinitialiser l'état local du modal
-      setHtmlPath(null);
+      // Ne réinitialiser que le CSV, garder le chemin HTML
       setCsvPath(null);
       // Note: clearData() n'est plus appelé ici - les données sont dans le store global
       onClose();
@@ -69,11 +68,10 @@ export function FilePicker({
   }, [htmlPath, csvPath, onFilesLoaded, onClose]);
 
   const handleCancel = useCallback(() => {
-    setHtmlPath(null);
+    // Garder le chemin HTML, réinitialiser seulement le CSV
     setCsvPath(null);
-    clearData();
     onClose();
-  }, [clearData, onClose]);
+  }, [onClose]);
 
   const getFileName = (path: string) => {
     return path.split('/').pop() || path;

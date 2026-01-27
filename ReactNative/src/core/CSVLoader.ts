@@ -6,6 +6,7 @@ import type { LCSCData } from './types';
 
 /**
  * Parse un fichier CSV LCSC et retourne les données
+ * Format attendu: Comment,Designator,Footprint,LCSC
  */
 export function parseCSV(csvContent: string): LCSCData {
   const lcscData: LCSCData = {};
@@ -16,15 +17,21 @@ export function parseCSV(csvContent: string): LCSCData {
 
     // Parser l'en-tête pour trouver les colonnes
     const header = parseCSVLine(lines[0]);
+    console.log('CSV headers:', header);
+    
+    // Chercher les colonnes Designator et LCSC (insensible à la casse)
     const designatorIndex = header.findIndex(
-      (h) => h.toLowerCase() === 'designator'
+      (h) => h && h.toLowerCase().trim() === 'designator'
     );
     const lcscIndex = header.findIndex(
-      (h) => h.toLowerCase() === 'lcsc'
+      (h) => h && h.toLowerCase().trim() === 'lcsc'
     );
+
+    console.log(`Designator index: ${designatorIndex}, LCSC index: ${lcscIndex}`);
 
     if (designatorIndex === -1 || lcscIndex === -1) {
       console.warn('Colonnes Designator ou LCSC non trouvées dans le CSV');
+      console.warn('Headers trouvés:', header);
       return lcscData;
     }
 
@@ -38,7 +45,8 @@ export function parseCSV(csvContent: string): LCSCData {
       const lcscCode = (values[lcscIndex] || '').trim();
 
       if (lcscCode) {
-        // Les designators peuvent être séparés par des virgules
+        // Les designators peuvent être séparés par des virgules (format LCSC)
+        // mais ils sont déjà dans des guillemets donc parseCSVLine les gère
         for (const ref of designators.split(',')) {
           const trimmedRef = ref.trim();
           if (trimmedRef) {
@@ -49,6 +57,9 @@ export function parseCSV(csvContent: string): LCSCData {
     }
 
     console.log(`CSV LCSC chargé: ${Object.keys(lcscData).length} références`);
+    // Log quelques exemples
+    const examples = Object.entries(lcscData).slice(0, 5);
+    console.log('Exemples LCSC:', examples);
   } catch (error) {
     console.error('Erreur lors du parsing CSV:', error);
   }
