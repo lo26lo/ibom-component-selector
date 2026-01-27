@@ -45,12 +45,14 @@ fi
 
 # Fonction pour envoyer les logs sur GitHub en cas d'erreur
 push_logs_on_error() {
-    if [ "$SHARE_LOGS" = true ]; then
+    local exit_code=$?
+    if [ "$SHARE_LOGS" = true ] && [ "$LOGS_PUSHED" != true ]; then
+        LOGS_PUSHED=true
         echo "" >> "$LOG_FILE"
-        echo "=== FIN DU BUILD (ERREUR) - $(date) ===" >> "$LOG_FILE"
+        echo "=== FIN DU BUILD (ERREUR code: $exit_code) - $(date) ===" >> "$LOG_FILE"
         
         cd "$SCRIPT_DIR/.."
-        git add build_log.txt 2>/dev/null || true
+        git add -f build_log.txt 2>/dev/null || true
         git commit -m "build: Log d'erreur du build $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
         git push 2>/dev/null || true
         
@@ -59,8 +61,15 @@ push_logs_on_error() {
     fi
 }
 
-# Attraper les erreurs pour envoyer les logs
-trap 'push_logs_on_error' ERR
+# Fonction wrapper pour exit avec push des logs
+exit_with_logs() {
+    local code=$1
+    push_logs_on_error
+    exit $code
+}
+
+# Attraper toutes les sorties (erreur ou normale) pour envoyer les logs
+trap 'push_logs_on_error' EXIT
 
 # Couleurs pour les messages
 RED='\033[0;31m'
@@ -389,12 +398,13 @@ if [ -f "$APK_SOURCE" ]; then
     
     # Envoyer les logs de succès si demandé
     if [ "$SHARE_LOGS" = true ]; then
+        LOGS_PUSHED=true  # Éviter le double push via trap EXIT
         echo "" >> "$LOG_FILE"
         echo "=== BUILD RÉUSSI - $(date) ===" >> "$LOG_FILE"
         ls -lh "$APK_DEST/IBomSelector.apk" >> "$LOG_FILE"
         
         cd "$SCRIPT_DIR/.."
-        git add build_log.txt 2>/dev/null || true
+        git add -f build_log.txt 2>/dev/null || true
         git commit -m "build: Build réussi $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
         git push 2>/dev/null || true
         
