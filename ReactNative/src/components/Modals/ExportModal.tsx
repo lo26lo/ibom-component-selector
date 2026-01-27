@@ -3,7 +3,8 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, Share, Platform } from 'react-native';
+import RNFS from 'react-native-fs';
 import { useTheme } from '../../theme';
 import { useAppStore } from '../../store';
 import { ThemedModal, ThemedButton, ThemedToggle } from '../common';
@@ -22,7 +23,7 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
   const processedItems = useAppStore((s) => s.processedItems);
 
   const [exportProcessedOnly, setExportProcessedOnly] = useState(false);
-  const [exportCSV, setExportCSV] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   const componentsToExport = exportProcessedOnly
     ? selectedComponents.filter((c) => {
@@ -38,17 +39,61 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
         return;
       }
 
-      const csv = generateCSV(componentsToExport);
+      setIsExporting(true);
       
-      // In real implementation, use react-native-fs to save
-      // For now just show the count
+      const csv = generateLCSCCSV(componentsToExport);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `IBom_LCSC_${timestamp}.csv`;
+      
+      // Sauvegarder dans le dossier Downloads
+      const downloadDir = Platform.OS === 'android' 
+        ? RNFS.DownloadDirectoryPath 
+        : RNFS.DocumentDirectoryPath;
+      const filePath = `${downloadDir}/${filename}`;
+      
+      await RNFS.writeFile(filePath, csv, 'utf8');
+      
+      setIsExporting(false);
       Alert.alert(
-        'Export',
-        `${componentsToExport.length} composants exportés au format LCSC CSV`,
+        'Export réussi ✓',
+        `${componentsToExport.length} composants exportés\n\nFichier: ${filename}\nDossier: Downloads`,
         [{ text: 'OK', onPress: onClose }]
       );
     } catch (error: any) {
-      Alert.alert('Erreur', error.message);
+      setIsExporting(false);
+      Alert.alert('Erreur', `Export échoué: ${error.message}`);
+    }
+  }, [componentsToExport, onClose]);
+
+  const handleExportCSV = useCallback(async () => {
+    try {
+      if (componentsToExport.length === 0) {
+        Alert.alert('Erreur', 'Aucun composant à exporter');
+        return;
+      }
+
+      setIsExporting(true);
+      
+      const csv = generateCSV(componentsToExport);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `IBom_BOM_${timestamp}.csv`;
+      
+      const downloadDir = Platform.OS === 'android' 
+        ? RNFS.DownloadDirectoryPath 
+        : RNFS.DocumentDirectoryPath;
+      const filePath = `${downloadDir}/${filename}`;
+      
+      await RNFS.writeFile(filePath, csv, 'utf8');
+      
+      setIsExporting(false);
+      Alert.alert(
+        'Export réussi ✓',
+        `${componentsToExport.length} composants exportés\n\nFichier: ${filename}\nDossier: Downloads`,
+        [{ text: 'OK', onPress: onClose }]
+      );
+    } catch (error: any) {
+      setIsExporting(false);
+      Alert.alert('Erreur', `Export échoué: ${error.message}`);
     }
   }, [componentsToExport, onClose]);
 
@@ -59,14 +104,17 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
         return;
       }
 
-      const refs = componentsToExport.map((c) => c.ref).join('\n');
+      const refs = componentsToExport.map((c) => c.ref).join(', ');
       
-      // In real implementation, use Clipboard or share
-      Alert.alert(
-        'Export',
-        `${componentsToExport.length} références exportées`,
-        [{ text: 'OK', onPress: onClose }]
-      );
+      // Utiliser Share pour partager la liste
+      const result = await Share.share({
+        message: refs,
+        title: 'Liste des références',
+      });
+      
+      if (result.action === Share.sharedAction) {
+        onClose();
+      }
     } catch (error: any) {
       Alert.alert('Erreur', error.message);
     }
@@ -89,13 +137,21 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
         {/* Export buttons */}
         <View style={styles.exportButtons}>
           <ThemedButton
-            title="Export CSV LCSC"
+            title="Export LCSC/JLCPCB"
             onPress={handleExportLCSC}
+            disabled={isExporting || componentsToExport.length === 0}
             style={styles.exportButton}
           />
           <ThemedButton
-            title="Liste des refs"
+            title="Export BOM CSV"
+            onPress={handleExportCSV}
+            disabled={isExporting || componentsToExport.length === 0}
+            style={styles.exportButton}
+          />
+          <ThemedButton
+            title="Partager références"
             onPress={handleExportRefList}
+            disabled={componentsToExport.length === 0}
             style={styles.exportButton}
           />
         </View>
