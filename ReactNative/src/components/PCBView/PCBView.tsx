@@ -47,6 +47,7 @@ export function PCBView({
   const selectedComponents = useAppStore((s) => s.selectedComponents);
   const highlightedComponents = useAppStore((s) => s.highlightedComponents);
   const setSelectedComponents = useAppStore((s) => s.setSelectedComponents);
+  const selectionRect = useAppStore((s) => s.selectionRect);
   const setSelectionRect = useAppStore((s) => s.setSelectionRect);
 
   // Récupérer les footprints et edges depuis le parser
@@ -63,10 +64,9 @@ export function PCBView({
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
 
-  // Selection rectangle (stored in board coordinates for persistence across zoom/pan)
+  // Selection rectangle temporaire pendant le drag (coordonnées écran)
   const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
-  const [lastSelectionPcb, setLastSelectionPcb] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   // Touch tracking
   const [isTouching, setIsTouching] = useState(false);
 
@@ -211,10 +211,9 @@ export function PCBView({
       // Get components in selection
       const selected = getComponentsInRect(start.x, start.y, end.x, end.y);
       setSelectedComponents(selected);
-      setSelectionRect({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
       
-      // Save selection in PCB coordinates for persistence across zoom/pan
-      setLastSelectionPcb({ 
+      // Sauvegarder le rectangle dans le store (persisté)
+      setSelectionRect({ 
         x1: Math.min(start.x, end.x), 
         y1: Math.min(start.y, end.y), 
         x2: Math.max(start.x, end.x), 
@@ -259,12 +258,12 @@ export function PCBView({
     );
   }, [boardBbox, boardToScreen, theme, isEinkMode]);
 
-  // Render persistent selection rectangle (in board coords, follows zoom/pan)
+  // Render persistent selection rectangle (from store, persists across navigation)
   const renderPersistentSelectionRect = useMemo(() => {
-    if (!lastSelectionPcb) return null;
+    if (!selectionRect) return null;
 
-    const topLeft = boardToScreen(lastSelectionPcb.x1, lastSelectionPcb.y2);
-    const bottomRight = boardToScreen(lastSelectionPcb.x2, lastSelectionPcb.y1);
+    const topLeft = boardToScreen(selectionRect.x1, selectionRect.y2);
+    const bottomRight = boardToScreen(selectionRect.x2, selectionRect.y1);
 
     return (
       <Rect
@@ -277,7 +276,7 @@ export function PCBView({
         strokeWidth={isEinkMode ? 2 : 1.5}
       />
     );
-  }, [lastSelectionPcb, boardToScreen, isEinkMode, theme]);
+  }, [selectionRect, boardToScreen, isEinkMode, theme]);
 
   // Render selection rectangle (during drag)
   const renderSelectionRect = useMemo(() => {

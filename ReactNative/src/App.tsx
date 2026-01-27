@@ -20,6 +20,7 @@ import { StyleSheet, LogBox } from 'react-native';
 import { ThemeProvider } from './theme';
 import { usePreferencesStore, useHistoryStore } from './store';
 import { HomeScreen, LoadingScreen } from './screens';
+import { useEinkDetect } from './hooks';
 
 // Ignorer certains warnings en développement
 LogBox.ignoreLogs([
@@ -29,6 +30,9 @@ LogBox.ignoreLogs([
 
 function AppContent() {
   const [isReady, setIsReady] = useState(false);
+
+  // Détection automatique e-ink au démarrage
+  useEinkDetect();
 
   // Hydrate les stores au démarrage
   const hydratePreferences = usePreferencesStore((s) => s._hasHydrated);
