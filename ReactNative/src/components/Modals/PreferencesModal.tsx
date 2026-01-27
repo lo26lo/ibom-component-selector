@@ -3,7 +3,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Switch } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme';
 import { usePreferencesStore } from '../../store';
 import { ThemedModal, ThemedButton, ThemedToggle } from '../common';
@@ -15,22 +15,23 @@ interface PreferencesModalProps {
 }
 
 export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
-  const { theme, isEinkMode, toggleEinkMode } = useTheme();
+  const { theme, isEinkMode } = useTheme();
 
-  const preferences = usePreferencesStore();
   const {
+    einkMode,
+    setEinkMode,
     autoSave,
     setAutoSave,
     autoSaveMinutes,
     setAutoSaveMinutes,
-    vibration,
-    setVibration,
+    vibrationEnabled,
+    setVibrationEnabled,
     fontSize: prefFontSize,
     setFontSize,
-    showHidden,
-    setShowHidden,
+    groupByValue,
+    setGroupByValue,
     resetPreferences,
-  } = preferences;
+  } = usePreferencesStore();
 
   const fontSizes = [10, 11, 12, 13, 14, 15];
   const autoSaveOptions = [5, 10, 15, 30];
@@ -51,28 +52,25 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
     <ThemedModal visible={visible} onClose={onClose} title="Préférences">
       <View style={styles.content}>
         {/* Mode E-ink */}
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>
-            Mode E-ink
-          </Text>
-          <ThemedToggle value={isEinkMode} onValueChange={toggleEinkMode} />
-        </View>
+        <ThemedToggle 
+          label="Mode E-ink"
+          value={einkMode} 
+          onValueChange={setEinkMode} 
+        />
 
         {/* Vibration */}
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>
-            Vibration
-          </Text>
-          <ThemedToggle value={vibration} onValueChange={setVibration} />
-        </View>
+        <ThemedToggle 
+          label="Vibration"
+          value={vibrationEnabled} 
+          onValueChange={setVibrationEnabled} 
+        />
 
         {/* Auto-save */}
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>
-            Sauvegarde auto
-          </Text>
-          <ThemedToggle value={autoSave} onValueChange={setAutoSave} />
-        </View>
+        <ThemedToggle 
+          label="Sauvegarde auto"
+          value={autoSave} 
+          onValueChange={setAutoSave} 
+        />
 
         {/* Auto-save interval */}
         <View style={styles.row}>
@@ -100,13 +98,12 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
           />
         </View>
 
-        {/* Show hidden */}
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>
-            Afficher cachés
-          </Text>
-          <ThemedToggle value={showHidden} onValueChange={setShowHidden} />
-        </View>
+        {/* Group by value */}
+        <ThemedToggle 
+          label="Grouper par valeur"
+          value={groupByValue} 
+          onValueChange={setGroupByValue} 
+        />
 
         {/* Reset button */}
         <View style={styles.resetRow}>
@@ -124,12 +121,12 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
 const styles = StyleSheet.create({
   content: {
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   label: {
@@ -141,7 +138,6 @@ const styles = StyleSheet.create({
   },
   resetRow: {
     marginTop: spacing.lg,
-    paddingHorizontal: spacing.md,
   },
   resetButton: {
     width: '100%',

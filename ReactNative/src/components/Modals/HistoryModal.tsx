@@ -7,7 +7,6 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   StyleSheet,
 } from 'react-native';
 import { useTheme } from '../../theme';
@@ -19,7 +18,7 @@ import type { HistoryEntry } from '../../core/types';
 interface HistoryModalProps {
   visible: boolean;
   onClose: () => void;
-  currentHtmlPath?: string;
+  currentHtmlPath?: string | null;
 }
 
 export function HistoryModal({
@@ -29,45 +28,43 @@ export function HistoryModal({
 }: HistoryModalProps) {
   const { theme, isEinkMode } = useTheme();
 
-  const history = useHistoryStore((s) => s.history);
-  const loadHistory = useHistoryStore((s) => s.loadHistory);
+  const histories = useHistoryStore((s) => s.histories);
   const deleteEntry = useHistoryStore((s) => s.deleteEntry);
+  const setCurrentIndex = useHistoryStore((s) => s.setCurrentIndex);
+  const setCurrentHtmlPathStore = useHistoryStore((s) => s.setCurrentHtmlPath);
 
   const setSelectedComponents = useAppStore((s) => s.setSelectedComponents);
-  const setProcessedItems = useAppStore((s) => s.setProcessedItems);
 
-  const currentHistory = currentHtmlPath ? history[currentHtmlPath] || [] : [];
+  // Récupérer l'historique pour le fichier courant
+  const currentHistory = currentHtmlPath ? histories[currentHtmlPath] || [] : [];
 
   const handleRestore = useCallback(
-    (entry: HistoryEntry) => {
-      setSelectedComponents(entry.selectedComponents);
-      setProcessedItems(new Set(entry.processedItems));
+    (entry: HistoryEntry, index: number) => {
+      setSelectedComponents(entry.components);
+      // Note: processedItems est géré dans le store principal
+      if (currentHtmlPath) {
+        setCurrentHtmlPathStore(currentHtmlPath);
+        setCurrentIndex(index);
+      }
       onClose();
     },
-    [setSelectedComponents, setProcessedItems, onClose]
+    [setSelectedComponents, setCurrentHtmlPathStore, setCurrentIndex, currentHtmlPath, onClose]
   );
 
   const handleDelete = useCallback(
-    (timestamp: number) => {
+    (index: number) => {
       if (currentHtmlPath) {
-        deleteEntry(currentHtmlPath, timestamp);
+        setCurrentHtmlPathStore(currentHtmlPath);
+        deleteEntry(index);
       }
     },
-    [currentHtmlPath, deleteEntry]
+    [currentHtmlPath, setCurrentHtmlPathStore, deleteEntry]
   );
 
-  const formatDate = useCallback((timestamp: number) => {
-    const date = new Date(timestamp);
-    return `${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`;
-  }, []);
-
   const renderItem = useCallback(
-    ({ item }: { item: HistoryEntry }) => {
-      const processed = item.processedItems.length;
-      const total = item.selectedComponents.length;
+    ({ item, index }: { item: HistoryEntry; index: number }) => {
+      const processed = item.processedItems?.length || 0;
+      const total = item.components?.length || 0;
       const progress = total > 0 ? Math.round((processed / total) * 100) : 0;
 
       return (
@@ -82,7 +79,7 @@ export function HistoryModal({
         >
           <View style={styles.historyInfo}>
             <Text style={[styles.historyDate, { color: theme.textPrimary }]}>
-              {formatDate(item.timestamp)}
+              {item.date}
             </Text>
             <Text style={[styles.historyStats, { color: theme.textSecondary }]}>
               {item.name || 'Sans nom'} • {processed}/{total} ({progress}%)
@@ -92,13 +89,13 @@ export function HistoryModal({
           <View style={styles.historyActions}>
             <ThemedButton
               title="Charger"
-              onPress={() => handleRestore(item)}
+              onPress={() => handleRestore(item, index)}
               size="small"
               style={styles.actionButton}
             />
             <ThemedButton
               title="X"
-              onPress={() => handleDelete(item.timestamp)}
+              onPress={() => handleDelete(index)}
               size="small"
               style={styles.deleteButton}
             />
@@ -106,11 +103,11 @@ export function HistoryModal({
         </View>
       );
     },
-    [theme, isEinkMode, formatDate, handleRestore, handleDelete]
+    [theme, isEinkMode, handleRestore, handleDelete]
   );
 
   const keyExtractor = useCallback(
-    (item: HistoryEntry) => item.timestamp.toString(),
+    (item: HistoryEntry) => item.id,
     []
   );
 

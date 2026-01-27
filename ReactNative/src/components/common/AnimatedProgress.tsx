@@ -53,8 +53,8 @@ export function AnimatedProgress({
   const fillColor = isEinkMode
     ? '#000000'
     : progress >= 1
-    ? theme.accent
-    : theme.accentSecondary;
+    ? theme.bgButtonActive
+    : theme.bgButton;
 
   return (
     <View style={styles.container}>

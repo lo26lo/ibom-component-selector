@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useTheme } from '../../theme';
 import { useAppStore } from '../../store';
 import { ThemedModal, ThemedButton, ThemedToggle } from '../common';
-import { CSVLoader } from '../../core/CSVLoader';
+import { generateCSV, generateLCSCCSV } from '../../core/CSVLoader';
 import { spacing, fontSize } from '../../theme/spacing';
 
 interface ExportModalProps {
@@ -38,7 +38,7 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
         return;
       }
 
-      const csv = CSVLoader.toCSV(componentsToExport);
+      const csv = generateCSV(componentsToExport);
       
       // In real implementation, use react-native-fs to save
       // For now just show the count
@@ -80,15 +80,11 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
         </Text>
 
         {/* Options */}
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>
-            Uniquement traités
-          </Text>
-          <ThemedToggle
-            value={exportProcessedOnly}
-            onValueChange={setExportProcessedOnly}
-          />
-        </View>
+        <ThemedToggle
+          label="Uniquement traités"
+          value={exportProcessedOnly}
+          onValueChange={setExportProcessedOnly}
+        />
 
         {/* Export buttons */}
         <View style={styles.exportButtons}>
@@ -120,16 +116,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     textAlign: 'center',
     marginBottom: spacing.lg,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: fontSize.md,
-    flex: 1,
   },
   exportButtons: {
     gap: spacing.md,

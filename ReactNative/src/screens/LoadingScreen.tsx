@@ -21,7 +21,7 @@ export function LoadingScreen({ message = 'Chargement...' }: LoadingScreenProps)
       </Text>
       <ActivityIndicator
         size="large"
-        color={isEinkMode ? '#000000' : theme.accent}
+        color={isEinkMode ? '#000000' : theme.bgButtonActive}
         style={styles.spinner}
       />
       <Text style={[styles.message, { color: theme.textSecondary }]}>
