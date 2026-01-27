@@ -1753,6 +1753,10 @@ class IBomSelectorApp:
         tk.Label(list_toolbar, text="Hist:", bg=self.theme['bg_secondary'],
                 fg=self.theme['text_primary'], font=('Segoe UI', 8)).pack(side=tk.RIGHT)
         
+        # Container pour tree + scrollbar
+        tree_container = tk.Frame(self.list_frame, bg=self.theme['bg_primary'])
+        tree_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
         # Treeview
         style = ttk.Style()
         style.theme_use('clam')
@@ -1768,7 +1772,7 @@ class IBomSelectorApp:
         style.map('Treeview', background=[('selected', self.theme['accent'])])
         
         columns = ('done', 'qty', 'ref', 'value', 'footprint', 'lcsc')
-        self.tree = ttk.Treeview(self.list_frame, columns=columns, show='headings', height=10)
+        self.tree = ttk.Treeview(tree_container, columns=columns, show='headings', height=10)
         
         self.tree.tag_configure('done', background=self.theme['row_done'])
         self.tree.tag_configure('pending', background=self.theme['row_pending'])
@@ -1792,11 +1796,11 @@ class IBomSelectorApp:
         self.tree.bind('<space>', self._toggle_processed)
         self.tree.bind('<<TreeviewSelect>>', self._on_tree_select)
         
-        scrollbar = ttk.Scrollbar(self.list_frame, orient=tk.VERTICAL, command=self.tree.yview)
+        scrollbar = ttk.Scrollbar(tree_container, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
         
-        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 5), pady=5)
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Boutons de navigation et actions en bas de la liste
         nav_frame = tk.Frame(self.list_frame, bg=self.theme['bg_secondary'])
