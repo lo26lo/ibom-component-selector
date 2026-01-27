@@ -380,6 +380,38 @@ export class IBomParser {
   }
 
   /**
+   * Retourne les footprints bruts avec pads et drawings
+   */
+  getFootprints(): any[] {
+    if (!this.pcbData) return [];
+    return (this.pcbData as any).footprints || [];
+  }
+
+  /**
+   * Retourne les edges (contour du PCB)
+   */
+  getEdges(): any[] {
+    if (!this.pcbData) return [];
+    return (this.pcbData as any).edges || [];
+  }
+
+  /**
+   * Retourne les drawings (silkscreen, etc.) par layer
+   */
+  getDrawings(): Record<string, any[]> {
+    if (!this.pcbData) return {};
+    return (this.pcbData as any).drawings || {};
+  }
+
+  /**
+   * Retourne les tracks (pistes) par layer
+   */
+  getTracks(): Record<string, any[]> {
+    if (!this.pcbData) return {};
+    return (this.pcbData as any).tracks || {};
+  }
+
+  /**
    * Retourne les composants dans une zone donnée
    */
   getComponentsInRect(

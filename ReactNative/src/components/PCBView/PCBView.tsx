@@ -1,10 +1,11 @@
 /**
  * PCBView - Vue interactive du PCB avec SVG
+ * Affiche les composants, pads, edges et silkscreen
  */
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { Rect, Circle, G, Line, Polygon } from 'react-native-svg';
+import Svg, { Rect, Circle, G, Line, Polygon, Path, Ellipse } from 'react-native-svg';
 import {
   GestureDetector,
   Gesture,
@@ -20,9 +21,17 @@ import type { Component, BoundingBox, SelectionRect } from '../../core/types';
 
 interface PCBViewProps {
   onSelectionComplete?: (components: Component[]) => void;
+  showPads?: boolean;
+  showSilkscreen?: boolean;
+  showEdges?: boolean;
 }
 
-export function PCBView({ onSelectionComplete }: PCBViewProps) {
+export function PCBView({ 
+  onSelectionComplete,
+  showPads = true,
+  showSilkscreen = true,
+  showEdges = true,
+}: PCBViewProps) {
   const { theme, isEinkMode } = useTheme();
   const containerRef = useRef<View>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -30,10 +39,16 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
   // Store state
   const components = useAppStore((s) => s.components);
   const boardBbox = useAppStore((s) => s.boardBbox);
+  const parser = useAppStore((s) => s.parser);
   const selectedComponents = useAppStore((s) => s.selectedComponents);
   const highlightedComponents = useAppStore((s) => s.highlightedComponents);
   const setSelectedComponents = useAppStore((s) => s.setSelectedComponents);
   const setSelectionRect = useAppStore((s) => s.setSelectionRect);
+
+  // Récupérer les footprints et edges depuis le parser
+  const footprints = useMemo(() => parser?.getFootprints() || [], [parser]);
+  const edges = useMemo(() => parser?.getEdges() || [], [parser]);
+  const drawings = useMemo(() => parser?.getDrawings() || {}, [parser]);
 
   // Gesture values
   const scale = useSharedValue(1);
@@ -303,6 +318,204 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
     );
   }, [selectionStart, selectionEnd, theme, isEinkMode]);
 
+  // Render edges (contour du PCB)
+  const renderEdges = useMemo(() => {
+    if (!showEdges || !edges.length) return null;
+
+    return edges.map((edge: any, index: number) => {
+      const type = edge.type;
+      const strokeColor = isEinkMode ? '#000000' : '#FFCC00';
+      const strokeWidth = 1.5;
+
+      if (type === 'segment') {
+        const start = boardToScreen(edge.start[0], edge.start[1]);
+        const end = boardToScreen(edge.end[0], edge.end[1]);
+        return (
+          <Line
+            key={`edge-${index}`}
+            x1={start.x}
+            y1={start.y}
+            x2={end.x}
+            y2={end.y}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+          />
+        );
+      } else if (type === 'arc') {
+        // Pour les arcs, on dessine une approximation avec plusieurs segments
+        const cx = edge.start[0];
+        const cy = edge.start[1];
+        const radius = edge.radius || 1;
+        const startAngle = edge.startangle || 0;
+        const endAngle = edge.endangle || 360;
+        const center = boardToScreen(cx, cy);
+        const r = radius * transform.scale;
+        
+        // Simple cercle si arc complet
+        if (Math.abs(endAngle - startAngle) >= 359) {
+          return (
+            <Circle
+              key={`edge-${index}`}
+              cx={center.x}
+              cy={center.y}
+              r={r}
+              fill="none"
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+            />
+          );
+        }
+        return null;
+      } else if (type === 'circle') {
+        const center = boardToScreen(edge.start[0], edge.start[1]);
+        const r = (edge.radius || 1) * transform.scale;
+        return (
+          <Circle
+            key={`edge-${index}`}
+            cx={center.x}
+            cy={center.y}
+            r={r}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+      return null;
+    });
+  }, [showEdges, edges, boardToScreen, transform.scale, isEinkMode]);
+
+  // Render pads from footprints
+  const renderPads = useMemo(() => {
+    if (!showPads || !footprints.length) return null;
+
+    const padElements: React.ReactNode[] = [];
+    
+    footprints.forEach((fp: any, fpIndex: number) => {
+      const pads = fp.pads || [];
+      const fpLayer = fp.layer || 'F';
+      
+      pads.forEach((pad: any, padIndex: number) => {
+        const pos = pad.pos || [0, 0];
+        const size = pad.size || [0.5, 0.5];
+        const layers = pad.layers || [fpLayer];
+        const shape = pad.shape || 'rect';
+        const angle = pad.angle || 0;
+        
+        const screenPos = boardToScreen(pos[0], pos[1]);
+        const w = Math.max(2, size[0] * transform.scale);
+        const h = Math.max(2, size[1] * transform.scale);
+        
+        // Couleur selon la couche
+        let fillColor: string;
+        if (isEinkMode) {
+          fillColor = layers.includes('F') ? '#888888' : '#AAAAAA';
+        } else {
+          fillColor = layers.includes('F') ? '#C9A030' : '#4040A0';
+        }
+        
+        const key = `pad-${fpIndex}-${padIndex}`;
+        
+        if (shape === 'circle' || shape === 'oval') {
+          padElements.push(
+            <Ellipse
+              key={key}
+              cx={screenPos.x}
+              cy={screenPos.y}
+              rx={w / 2}
+              ry={h / 2}
+              fill={fillColor}
+              opacity={0.7}
+            />
+          );
+        } else {
+          // Rectangle (avec rotation si nécessaire)
+          padElements.push(
+            <Rect
+              key={key}
+              x={screenPos.x - w / 2}
+              y={screenPos.y - h / 2}
+              width={w}
+              height={h}
+              fill={fillColor}
+              opacity={0.7}
+              transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
+            />
+          );
+        }
+      });
+    });
+    
+    return padElements;
+  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode]);
+
+  // Render silkscreen drawings from footprints
+  const renderSilkscreen = useMemo(() => {
+    if (!showSilkscreen || !footprints.length) return null;
+
+    const silkElements: React.ReactNode[] = [];
+    const strokeColor = isEinkMode ? '#333333' : '#FFFFAA';
+    
+    footprints.forEach((fp: any, fpIndex: number) => {
+      const fpDrawings = fp.drawings || [];
+      
+      fpDrawings.forEach((drawing: any, drawIndex: number) => {
+        const key = `silk-${fpIndex}-${drawIndex}`;
+        
+        if (drawing.type === 'segment') {
+          const start = boardToScreen(drawing.start[0], drawing.start[1]);
+          const end = boardToScreen(drawing.end[0], drawing.end[1]);
+          silkElements.push(
+            <Line
+              key={key}
+              x1={start.x}
+              y1={start.y}
+              x2={end.x}
+              y2={end.y}
+              stroke={strokeColor}
+              strokeWidth={0.8}
+              opacity={0.6}
+            />
+          );
+        } else if (drawing.type === 'circle') {
+          const center = boardToScreen(drawing.start[0], drawing.start[1]);
+          const r = (drawing.radius || 0.5) * transform.scale;
+          silkElements.push(
+            <Circle
+              key={key}
+              cx={center.x}
+              cy={center.y}
+              r={r}
+              fill="none"
+              stroke={strokeColor}
+              strokeWidth={0.8}
+              opacity={0.6}
+            />
+          );
+        } else if (drawing.type === 'polygon' && drawing.polygons) {
+          drawing.polygons.forEach((poly: number[][], polyIndex: number) => {
+            const points = poly.map(([x, y]) => {
+              const p = boardToScreen(x, y);
+              return `${p.x},${p.y}`;
+            }).join(' ');
+            silkElements.push(
+              <Polygon
+                key={`${key}-${polyIndex}`}
+                points={points}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth={0.5}
+                opacity={0.5}
+              />
+            );
+          });
+        }
+      });
+    });
+    
+    return silkElements;
+  }, [showSilkscreen, footprints, boardToScreen, transform.scale, isEinkMode]);
+
   return (
     <View style={styles.container}>
       <View
@@ -324,7 +537,16 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
                 {/* Board outline */}
                 {renderBoard}
 
-                {/* Components */}
+                {/* Edges (contour PCB) */}
+                {renderEdges}
+
+                {/* Pads des footprints */}
+                {renderPads}
+
+                {/* Silkscreen */}
+                {renderSilkscreen}
+
+                {/* Components (cercles) */}
                 {components.map(renderComponent)}
 
                 {/* Persistent selection rectangle (follows zoom/pan) */}
