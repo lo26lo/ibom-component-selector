@@ -291,6 +291,30 @@ EOF
 
 echo "      ✓ Fichiers sources copiés"
 
+# Copier les icônes personnalisées
+echo "      Copie des icônes personnalisées..."
+RES_SRC="$SCRIPT_DIR/android/app/src/main/res"
+RES_DEST="android/app/src/main/res"
+
+# Copier les fichiers drawable (foreground, background)
+if [ -d "$RES_SRC/drawable" ]; then
+    mkdir -p "$RES_DEST/drawable"
+    cp -f "$RES_SRC/drawable/ic_launcher_background.xml" "$RES_DEST/drawable/" 2>/dev/null || true
+    cp -f "$RES_SRC/drawable/ic_launcher_foreground_bom.xml" "$RES_DEST/drawable/" 2>/dev/null || true
+    cp -f "$RES_SRC/drawable/ic_launcher_foreground_pcb.xml" "$RES_DEST/drawable/" 2>/dev/null || true
+    echo "      ✓ Drawable copiés"
+fi
+
+# Copier les adaptive icons (Android 8+)
+if [ -d "$RES_SRC/mipmap-anydpi-v26" ]; then
+    mkdir -p "$RES_DEST/mipmap-anydpi-v26"
+    cp -f "$RES_SRC/mipmap-anydpi-v26/ic_launcher.xml" "$RES_DEST/mipmap-anydpi-v26/" 2>/dev/null || true
+    cp -f "$RES_SRC/mipmap-anydpi-v26/ic_launcher_round.xml" "$RES_DEST/mipmap-anydpi-v26/" 2>/dev/null || true
+    echo "      ✓ Adaptive icons copiés"
+fi
+
+echo "      ✓ Icônes personnalisées installées"
+
 # ============================================
 # [4/6] Configurer l'application
 # ============================================
