@@ -217,12 +217,13 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
     npm install zustand@4.5.0 \
         react-native-svg@13.14.0 \
         react-native-gesture-handler@2.14.0 \
-        react-native-reanimated@2.17.0 \
+        react-native-reanimated@3.8.1 \
         react-native-document-picker@9.1.0 \
         react-native-fs@2.20.0 \
         @react-native-async-storage/async-storage@1.21.0 \
         react-native-haptic-feedback@2.2.0 \
-        react-native-device-info@10.12.0
+        react-native-device-info@10.12.0 \
+        react-native-safe-area-context@4.8.2
     
     # Configurer Babel pour react-native-reanimated
     echo "      Configuration de Babel pour reanimated..."
