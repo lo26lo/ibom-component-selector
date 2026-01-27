@@ -116,6 +116,9 @@ export class IBomParser {
       // Extraire les composants
       this.extractComponents();
 
+      // Extraire les données BOM (valeur, footprint, LCSC)
+      this.extractBomData();
+
       return true;
     } catch (error) {
       console.error('Erreur de parsing IBom:', error);
@@ -164,6 +167,76 @@ export class IBomParser {
     }
 
     console.log(`${this.components.length} composants extraits`);
+  }
+
+  /**
+   * Extrait les données BOM (valeur, footprint, LCSC) et les associe aux composants
+   */
+  private extractBomData(): void {
+    if (!this.pcbData || !this.pcbData.bom) return;
+
+    const bom = this.pcbData.bom as any;
+    const fieldsData = bom.fields || {};
+    const both = bom.both || [];
+
+    console.log(`Extraction BOM: ${both.length} groupes`);
+
+    for (const group of both) {
+      if (!Array.isArray(group)) continue;
+
+      for (const refItem of group) {
+        if (!Array.isArray(refItem) || refItem.length < 2) continue;
+
+        const refName = refItem[0];
+        const fpId = refItem[1];
+        const fpIdStr = String(fpId);
+
+        let value = '';
+        let footprintName = '';
+        let lcsc = '';
+
+        // Chercher dans fieldsData
+        if (fieldsData && typeof fieldsData === 'object') {
+          const componentFields = fieldsData[fpIdStr];
+          if (Array.isArray(componentFields)) {
+            if (componentFields.length >= 1) {
+              value = componentFields[0] || '';
+            }
+            if (componentFields.length >= 2) {
+              footprintName = componentFields[1] || '';
+            }
+            // Chercher LCSC (format Cxxxxxxx)
+            for (const fieldVal of componentFields) {
+              if (typeof fieldVal === 'string' && fieldVal.length > 1) {
+                if (fieldVal.startsWith('C') && /^\d+$/.test(fieldVal.slice(1))) {
+                  lcsc = fieldVal;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        // Si pas de LCSC trouvé, chercher dans les données LCSC externes
+        if (!lcsc && this.lcscData[refName]) {
+          lcsc = this.lcscData[refName];
+        }
+
+        // Mettre à jour le composant correspondant
+        for (const comp of this.components) {
+          if (comp.ref === refName) {
+            comp.value = value;
+            comp.footprint = footprintName;
+            if (!comp.lcsc) {
+              comp.lcsc = lcsc;
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    console.log('Extraction BOM terminée');
   }
 
   /**
