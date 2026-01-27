@@ -113,7 +113,6 @@ export function HistoryModal({
 
   return (
     <ThemedModal visible={visible} onClose={onClose} title="Historique">
-      <View style={styles.content}>
         {currentHistory.length === 0 ? (
           <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
             Aucune sauvegarde pour ce fichier.
@@ -125,23 +124,19 @@ export function HistoryModal({
             keyExtractor={keyExtractor}
             style={styles.list}
             contentContainerStyle={styles.listContent}
+            nestedScrollEnabled={true}
           />
         )}
-      </View>
     </ThemedModal>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingVertical: spacing.md,
-    maxHeight: 400,
-  },
   list: {
-    flex: 1,
+    maxHeight: 350,
   },
   listContent: {
-    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   historyItem: {
     flexDirection: 'row',

@@ -80,123 +80,118 @@ export function FilePicker({
 
   return (
     <ThemedModal visible={visible} onClose={handleCancel} title="Charger fichiers">
-      <View style={styles.content}>
-        {/* HTML file selection */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>
-            Fichier IBom HTML *
-          </Text>
-          <View style={styles.fileRow}>
-            <View
-              style={[
-                styles.filePath,
-                {
-                  backgroundColor: isEinkMode ? '#ffffff' : theme.bgSecondary,
-                  borderColor: theme.border,
-                },
-              ]}
+      {/* HTML file selection */}
+      <View style={styles.section}>
+        <Text style={[styles.label, { color: theme.textPrimary }]}>
+          Fichier IBom HTML *
+        </Text>
+        <View style={styles.fileRow}>
+          <View
+            style={[
+              styles.filePath,
+              {
+                backgroundColor: isEinkMode ? '#ffffff' : theme.bgSecondary,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <Text
+              style={[styles.filePathText, { color: theme.textPrimary }]}
+              numberOfLines={1}
             >
-              <Text
-                style={[styles.filePathText, { color: theme.textPrimary }]}
-                numberOfLines={1}
-              >
-                {htmlPath ? getFileName(htmlPath) : 'Aucun fichier'}
-              </Text>
-            </View>
-            <ThemedButton
-              title="Parcourir"
-              onPress={handlePickHtml}
-              disabled={loading}
-              style={styles.browseButton}
-            />
-          </View>
-        </View>
-
-        {/* CSV file selection (optional) */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.textPrimary }]}>
-            Fichier LCSC CSV (optionnel)
-          </Text>
-          <View style={styles.fileRow}>
-            <View
-              style={[
-                styles.filePath,
-                {
-                  backgroundColor: isEinkMode ? '#ffffff' : theme.bgSecondary,
-                  borderColor: theme.border,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.filePathText, { color: theme.textPrimary }]}
-                numberOfLines={1}
-              >
-                {csvPath ? getFileName(csvPath) : 'Aucun fichier'}
-              </Text>
-            </View>
-            <ThemedButton
-              title="Parcourir"
-              onPress={handlePickCsv}
-              disabled={loading}
-              style={styles.browseButton}
-            />
-          </View>
-        </View>
-
-        {/* Loading progress */}
-        {loading && (
-          <View style={styles.progressSection}>
-            <Text style={[styles.progressText, { color: theme.textSecondary }]}>
-              Chargement...
-            </Text>
-            <ProgressBar current={progress} total={100} />
-          </View>
-        )}
-
-        {/* Error display */}
-        {error && (
-          <Text style={[styles.errorText, { color: theme.error }]}>
-            {error}
-          </Text>
-        )}
-
-        {/* PCB data info */}
-        {pcbData && (
-          <View style={styles.infoSection}>
-            <Text style={[styles.infoText, { color: theme.textPrimary }]}>
-              ✓ {pcbData.components.length} composants trouvés
-            </Text>
-            <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-              PCB: {pcbData.title || 'Sans titre'}
+              {htmlPath ? getFileName(htmlPath) : 'Aucun fichier'}
             </Text>
           </View>
-        )}
-
-        {/* Actions */}
-        <View style={styles.buttons}>
           <ThemedButton
-            title="Annuler"
-            onPress={handleCancel}
+            title="Parcourir"
+            onPress={handlePickHtml}
             disabled={loading}
-            style={styles.button}
-          />
-          <ThemedButton
-            title="Charger"
-            onPress={handleConfirm}
-            disabled={!htmlPath || loading}
-            active={!!htmlPath}
-            style={styles.button}
+            style={styles.browseButton}
           />
         </View>
+      </View>
+
+      {/* CSV file selection (optional) */}
+      <View style={styles.section}>
+        <Text style={[styles.label, { color: theme.textPrimary }]}>
+          Fichier LCSC CSV (optionnel)
+        </Text>
+        <View style={styles.fileRow}>
+          <View
+            style={[
+              styles.filePath,
+              {
+                backgroundColor: isEinkMode ? '#ffffff' : theme.bgSecondary,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <Text
+              style={[styles.filePathText, { color: theme.textPrimary }]}
+              numberOfLines={1}
+            >
+              {csvPath ? getFileName(csvPath) : 'Aucun fichier'}
+            </Text>
+          </View>
+          <ThemedButton
+            title="Parcourir"
+            onPress={handlePickCsv}
+            disabled={loading}
+            style={styles.browseButton}
+          />
+        </View>
+      </View>
+
+      {/* Loading progress */}
+      {loading && (
+        <View style={styles.progressSection}>
+          <Text style={[styles.progressText, { color: theme.textSecondary }]}>
+            Chargement...
+          </Text>
+          <ProgressBar current={progress} total={100} />
+        </View>
+      )}
+
+      {/* Error display */}
+      {error && (
+        <Text style={[styles.errorText, { color: theme.error }]}>
+          {error}
+        </Text>
+      )}
+
+      {/* PCB data info */}
+      {pcbData && (
+        <View style={styles.infoSection}>
+          <Text style={[styles.infoText, { color: theme.textPrimary }]}>
+            ✓ {pcbData.components.length} composants trouvés
+          </Text>
+          <Text style={[styles.infoText, { color: theme.textSecondary }]}>
+            PCB: {pcbData.title || 'Sans titre'}
+          </Text>
+        </View>
+      )}
+
+      {/* Actions */}
+      <View style={styles.buttons}>
+        <ThemedButton
+          title="Annuler"
+          onPress={handleCancel}
+          disabled={loading}
+          style={styles.button}
+        />
+        <ThemedButton
+          title="Charger"
+          onPress={handleConfirm}
+          disabled={!htmlPath || loading}
+          active={!!htmlPath}
+          style={styles.button}
+        />
       </View>
     </ThemedModal>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.md,
-  },
   section: {
     marginBottom: spacing.lg,
   },

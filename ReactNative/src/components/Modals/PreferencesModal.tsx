@@ -50,7 +50,6 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
 
   return (
     <ThemedModal visible={visible} onClose={onClose} title="Préférences">
-      <View style={styles.content}>
         {/* Mode E-ink */}
         <ThemedToggle 
           label="Mode E-ink"
@@ -113,16 +112,11 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
             style={styles.resetButton}
           />
         </View>
-      </View>
     </ThemedModal>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -48,7 +48,6 @@ export function SaveSelectionModal({
 
   return (
     <ThemedModal visible={visible} onClose={onClose} title="Sauvegarder">
-      <View style={styles.content}>
         <Text style={[styles.statsText, { color: theme.textSecondary }]}>
           {processedCount}/{totalCount} composants traités
         </Text>
@@ -85,15 +84,11 @@ export function SaveSelectionModal({
             style={styles.button}
           />
         </View>
-      </View>
     </ThemedModal>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.md,
-  },
   statsText: {
     fontSize: fontSize.sm,
     textAlign: 'center',

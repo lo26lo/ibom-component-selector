@@ -9,11 +9,15 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../../theme';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 interface ThemedModalProps {
   visible: boolean;
@@ -32,66 +36,80 @@ export function ThemedModal({
 }: ThemedModalProps) {
   const { theme, isEinkMode } = useTheme();
 
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View style={styles.overlay}>
-        <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.overlay}
+      >
+        <TouchableOpacity 
+          style={styles.backdrop} 
+          activeOpacity={1} 
+          onPress={onClose}
+        />
+        
+        <View
+          style={[
+            styles.container,
+            {
+              backgroundColor: theme.bgPrimary,
+              borderColor: isEinkMode ? theme.border : theme.bgSecondary,
+              maxHeight: screenHeight * 0.8,
+            },
+          ]}
+        >
+          {/* Header */}
           <View
             style={[
-              styles.container,
-              {
-                backgroundColor: theme.bgPrimary,
-                borderColor: isEinkMode ? theme.border : 'transparent',
-                borderWidth: isEinkMode ? 2 : 0,
+              styles.header,
+              { 
+                borderBottomColor: theme.border,
+                backgroundColor: theme.bgSecondary,
               },
             ]}
           >
-            {/* Header */}
-            <View
-              style={[
-                styles.header,
-                { borderBottomColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.title, { color: theme.textPrimary }]}>
-                {title}
-              </Text>
-              {showCloseButton && (
-                <TouchableOpacity
-                  onPress={onClose}
-                  style={[
-                    styles.closeButton,
-                    {
-                      backgroundColor: theme.bgButton,
-                      borderColor: isEinkMode ? theme.border : 'transparent',
-                      borderWidth: isEinkMode ? 1 : 0,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.closeText, { color: theme.textPrimary }]}>
-                    X
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Content */}
-            <ScrollView
-              style={styles.content}
-              contentContainerStyle={styles.contentContainer}
-              showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-            >
-              {children}
-            </ScrollView>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>
+              {title}
+            </Text>
+            {showCloseButton && (
+              <TouchableOpacity
+                onPress={onClose}
+                style={[
+                  styles.closeButton,
+                  {
+                    backgroundColor: theme.bgButton,
+                  },
+                ]}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={[styles.closeText, { color: theme.textPrimary }]}>
+                  X
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
-        </SafeAreaView>
-      </View>
+
+          {/* Content */}
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            bounces={false}
+            showsVerticalScrollIndicator={true}
+          >
+            <View style={styles.childrenWrapper}>
+              {children}
+            </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -99,22 +117,23 @@ export function ThemedModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  safeArea: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   container: {
-    width: '90%',
-    maxHeight: '85%',
-    minHeight: 200,
-    borderRadius: borderRadius.md,
+    width: '92%',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
     overflow: 'hidden',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   header: {
     flexDirection: 'row',
@@ -125,8 +144,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: 'bold',
+    flex: 1,
   },
   closeButton: {
     width: 36,
@@ -134,17 +154,21 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: spacing.md,
   },
   closeText: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
   },
-  content: {
-    flexGrow: 1,
+  scrollView: {
+    flexGrow: 0,
     flexShrink: 1,
   },
-  contentContainer: {
+  scrollContent: {
     flexGrow: 1,
+  },
+  childrenWrapper: {
+    padding: spacing.md,
   },
 });
 

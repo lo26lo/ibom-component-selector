@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme';
 import { ThemedModal, ThemedButton } from '../common';
 import { spacing, fontSize, borderRadius } from '../../theme/spacing';
@@ -63,7 +63,6 @@ export function ComponentDetailModal({
 
   return (
     <ThemedModal visible={visible} onClose={onClose} title="Détails">
-      <ScrollView style={styles.content}>
         <DetailRow label="Référence" value={component.ref} />
         <DetailRow label="Valeur" value={component.value} />
         <DetailRow label="Footprint" value={component.footprint} />
@@ -97,16 +96,11 @@ export function ComponentDetailModal({
             style={styles.toggleButton}
           />
         </View>
-      </ScrollView>
     </ThemedModal>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.md,
-    maxHeight: 400,
-  },
   detailRow: {
     flexDirection: 'row',
     paddingVertical: spacing.sm,

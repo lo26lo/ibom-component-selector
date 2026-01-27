@@ -122,7 +122,6 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
 
   return (
     <ThemedModal visible={visible} onClose={onClose} title="Exporter">
-      <View style={styles.content}>
         <Text style={[styles.statsText, { color: theme.textSecondary }]}>
           {componentsToExport.length} composants à exporter
         </Text>
@@ -159,15 +158,11 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
         <View style={styles.footer}>
           <ThemedButton title="Fermer" onPress={onClose} />
         </View>
-      </View>
     </ThemedModal>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.md,
-  },
   statsText: {
     fontSize: fontSize.sm,
     textAlign: 'center',
