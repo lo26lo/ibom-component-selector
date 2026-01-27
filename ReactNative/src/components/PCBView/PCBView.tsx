@@ -43,10 +43,12 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
 
-  // Selection rectangle
+  // Selection rectangle (stored in board coordinates for persistence across zoom/pan)
   const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
-  const [isSelecting, setIsSelecting] = useState(false);
+  const [lastSelectionPcb, setLastSelectionPcb] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
+  // Touch tracking
+  const [isTouching, setIsTouching] = useState(false);
 
   // Calculate transform
   const transform = useMemo(() => {
@@ -117,7 +119,7 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
     [components]
   );
 
-  // Pinch gesture for zoom
+  // Pinch gesture for zoom (2 fingers)
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
       savedScale.value = scale.value;
@@ -126,8 +128,9 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
       scale.value = Math.max(0.5, Math.min(5, savedScale.value * event.scale));
     });
 
-  // Pan gesture for moving
+  // Pan gesture for moving (2 fingers)
   const panGesture = Gesture.Pan()
+    .minPointers(2)
     .onStart(() => {
       savedTranslateX.value = translateX.value;
       savedTranslateY.value = translateY.value;
@@ -137,16 +140,7 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
       translateY.value = savedTranslateY.value + event.translationY;
     });
 
-  // Long press for selection mode
-  const longPressGesture = Gesture.LongPress()
-    .minDuration(300)
-    .onStart((event) => {
-      setIsSelecting(true);
-      setSelectionStart({ x: event.x, y: event.y });
-      setSelectionEnd({ x: event.x, y: event.y });
-    });
-
-  // Composed gestures
+  // Composed gestures for zoom/pan (needs 2 fingers)
   const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
 
   // Animated style for the SVG container
@@ -164,40 +158,58 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
     setContainerSize({ width, height });
   }, []);
 
-  // Handle touch for selection
+  // Handle touch for selection (1 finger = selection rectangle)
   const handleTouchStart = useCallback((event: any) => {
-    if (!isSelecting) return;
     const { locationX, locationY } = event.nativeEvent;
+    // Start selection
+    setIsTouching(true);
     setSelectionStart({ x: locationX, y: locationY });
     setSelectionEnd({ x: locationX, y: locationY });
-  }, [isSelecting]);
+  }, []);
 
   const handleTouchMove = useCallback((event: any) => {
-    if (!isSelecting || !selectionStart) return;
+    if (!isTouching || !selectionStart) return;
     const { locationX, locationY } = event.nativeEvent;
     setSelectionEnd({ x: locationX, y: locationY });
-  }, [isSelecting, selectionStart]);
+  }, [isTouching, selectionStart]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!isSelecting || !selectionStart || !selectionEnd) return;
-
-    // Convert to board coordinates
-    const start = screenToBoard(selectionStart.x, selectionStart.y);
-    const end = screenToBoard(selectionEnd.x, selectionEnd.y);
-
-    // Get components in selection
-    const selected = getComponentsInRect(start.x, start.y, end.x, end.y);
-    setSelectedComponents(selected);
-    setSelectionRect({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
-
-    if (onSelectionComplete) {
-      onSelectionComplete(selected);
+    if (!isTouching || !selectionStart || !selectionEnd) {
+      setIsTouching(false);
+      return;
     }
 
-    setIsSelecting(false);
+    // Check if selection rectangle is big enough (not just a tap)
+    const width = Math.abs(selectionEnd.x - selectionStart.x);
+    const height = Math.abs(selectionEnd.y - selectionStart.y);
+    
+    if (width > 10 && height > 10) {
+      // Convert to board coordinates
+      const start = screenToBoard(selectionStart.x, selectionStart.y);
+      const end = screenToBoard(selectionEnd.x, selectionEnd.y);
+
+      // Get components in selection
+      const selected = getComponentsInRect(start.x, start.y, end.x, end.y);
+      setSelectedComponents(selected);
+      setSelectionRect({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
+      
+      // Save selection in PCB coordinates for persistence across zoom/pan
+      setLastSelectionPcb({ 
+        x1: Math.min(start.x, end.x), 
+        y1: Math.min(start.y, end.y), 
+        x2: Math.max(start.x, end.x), 
+        y2: Math.max(start.y, end.y) 
+      });
+
+      if (onSelectionComplete) {
+        onSelectionComplete(selected);
+      }
+    }
+
+    setIsTouching(false);
     setSelectionStart(null);
     setSelectionEnd(null);
-  }, [isSelecting, selectionStart, selectionEnd, screenToBoard, getComponentsInRect]);
+  }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setSelectionRect, onSelectionComplete]);
 
   // Render component
   const renderComponent = useCallback(
@@ -248,7 +260,27 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
     );
   }, [boardBbox, boardToScreen, theme, isEinkMode]);
 
-  // Render selection rectangle
+  // Render persistent selection rectangle (in board coords, follows zoom/pan)
+  const renderPersistentSelectionRect = useMemo(() => {
+    if (!lastSelectionPcb) return null;
+
+    const topLeft = boardToScreen(lastSelectionPcb.x1, lastSelectionPcb.y2);
+    const bottomRight = boardToScreen(lastSelectionPcb.x2, lastSelectionPcb.y1);
+
+    return (
+      <Rect
+        x={topLeft.x}
+        y={topLeft.y}
+        width={bottomRight.x - topLeft.x}
+        height={bottomRight.y - topLeft.y}
+        fill={isEinkMode ? 'transparent' : 'rgba(255, 255, 0, 0.15)'}
+        stroke={isEinkMode ? theme.textPrimary : theme.pcbSelected}
+        strokeWidth={isEinkMode ? 2 : 1.5}
+      />
+    );
+  }, [lastSelectionPcb, boardToScreen, isEinkMode, theme]);
+
+  // Render selection rectangle (during drag)
   const renderSelectionRect = useMemo(() => {
     if (!selectionStart || !selectionEnd) return null;
 
@@ -263,13 +295,13 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
         y={y}
         width={width}
         height={height}
-        fill="rgba(100, 150, 255, 0.3)"
+        fill={isEinkMode ? 'rgba(200, 200, 200, 0.5)' : 'rgba(100, 150, 255, 0.3)'}
         stroke={theme.pcbSelected}
         strokeWidth={2}
         strokeDasharray="5,5"
       />
     );
-  }, [selectionStart, selectionEnd, theme]);
+  }, [selectionStart, selectionEnd, theme, isEinkMode]);
 
   return (
     <View style={styles.container}>
@@ -295,7 +327,10 @@ export function PCBView({ onSelectionComplete }: PCBViewProps) {
                 {/* Components */}
                 {components.map(renderComponent)}
 
-                {/* Selection rectangle */}
+                {/* Persistent selection rectangle (follows zoom/pan) */}
+                {renderPersistentSelectionRect}
+
+                {/* Selection rectangle being drawn */}
                 {renderSelectionRect}
               </G>
             </Svg>
