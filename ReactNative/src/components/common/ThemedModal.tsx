@@ -84,6 +84,8 @@ export function ThemedModal({
             <ScrollView
               style={styles.content}
               contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
             >
               {children}
             </ScrollView>
@@ -110,6 +112,7 @@ const styles = StyleSheet.create({
   container: {
     width: '90%',
     maxHeight: '85%',
+    minHeight: 200,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
   },
@@ -137,10 +140,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   contentContainer: {
-    padding: spacing.lg,
+    flexGrow: 1,
   },
 });
 
