@@ -5,7 +5,7 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { Rect, Circle, G, Line, Polygon, Path, Ellipse } from 'react-native-svg';
+import Svg, { Rect, Circle, G, Line, Polygon, Path, Ellipse, Text as SvgText } from 'react-native-svg';
 import {
   GestureDetector,
   Gesture,
@@ -431,11 +431,17 @@ export function PCBView({
     });
   }, [showEdges, edges, boardToScreen, transform.scale, isEinkMode]);
 
-  // Render pads from footprints
+  // Render pads from footprints - Amélioration avec formes correctes et trous
   const renderPads = useMemo(() => {
     if (!showPads || !footprints.length) return null;
 
     const padElements: React.ReactNode[] = [];
+    
+    // Couleurs inspirées de ibom.html
+    const padColor = isEinkMode ? '#808080' : '#878787';
+    const padHoleColor = isEinkMode ? '#AAAAAA' : '#CCCCCC';
+    const frontColor = isEinkMode ? '#808080' : '#B0A050';  // Or/cuivre pour F
+    const backColor = isEinkMode ? '#606060' : '#5050A0';   // Bleu pour B
     
     footprints.forEach((fp: any, fpIndex: number) => {
       const pads = fp.pads || [];
@@ -447,22 +453,39 @@ export function PCBView({
         const layers = pad.layers || [fpLayer];
         const shape = pad.shape || 'rect';
         const angle = pad.angle || 0;
+        const padType = pad.type || 'smd';
+        const offset = pad.offset || [0, 0];
+        const radius = pad.radius || 0;
+        const drillsize = pad.drillsize || [0.3, 0.3];
+        const drillshape = pad.drillshape || 'circle';
         
-        const screenPos = boardToScreen(pos[0], pos[1]);
-        const w = Math.max(2, size[0] * transform.scale);
-        const h = Math.max(2, size[1] * transform.scale);
+        // Position avec offset
+        const actualX = pos[0] + offset[0];
+        const actualY = pos[1] + offset[1];
+        const screenPos = boardToScreen(actualX, actualY);
         
-        // Couleur selon la couche
-        let fillColor: string;
-        if (isEinkMode) {
-          fillColor = layers.includes('F') ? '#888888' : '#AAAAAA';
-        } else {
-          fillColor = layers.includes('F') ? '#C9A030' : '#4040A0';
-        }
+        const w = Math.max(1.5, size[0] * transform.scale);
+        const h = Math.max(1.5, size[1] * transform.scale);
+        
+        // Couleur selon la couche principale
+        const isTopLayer = layers.includes('F') || layers.some((l: string) => l.startsWith('F.'));
+        const fillColor = isTopLayer ? frontColor : backColor;
         
         const key = `pad-${fpIndex}-${padIndex}`;
         
-        if (shape === 'circle' || shape === 'oval') {
+        // Dessiner le pad selon sa forme
+        if (shape === 'circle') {
+          padElements.push(
+            <Circle
+              key={key}
+              cx={screenPos.x}
+              cy={screenPos.y}
+              r={w / 2}
+              fill={fillColor}
+              opacity={0.85}
+            />
+          );
+        } else if (shape === 'oval') {
           padElements.push(
             <Ellipse
               key={key}
@@ -471,11 +494,29 @@ export function PCBView({
               rx={w / 2}
               ry={h / 2}
               fill={fillColor}
-              opacity={0.7}
+              opacity={0.85}
+              transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
+            />
+          );
+        } else if (shape === 'roundrect') {
+          // Rectangle arrondi - calculer le rayon des coins
+          const cornerRadius = Math.min(w, h) * (radius || 0.25);
+          padElements.push(
+            <Rect
+              key={key}
+              x={screenPos.x - w / 2}
+              y={screenPos.y - h / 2}
+              width={w}
+              height={h}
+              rx={cornerRadius}
+              ry={cornerRadius}
+              fill={fillColor}
+              opacity={0.85}
+              transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
             />
           );
         } else {
-          // Rectangle (avec rotation si nécessaire)
+          // Rectangle standard
           padElements.push(
             <Rect
               key={key}
@@ -484,10 +525,40 @@ export function PCBView({
               width={w}
               height={h}
               fill={fillColor}
-              opacity={0.7}
+              opacity={0.85}
               transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
             />
           );
+        }
+        
+        // Dessiner le trou pour les pads through-hole
+        if (padType === 'th' && drillsize) {
+          const holeW = Math.max(1, drillsize[0] * transform.scale);
+          const holeH = drillsize.length > 1 ? Math.max(1, drillsize[1] * transform.scale) : holeW;
+          
+          if (drillshape === 'oblong') {
+            padElements.push(
+              <Ellipse
+                key={`${key}-hole`}
+                cx={screenPos.x}
+                cy={screenPos.y}
+                rx={holeW / 2}
+                ry={holeH / 2}
+                fill={padHoleColor}
+                transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
+              />
+            );
+          } else {
+            padElements.push(
+              <Circle
+                key={`${key}-hole`}
+                cx={screenPos.x}
+                cy={screenPos.y}
+                r={holeW / 2}
+                fill={padHoleColor}
+              />
+            );
+          }
         }
       });
     });
@@ -495,91 +566,185 @@ export function PCBView({
     return padElements;
   }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode]);
 
-  // Render silkscreen drawings from footprints
+  // Render silkscreen drawings from footprints - avec texte des références
   const renderSilkscreen = useMemo(() => {
     if (!showSilkscreen || !footprints.length) return null;
 
     const silkElements: React.ReactNode[] = [];
-    const strokeColor = isEinkMode ? '#333333' : '#FFFFAA';
+    // Couleurs inspirées de ibom.html
+    const silkEdgeColor = isEinkMode ? '#333333' : '#AAAA44';
+    const silkTextColor = isEinkMode ? '#444444' : '#44AAAA';
     
     footprints.forEach((fp: any, fpIndex: number) => {
       const fpDrawings = fp.drawings || [];
+      const fpRef = fp.ref || '';
+      const fpBbox = fp.bbox;
       
-      fpDrawings.forEach((drawing: any, drawIndex: number) => {
+      // Dessiner les drawings du footprint
+      fpDrawings.forEach((drawingObj: any, drawIndex: number) => {
         const key = `silk-${fpIndex}-${drawIndex}`;
+        const layer = drawingObj.layer || '';
+        const drawing = drawingObj.drawing || drawingObj;
         
-        if (drawing.type === 'segment') {
-          const start = boardToScreen(drawing.start[0], drawing.start[1]);
-          const end = boardToScreen(drawing.end[0], drawing.end[1]);
+        // Seulement les couches silkscreen
+        if (!layer.includes('Silk') && !layer.includes('F.SilkS') && !layer.includes('B.SilkS')) {
+          // Mais on dessine quand même si c'est directement dans drawings
+          if (drawingObj.layer) return;
+        }
+        
+        const type = drawing.type;
+        
+        if (type === 'segment') {
+          const start = drawing.start || [0, 0];
+          const end = drawing.end || [0, 0];
+          const startScreen = boardToScreen(start[0], start[1]);
+          const endScreen = boardToScreen(end[0], end[1]);
+          const width = Math.max(0.3, (drawing.width || 0.1) * transform.scale);
           silkElements.push(
             <Line
               key={key}
-              x1={start.x}
-              y1={start.y}
-              x2={end.x}
-              y2={end.y}
-              stroke={strokeColor}
-              strokeWidth={0.8}
-              opacity={0.6}
+              x1={startScreen.x}
+              y1={startScreen.y}
+              x2={endScreen.x}
+              y2={endScreen.y}
+              stroke={silkEdgeColor}
+              strokeWidth={width}
+              strokeLinecap="round"
             />
           );
-        } else if (drawing.type === 'circle') {
-          const center = boardToScreen(drawing.start[0], drawing.start[1]);
+        } else if (type === 'rect') {
+          const start = drawing.start || [0, 0];
+          const end = drawing.end || [1, 1];
+          const topLeft = boardToScreen(Math.min(start[0], end[0]), Math.max(start[1], end[1]));
+          const bottomRight = boardToScreen(Math.max(start[0], end[0]), Math.min(start[1], end[1]));
+          const width = Math.max(0.3, (drawing.width || 0.1) * transform.scale);
+          silkElements.push(
+            <Rect
+              key={key}
+              x={topLeft.x}
+              y={topLeft.y}
+              width={bottomRight.x - topLeft.x}
+              height={bottomRight.y - topLeft.y}
+              fill="none"
+              stroke={silkEdgeColor}
+              strokeWidth={width}
+            />
+          );
+        } else if (type === 'circle') {
+          const center = drawing.start || [0, 0];
+          const centerScreen = boardToScreen(center[0], center[1]);
           const r = (drawing.radius || 0.5) * transform.scale;
+          const width = Math.max(0.3, (drawing.width || 0.1) * transform.scale);
           silkElements.push(
             <Circle
               key={key}
-              cx={center.x}
-              cy={center.y}
+              cx={centerScreen.x}
+              cy={centerScreen.y}
               r={r}
               fill="none"
-              stroke={strokeColor}
-              strokeWidth={0.8}
-              opacity={0.6}
+              stroke={silkEdgeColor}
+              strokeWidth={width}
             />
           );
-        } else if (drawing.type === 'polygon' && drawing.polygons) {
+        } else if (type === 'arc') {
+          // Arc - dessiner approximativement
+          const start = drawing.start || [0, 0];
+          const mid = drawing.mid || start;
+          const end = drawing.end || start;
+          const startScreen = boardToScreen(start[0], start[1]);
+          const endScreen = boardToScreen(end[0], end[1]);
+          const width = Math.max(0.3, (drawing.width || 0.1) * transform.scale);
+          // Simplification: ligne entre start et end
+          silkElements.push(
+            <Line
+              key={key}
+              x1={startScreen.x}
+              y1={startScreen.y}
+              x2={endScreen.x}
+              y2={endScreen.y}
+              stroke={silkEdgeColor}
+              strokeWidth={width}
+              strokeLinecap="round"
+            />
+          );
+        } else if (type === 'polygon' && drawing.polygons) {
           drawing.polygons.forEach((poly: number[][], polyIndex: number) => {
+            if (!Array.isArray(poly)) return;
             const points = poly.map(([x, y]) => {
               const p = boardToScreen(x, y);
               return `${p.x},${p.y}`;
             }).join(' ');
-            silkElements.push(
-              <Polygon
-                key={`${key}-${polyIndex}`}
-                points={points}
-                fill="none"
-                stroke={strokeColor}
-                strokeWidth={0.5}
-                opacity={0.5}
-              />
-            );
+            if (points) {
+              const filled = drawing.filled !== false;
+              silkElements.push(
+                <Polygon
+                  key={`${key}-${polyIndex}`}
+                  points={points}
+                  fill={filled ? silkEdgeColor : 'none'}
+                  stroke={silkEdgeColor}
+                  strokeWidth={0.5}
+                  opacity={0.8}
+                />
+              );
+            }
           });
         }
       });
+      
+      // Dessiner la référence du composant comme texte
+      if (fpRef && fpBbox) {
+        const bboxPos = fpBbox.pos || [0, 0];
+        const bboxRelpos = fpBbox.relpos || [0, 0];
+        const bboxSize = fpBbox.size || [1, 1];
+        const bboxAngle = fpBbox.angle || 0;
+        
+        // Centre de la bounding box
+        const centerX = bboxPos[0] + bboxRelpos[0] + bboxSize[0] / 2;
+        const centerY = bboxPos[1] + bboxRelpos[1] + bboxSize[1] / 2;
+        const textPos = boardToScreen(centerX, centerY);
+        
+        // Taille du texte proportionnelle à la bbox
+        const textSize = Math.max(6, Math.min(14, Math.min(bboxSize[0], bboxSize[1]) * transform.scale * 0.4));
+        
+        silkElements.push(
+          <SvgText
+            key={`text-${fpIndex}`}
+            x={textPos.x}
+            y={textPos.y}
+            fill={silkTextColor}
+            fontSize={textSize}
+            fontWeight="bold"
+            textAnchor="middle"
+            alignmentBaseline="middle"
+            opacity={0.9}
+          >
+            {fpRef}
+          </SvgText>
+        );
+      }
     });
     
     return silkElements;
   }, [showSilkscreen, footprints, boardToScreen, transform.scale, isEinkMode]);
 
-  // Render tracks (pistes de cuivre)
+  // Render tracks (pistes de cuivre) - avec couleurs ibom
   const renderTracks = useMemo(() => {
     if (!showTracks || !tracks || Object.keys(tracks).length === 0) return null;
 
     const trackElements: React.ReactNode[] = [];
     let trackIndex = 0;
     
+    // Couleurs inspirées de ibom.html
+    const trackColorF = isEinkMode ? '#555555' : '#DEF5F1';  // Cuivre avant
+    const trackColorB = isEinkMode ? '#777777' : '#42524F';  // Cuivre arrière
+    
     // Parcourir les layers (F.Cu, B.Cu, etc.)
     Object.entries(tracks).forEach(([layer, layerTracks]: [string, any]) => {
       if (!Array.isArray(layerTracks)) return;
       
       // Couleur selon la couche
-      let strokeColor: string;
-      if (isEinkMode) {
-        strokeColor = layer.startsWith('F') ? '#555555' : '#888888';
-      } else {
-        strokeColor = layer.startsWith('F') ? '#CC4444' : '#4444CC';
-      }
+      const isTopLayer = layer.startsWith('F') || layer === 'F.Cu';
+      const strokeColor = isTopLayer ? trackColorF : trackColorB;
       
       layerTracks.forEach((track: any) => {
         const start = track.start;
@@ -589,7 +754,8 @@ export function PCBView({
         if (start && end && Array.isArray(start) && Array.isArray(end)) {
           const startScreen = boardToScreen(start[0], start[1]);
           const endScreen = boardToScreen(end[0], end[1]);
-          const strokeWidth = Math.max(0.5, width * transform.scale * 0.5);
+          // Utiliser la largeur réelle de la piste
+          const strokeWidth = Math.max(0.8, width * transform.scale);
           
           trackElements.push(
             <Line
@@ -601,7 +767,7 @@ export function PCBView({
               stroke={strokeColor}
               strokeWidth={strokeWidth}
               strokeLinecap="round"
-              opacity={0.6}
+              opacity={0.75}
             />
           );
         }

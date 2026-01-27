@@ -53,14 +53,14 @@ export const normalTheme: ThemeColors = {
   border: '#808099',
   borderLight: '#4d4d59',
 
-  // PCB
-  pcbBg: '#1f1f26',
-  pcbBoard: '#1a4d1a',
-  pcbPad: '#b39933',
+  // PCB - couleurs inspirées de ibom.html mode dark
+  pcbBg: '#252C30',       // Fond gris-bleu foncé
+  pcbBoard: '#1A3020',    // PCB vert foncé (solder mask)
+  pcbPad: '#878787',      // Pads gris
   pcbCompFront: '#cc3333',
   pcbCompBack: '#3333cc',
   pcbSelected: '#ff8000',
-  pcbHighlight: '#ff0000',
+  pcbHighlight: '#D04040',
 
   // Checkbox
   checkboxOn: '[X]',
