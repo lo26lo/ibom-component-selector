@@ -132,6 +132,7 @@ export interface Preferences {
   vibrationEnabled: boolean;
   autoSave: boolean;
   autoSaveMinutes: number;
+  showSilkscreen: boolean;
 }
 
 // Rectangle de sélection

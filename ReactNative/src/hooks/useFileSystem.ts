@@ -77,16 +77,26 @@ export function useFileSystem(): FileSystemHook {
 
   /**
    * Sélectionne un fichier HTML
+   * Note: Sur Android, on utilise plusieurs MIME types + extension filter
    */
   const pickHTMLFile = useCallback(async (): Promise<string | null> => {
     try {
       setError(null);
       const result = await DocumentPicker.pick({
-        type: ['text/html', 'application/xhtml+xml'],
+        // Inclure plusieurs types pour meilleure compatibilité Android
+        type: [types.plainText, 'text/html', 'application/xhtml+xml', 'application/octet-stream'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
+      const fileName = file.name || '';
+      
+      // Vérifier l'extension
+      if (!fileName.toLowerCase().endsWith('.html') && !fileName.toLowerCase().endsWith('.htm')) {
+        setError('Veuillez sélectionner un fichier HTML (.html ou .htm)');
+        return null;
+      }
+      
       return file.fileCopyUri || file.uri;
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
@@ -100,16 +110,26 @@ export function useFileSystem(): FileSystemHook {
 
   /**
    * Sélectionne un fichier CSV
+   * Note: Sur Android, on utilise plusieurs MIME types + extension filter
    */
   const pickCSVFile = useCallback(async (): Promise<string | null> => {
     try {
       setError(null);
       const result = await DocumentPicker.pick({
-        type: ['text/csv', 'text/comma-separated-values', 'application/csv'],
+        // Inclure plusieurs types pour meilleure compatibilité Android
+        type: [types.plainText, 'text/csv', 'text/comma-separated-values', 'application/csv', 'application/octet-stream'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
+      const fileName = file.name || '';
+      
+      // Vérifier l'extension
+      if (!fileName.toLowerCase().endsWith('.csv')) {
+        setError('Veuillez sélectionner un fichier CSV (.csv)');
+        return null;
+      }
+      
       return file.fileCopyUri || file.uri;
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
@@ -117,6 +137,7 @@ export function useFileSystem(): FileSystemHook {
       }
       setError('Erreur lors de la sélection du fichier');
       console.error('Pick CSV error:', err);
+      return null;
       return null;
     }
   }, []);
@@ -220,11 +241,19 @@ export function useFileSystem(): FileSystemHook {
       setProgress(10);
 
       const result = await DocumentPicker.pick({
-        type: ['text/html', 'application/xhtml+xml'],
+        type: [types.plainText, 'text/html', 'application/xhtml+xml', 'application/octet-stream'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
+      const fileName = file.name || '';
+      
+      // Vérifier l'extension
+      if (!fileName.toLowerCase().endsWith('.html') && !fileName.toLowerCase().endsWith('.htm')) {
+        setError('Veuillez sélectionner un fichier HTML (.html ou .htm)');
+        setLoadingState(false);
+        return null;
+      }
 
       const path = file.fileCopyUri || file.uri;
       setProgress(30);
@@ -271,11 +300,19 @@ export function useFileSystem(): FileSystemHook {
       setProgress(10);
 
       const result = await DocumentPicker.pick({
-        type: ['text/csv', 'text/comma-separated-values', 'application/csv'],
+        type: [types.plainText, 'text/csv', 'text/comma-separated-values', 'application/csv', 'application/octet-stream'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
+      const fileName = file.name || '';
+      
+      // Vérifier l'extension
+      if (!fileName.toLowerCase().endsWith('.csv')) {
+        setError('Veuillez sélectionner un fichier CSV (.csv)');
+        setLoadingState(false);
+        return null;
+      }
 
       const path = file.fileCopyUri || file.uri;
       setProgress(50);

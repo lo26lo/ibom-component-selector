@@ -20,6 +20,7 @@ interface PreferencesState extends Preferences {
   setVibrationEnabled: (value: boolean) => void;
   setAutoSave: (value: boolean) => void;
   setAutoSaveMinutes: (value: number) => void;
+  setShowSilkscreen: (value: boolean) => void;
   resetPreferences: () => void;
 }
 
@@ -31,6 +32,7 @@ const defaultPreferences: Preferences = {
   vibrationEnabled: true,
   autoSave: false,
   autoSaveMinutes: 5,
+  showSilkscreen: false,
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -54,6 +56,8 @@ export const usePreferencesStore = create<PreferencesState>()(
       setAutoSave: (value) => set({ autoSave: value }),
       
       setAutoSaveMinutes: (value) => set({ autoSaveMinutes: value }),
+      
+      setShowSilkscreen: (value) => set({ showSilkscreen: value }),
       
       resetPreferences: () => set(defaultPreferences),
     }),

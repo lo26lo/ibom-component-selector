@@ -30,6 +30,8 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
     setFontSize,
     groupByValue,
     setGroupByValue,
+    showSilkscreen,
+    setShowSilkscreen,
     resetPreferences,
   } = usePreferencesStore();
 
@@ -102,6 +104,13 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
           label="Grouper par valeur"
           value={groupByValue} 
           onValueChange={setGroupByValue} 
+        />
+
+        {/* Silkscreen */}
+        <ThemedToggle 
+          label="Afficher silkscreen (texte PCB)"
+          value={showSilkscreen} 
+          onValueChange={setShowSilkscreen} 
         />
 
         {/* Reset button */}

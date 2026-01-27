@@ -18,11 +18,11 @@ import Animated, {
 import { useTheme } from '../../theme';
 import { useAppStore } from '../../store';
 import type { Component, BoundingBox, SelectionRect } from '../../core/types';
+import { usePreferencesStore } from '../../store';
 
 interface PCBViewProps {
   onSelectionComplete?: (components: Component[]) => void;
   showPads?: boolean;
-  showSilkscreen?: boolean;
   showEdges?: boolean;
   showTracks?: boolean;
 }
@@ -30,13 +30,15 @@ interface PCBViewProps {
 export function PCBView({ 
   onSelectionComplete,
   showPads = true,
-  showSilkscreen = true,
   showEdges = true,
   showTracks = true,
 }: PCBViewProps) {
   const { theme, isEinkMode } = useTheme();
   const containerRef = useRef<View>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  // Préférence silkscreen depuis le store
+  const showSilkscreen = usePreferencesStore((s) => s.showSilkscreen);
 
   // Store state
   const components = useAppStore((s) => s.components);
@@ -229,62 +231,85 @@ export function PCBView({
     setSelectionEnd(null);
   }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setSelectionRect, onSelectionComplete]);
 
-  // Render component - discret par défaut, visible si sélectionné/highlighté
+  // Render component - utilise la bounding box du footprint pour le highlight
   const renderComponent = useCallback(
     (comp: Component, index: number) => {
-      const pos = boardToScreen(comp.x, comp.y);
       const isSelected = selectedComponents.some((c) => c.ref === comp.ref);
       const isHighlighted = highlightedComponents.some((c) => c.ref === comp.ref);
 
-      // Ne pas afficher les composants non sélectionnés/highlightés (les pads sont déjà visibles)
+      // Ne pas afficher les composants non sélectionnés/highlightés
       if (!isSelected && !isHighlighted) {
         return null;
       }
 
-      if (isHighlighted) {
-        // Highlight très visible - grand cercle + croix
-        const size = 12 * scale.value;
+      // Trouver le footprint correspondant pour avoir la bounding box
+      const footprint = footprints.find((fp: any) => fp.ref === comp.ref);
+      
+      if (isHighlighted && footprint?.bbox) {
+        // Highlight avec la bounding box du footprint (comme ibom.html)
+        const bbox = footprint.bbox;
+        const bboxPos = bbox.pos || [0, 0];
+        const bboxRelpos = bbox.relpos || [0, 0];
+        const bboxSize = bbox.size || [1, 1];
+        const bboxAngle = bbox.angle || 0;
+        
+        // Calculer les coins de la bounding box
+        const x = bboxPos[0] + bboxRelpos[0];
+        const y = bboxPos[1] + bboxRelpos[1];
+        const w = bboxSize[0];
+        const h = bboxSize[1];
+        
+        // Transformer en coordonnées écran
+        const topLeft = boardToScreen(x, y + h);
+        const bottomRight = boardToScreen(x + w, y);
+        const screenW = bottomRight.x - topLeft.x;
+        const screenH = bottomRight.y - topLeft.y;
+        
+        // Couleurs highlight inspirées de ibom.html
+        const fillColor = isEinkMode ? 'rgba(128, 128, 128, 0.3)' : 'rgba(208, 64, 64, 0.25)';
+        const strokeColor = isEinkMode ? '#000000' : '#D04040';
+        
         return (
           <G key={`comp-${comp.ref}-${index}`}>
-            {/* Cercle externe */}
-            <Circle
-              cx={pos.x}
-              cy={pos.y}
-              r={size}
-              fill="none"
-              stroke={isEinkMode ? '#000000' : '#FF0000'}
-              strokeWidth={3}
+            {/* Rectangle de highlight avec fond semi-transparent */}
+            <Rect
+              x={topLeft.x}
+              y={topLeft.y}
+              width={screenW}
+              height={screenH}
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={2.5}
             />
-            {/* Croix au centre */}
+          </G>
+        );
+      } else if (isHighlighted) {
+        // Fallback: croix au centre si pas de bbox
+        const pos = boardToScreen(comp.x, comp.y);
+        const size = 10 * scale.value;
+        return (
+          <G key={`comp-${comp.ref}-${index}`}>
             <Line
-              x1={pos.x - size * 0.6}
+              x1={pos.x - size}
               y1={pos.y}
-              x2={pos.x + size * 0.6}
+              x2={pos.x + size}
               y2={pos.y}
-              stroke={isEinkMode ? '#000000' : '#FF0000'}
-              strokeWidth={2}
+              stroke={isEinkMode ? '#000000' : '#D04040'}
+              strokeWidth={3}
             />
             <Line
               x1={pos.x}
-              y1={pos.y - size * 0.6}
+              y1={pos.y - size}
               x2={pos.x}
-              y2={pos.y + size * 0.6}
-              stroke={isEinkMode ? '#000000' : '#FF0000'}
-              strokeWidth={2}
-            />
-            {/* Cercle interne */}
-            <Circle
-              cx={pos.x}
-              cy={pos.y}
-              r={size * 0.5}
-              fill="none"
-              stroke={isEinkMode ? '#555555' : '#FFFF00'}
-              strokeWidth={2}
+              y2={pos.y + size}
+              stroke={isEinkMode ? '#000000' : '#D04040'}
+              strokeWidth={3}
             />
           </G>
         );
       } else if (isSelected) {
-        // Sélectionné - petit cercle orange
+        // Sélectionné - petit marqueur discret
+        const pos = boardToScreen(comp.x, comp.y);
         const size = 3 * scale.value;
         return (
           <Circle
@@ -300,7 +325,7 @@ export function PCBView({
 
       return null;
     },
-    [boardToScreen, selectedComponents, highlightedComponents, scale, isEinkMode]
+    [boardToScreen, selectedComponents, highlightedComponents, footprints, scale, isEinkMode]
   );
 
   // Render board outline
