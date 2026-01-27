@@ -977,6 +977,9 @@ class PCBViewer(tk.Toplevel):
     
     def _on_mouse_drag(self, event):
         """Pendant la sélection"""
+        if self.start_x is None or self.start_y is None:
+            return
+        
         if self.rect_id:
             self.canvas.delete(self.rect_id)
         
