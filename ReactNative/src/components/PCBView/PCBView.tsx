@@ -247,6 +247,7 @@ export function PCBView({
       
       if (isHighlighted && footprint?.bbox) {
         // Highlight avec la bounding box du footprint (comme ibom.html)
+        // Les pads sont déjà en rouge via renderPads, on dessine juste la bbox
         const bbox = footprint.bbox;
         const bboxPos = bbox.pos || [0, 0];
         const bboxRelpos = bbox.relpos || [0, 0];
@@ -265,8 +266,8 @@ export function PCBView({
         const screenW = bottomRight.x - topLeft.x;
         const screenH = bottomRight.y - topLeft.y;
         
-        // Couleurs highlight inspirées de ibom.html
-        const fillColor = isEinkMode ? 'rgba(128, 128, 128, 0.3)' : 'rgba(208, 64, 64, 0.25)';
+        // Couleurs highlight comme ibom.html - fond semi-transparent, bordure rouge
+        const fillColor = isEinkMode ? 'rgba(128, 128, 128, 0.2)' : 'rgba(208, 64, 64, 0.2)';
         const strokeColor = isEinkMode ? '#000000' : '#D04040';
         
         return (
@@ -279,7 +280,7 @@ export function PCBView({
               height={screenH}
               fill={fillColor}
               stroke={strokeColor}
-              strokeWidth={2.5}
+              strokeWidth={3}
             />
           </G>
         );
@@ -456,21 +457,26 @@ export function PCBView({
     });
   }, [showEdges, edges, boardToScreen, transform.scale, isEinkMode]);
 
-  // Render pads from footprints - Amélioration avec formes correctes et trous
+  // Render pads from footprints - avec highlight des composants sélectionnés
   const renderPads = useMemo(() => {
     if (!showPads || !footprints.length) return null;
 
     const padElements: React.ReactNode[] = [];
     
     // Couleurs inspirées de ibom.html
-    const padColor = isEinkMode ? '#808080' : '#878787';
     const padHoleColor = isEinkMode ? '#AAAAAA' : '#CCCCCC';
     const frontColor = isEinkMode ? '#808080' : '#B0A050';  // Or/cuivre pour F
     const backColor = isEinkMode ? '#606060' : '#5050A0';   // Bleu pour B
+    const highlightColor = isEinkMode ? '#404040' : '#D04040';  // Rouge pour highlight
+    
+    // Créer un Set des refs highlighted pour lookup rapide
+    const highlightedRefs = new Set(highlightedComponents.map(c => c.ref));
     
     footprints.forEach((fp: any, fpIndex: number) => {
       const pads = fp.pads || [];
       const fpLayer = fp.layer || 'F';
+      const fpRef = fp.ref || '';
+      const isHighlighted = highlightedRefs.has(fpRef);
       
       pads.forEach((pad: any, padIndex: number) => {
         const pos = pad.pos || [0, 0];
@@ -492,9 +498,10 @@ export function PCBView({
         const w = Math.max(1.5, size[0] * transform.scale);
         const h = Math.max(1.5, size[1] * transform.scale);
         
-        // Couleur selon la couche principale
+        // Couleur selon la couche principale OU highlight
         const isTopLayer = layers.includes('F') || layers.some((l: string) => l.startsWith('F.'));
-        const fillColor = isTopLayer ? frontColor : backColor;
+        const fillColor = isHighlighted ? highlightColor : (isTopLayer ? frontColor : backColor);
+        const opacity = isHighlighted ? 1.0 : 0.85;
         
         const key = `pad-${fpIndex}-${padIndex}`;
         
@@ -507,7 +514,7 @@ export function PCBView({
               cy={screenPos.y}
               r={w / 2}
               fill={fillColor}
-              opacity={0.85}
+              opacity={opacity}
             />
           );
         } else if (shape === 'oval') {
@@ -519,7 +526,7 @@ export function PCBView({
               rx={w / 2}
               ry={h / 2}
               fill={fillColor}
-              opacity={0.85}
+              opacity={opacity}
               transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
             />
           );
@@ -536,7 +543,7 @@ export function PCBView({
               rx={cornerRadius}
               ry={cornerRadius}
               fill={fillColor}
-              opacity={0.85}
+              opacity={opacity}
               transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
             />
           );
@@ -550,7 +557,7 @@ export function PCBView({
               width={w}
               height={h}
               fill={fillColor}
-              opacity={0.85}
+              opacity={opacity}
               transform={angle ? `rotate(${-angle}, ${screenPos.x}, ${screenPos.y})` : undefined}
             />
           );
@@ -589,7 +596,7 @@ export function PCBView({
     });
     
     return padElements;
-  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode]);
+  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents]);
 
   // Render silkscreen drawings from footprints - avec texte des références
   const renderSilkscreen = useMemo(() => {
