@@ -82,17 +82,12 @@ export function useFileSystem(): FileSystemHook {
     try {
       setError(null);
       const result = await DocumentPicker.pick({
-        type: [types.allFiles],
+        type: ['text/html', 'application/xhtml+xml'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
-      if (file.name?.endsWith('.html') || file.name?.endsWith('.htm')) {
-        return file.fileCopyUri || file.uri;
-      } else {
-        setError('Veuillez sélectionner un fichier HTML');
-        return null;
-      }
+      return file.fileCopyUri || file.uri;
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         return null;
@@ -110,17 +105,12 @@ export function useFileSystem(): FileSystemHook {
     try {
       setError(null);
       const result = await DocumentPicker.pick({
-        type: [types.allFiles],
+        type: ['text/csv', 'text/comma-separated-values', 'application/csv'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
-      if (file.name?.endsWith('.csv')) {
-        return file.fileCopyUri || file.uri;
-      } else {
-        setError('Veuillez sélectionner un fichier CSV');
-        return null;
-      }
+      return file.fileCopyUri || file.uri;
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         return null;
@@ -230,16 +220,11 @@ export function useFileSystem(): FileSystemHook {
       setProgress(10);
 
       const result = await DocumentPicker.pick({
-        type: [types.allFiles],
+        type: ['text/html', 'application/xhtml+xml'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
-      if (!file.name?.endsWith('.html') && !file.name?.endsWith('.htm')) {
-        setError('Veuillez sélectionner un fichier HTML');
-        setLoadingState(false);
-        return null;
-      }
 
       const path = file.fileCopyUri || file.uri;
       setProgress(30);
@@ -286,16 +271,11 @@ export function useFileSystem(): FileSystemHook {
       setProgress(10);
 
       const result = await DocumentPicker.pick({
-        type: [types.allFiles],
+        type: ['text/csv', 'text/comma-separated-values', 'application/csv'],
         copyTo: 'cachesDirectory',
       });
 
       const file = result[0];
-      if (!file.name?.endsWith('.csv')) {
-        setError('Veuillez sélectionner un fichier CSV');
-        setLoadingState(false);
-        return null;
-      }
 
       const path = file.fileCopyUri || file.uri;
       setProgress(50);
