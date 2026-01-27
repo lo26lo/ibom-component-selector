@@ -136,24 +136,67 @@ npm run clean
 
 ## 📦 Build APK Production
 
-### Build Release
+### 🐧 Linux/macOS - Script automatisé `build_apk.sh`
+
+Le script `build_apk.sh` gère **automatiquement tout le processus de build**, y compris l'installation des prérequis :
 
 ```bash
-cd android
-./gradlew assembleRelease
+# Build standard
+./build_apk.sh
+
+# Build avec nettoyage du cache
+./build_apk.sh --clean
+
+# Build avec envoi des logs sur GitHub (debug à distance)
+./build_apk.sh --share-logs
 ```
 
-### Emplacement de l'APK
+#### Ce que fait le script :
 
-```
-android/app/build/outputs/apk/release/app-release.apk
-```
+| Étape | Description |
+|-------|-------------|
+| **[1/6] Prérequis** | Vérifie et installe automatiquement Node.js, Java 17, Android SDK |
+| **[2/6] Projet RN** | Crée un projet React Native 0.73.4 propre avec toutes les dépendances |
+| **[3/6] Sources** | Copie les fichiers sources TypeScript depuis `src/` |
+| **[4/6] Config** | Configure les permissions Android, Proguard, Babel pour Reanimated |
+| **[5/6] Build** | Compile l'APK Release avec Gradle |
+| **[6/6] Finalisation** | Copie l'APK dans `build/IBomSelector.apk` |
 
-### Build avec script PowerShell (Windows)
+#### Options :
+
+| Option | Description |
+|--------|-------------|
+| `--clean` | Nettoie le cache Gradle et recrée le projet |
+| `--share-logs` | Envoie les logs de build sur GitHub pour debug à distance |
+
+### 🪟 Windows - Scripts PowerShell/Batch
 
 ```powershell
+# PowerShell
 .\build_apk.ps1
+
+# Batch
+.\build_apk.bat
 ```
+
+Ces scripts font :
+1. Installation des dépendances npm (si nécessaire)
+2. Nettoyage des builds précédents
+3. Build APK Release
+4. Copie de l'APK vers `build\IBomSelector.apk`
+
+### 📍 Emplacement de l'APK
+
+```
+build/IBomSelector.apk
+```
+
+### ⚠️ Prérequis Windows
+
+Sur Windows, vous devez avoir installé au préalable :
+- Node.js 18+
+- JDK 17 (ex: [Adoptium Temurin](https://adoptium.net/))
+- Android SDK (via Android Studio)
 
 ---
 
