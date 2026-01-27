@@ -1053,6 +1053,452 @@ class PCBViewer(tk.Toplevel):
         self._draw_pcb(recalculate_scale=True)
 
 
+# ==================== SPLIT VIEW ====================
+
+class SplitView(tk.Toplevel):
+    """Fenêtre Split avec PCB et Liste côte à côte, synchronisés"""
+    
+    def __init__(self, parent, parser, components, processed_items, prefs, theme, on_processed_change):
+        super().__init__(parent)
+        self.parser = parser
+        self.components = components
+        self.processed_items = processed_items
+        self.prefs = prefs
+        self.theme = theme
+        self.on_processed_change = on_processed_change
+        
+        self.title("Split View - PCB + Liste")
+        self.geometry("1400x900")
+        self.configure(bg=theme['bg_primary'])
+        
+        # Variables
+        self.scale = 1.0
+        self.offset_x = 50
+        self.offset_y = 50
+        self.highlighted_refs = set()
+        self.show_pads_var = tk.BooleanVar(value=True)
+        self.show_tracks_var = tk.BooleanVar(value=True)
+        self.show_silk_var = tk.BooleanVar(value=True)
+        self.group_by_value_var = tk.BooleanVar(value=prefs.get('group_by_value', True))
+        
+        self._setup_ui()
+        self.after(100, self._draw_pcb)
+    
+    def _setup_ui(self):
+        """Configure l'interface split"""
+        # Frame principal avec PanedWindow
+        self.paned = tk.PanedWindow(self, orient=tk.HORIZONTAL, bg=self.theme['bg_primary'],
+                                     sashwidth=5, sashrelief=tk.RAISED)
+        self.paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # ===== PANNEAU GAUCHE: PCB =====
+        left_frame = tk.Frame(self.paned, bg=self.theme['bg_primary'])
+        self.paned.add(left_frame, width=700)
+        
+        # Toolbar PCB
+        pcb_toolbar = tk.Frame(left_frame, bg=self.theme['bg_secondary'])
+        pcb_toolbar.pack(fill=tk.X, pady=2)
+        
+        tk.Label(pcb_toolbar, text="PCB", font=('Segoe UI', 11, 'bold'),
+                bg=self.theme['bg_secondary'], fg=self.theme['text_primary']).pack(side=tk.LEFT, padx=10)
+        
+        tk.Checkbutton(pcb_toolbar, text="Pads", variable=self.show_pads_var,
+                       command=self._draw_pcb, bg=self.theme['bg_secondary'],
+                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
+                       ).pack(side=tk.LEFT, padx=5)
+        tk.Checkbutton(pcb_toolbar, text="Tracks", variable=self.show_tracks_var,
+                       command=self._draw_pcb, bg=self.theme['bg_secondary'],
+                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
+                       ).pack(side=tk.LEFT, padx=5)
+        tk.Checkbutton(pcb_toolbar, text="Silk", variable=self.show_silk_var,
+                       command=self._draw_pcb, bg=self.theme['bg_secondary'],
+                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
+                       ).pack(side=tk.LEFT, padx=5)
+        
+        btn_style = {'bg': self.theme['bg_tertiary'], 'fg': self.theme['text_primary'],
+                     'activebackground': self.theme['accent'], 'activeforeground': '#ffffff',
+                     'relief': tk.FLAT, 'padx': 8, 'pady': 2}
+        
+        tk.Button(pcb_toolbar, text="Zoom +", command=self._zoom_in, **btn_style).pack(side=tk.RIGHT, padx=2)
+        tk.Button(pcb_toolbar, text="Zoom -", command=self._zoom_out, **btn_style).pack(side=tk.RIGHT, padx=2)
+        tk.Button(pcb_toolbar, text="Reset", command=self._reset_view, **btn_style).pack(side=tk.RIGHT, padx=2)
+        
+        # Canvas PCB
+        self.canvas = tk.Canvas(left_frame, bg=self.theme['pcb_board'], highlightthickness=0)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+        
+        # Bindings PCB
+        self.canvas.bind('<MouseWheel>', self._on_mousewheel)
+        self.canvas.bind('<Button-3>', self._on_pan_start)
+        self.canvas.bind('<B3-Motion>', self._on_pan_drag)
+        self.pan_start_x = None
+        self.pan_start_y = None
+        
+        # Légende
+        legend = tk.Frame(left_frame, bg=self.theme['bg_secondary'])
+        legend.pack(fill=tk.X, pady=2)
+        tk.Label(legend, text="● Front", fg=self.theme['pad_front'],
+                 bg=self.theme['bg_secondary'], font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+        tk.Label(legend, text="● Back", fg=self.theme['pad_back'],
+                 bg=self.theme['bg_secondary'], font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+        tk.Label(legend, text="● Highlight", fg=self.theme['pad_highlight'],
+                 bg=self.theme['bg_secondary'], font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+        
+        # ===== PANNEAU DROIT: LISTE =====
+        right_frame = tk.Frame(self.paned, bg=self.theme['bg_primary'])
+        self.paned.add(right_frame, width=650)
+        
+        # Toolbar Liste
+        list_toolbar = tk.Frame(right_frame, bg=self.theme['bg_secondary'])
+        list_toolbar.pack(fill=tk.X, pady=2)
+        
+        tk.Label(list_toolbar, text="Composants", font=('Segoe UI', 11, 'bold'),
+                bg=self.theme['bg_secondary'], fg=self.theme['text_primary']).pack(side=tk.LEFT, padx=10)
+        
+        tk.Checkbutton(list_toolbar, text="Grouper", variable=self.group_by_value_var,
+                       command=self._update_list, bg=self.theme['bg_secondary'],
+                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary']
+                       ).pack(side=tk.LEFT, padx=10)
+        
+        self.stats_label = tk.Label(list_toolbar, text="", font=('Segoe UI', 9),
+                                   bg=self.theme['bg_secondary'], fg=self.theme['text_secondary'])
+        self.stats_label.pack(side=tk.RIGHT, padx=10)
+        
+        # Treeview
+        style = ttk.Style()
+        style.configure("Split.Treeview", 
+                       background=self.theme['bg_primary'],
+                       foreground=self.theme['text_primary'],
+                       fieldbackground=self.theme['bg_primary'],
+                       font=('Segoe UI', 10))
+        style.configure("Split.Treeview.Heading",
+                       background=self.theme['bg_tertiary'],
+                       foreground=self.theme['text_primary'],
+                       font=('Segoe UI', 9, 'bold'))
+        style.map('Split.Treeview', background=[('selected', self.theme['accent'])])
+        
+        columns = ('done', 'qty', 'ref', 'value', 'footprint', 'lcsc')
+        self.tree = ttk.Treeview(right_frame, columns=columns, show='headings', 
+                                 style="Split.Treeview")
+        
+        self.tree.tag_configure('done', background=self.theme['row_done'])
+        self.tree.tag_configure('pending', background=self.theme['row_pending'])
+        
+        self.tree.heading('done', text='✓')
+        self.tree.heading('qty', text='Qté')
+        self.tree.heading('ref', text='Références')
+        self.tree.heading('value', text='Valeur')
+        self.tree.heading('footprint', text='Footprint')
+        self.tree.heading('lcsc', text='LCSC')
+        
+        self.tree.column('done', width=30, anchor='center')
+        self.tree.column('qty', width=35, anchor='center')
+        self.tree.column('ref', width=150)
+        self.tree.column('value', width=100)
+        self.tree.column('footprint', width=130)
+        self.tree.column('lcsc', width=80)
+        
+        scrollbar = ttk.Scrollbar(right_frame, orient=tk.VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar.set)
+        
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Bindings liste
+        self.tree.bind('<<TreeviewSelect>>', self._on_list_select)
+        self.tree.bind('<Double-1>', self._on_toggle_processed)
+        self.tree.bind('<space>', self._on_toggle_processed)
+        
+        # Barre d'actions en bas
+        action_frame = tk.Frame(right_frame, bg=self.theme['bg_secondary'])
+        action_frame.pack(fill=tk.X, pady=5)
+        
+        tk.Button(action_frame, text="✓ Marquer fait", command=self._mark_done, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(action_frame, text="✗ Démarquer", command=self._mark_undone, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(action_frame, text="◀ Préc", command=self._navigate_prev, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(action_frame, text="Suiv ▶", command=self._navigate_next, **btn_style).pack(side=tk.LEFT, padx=5)
+        
+        self.nav_label = tk.Label(action_frame, text="", bg=self.theme['bg_secondary'],
+                                 fg=self.theme['text_secondary'], font=('Segoe UI', 9))
+        self.nav_label.pack(side=tk.RIGHT, padx=10)
+        
+        # Initialiser la liste
+        self._update_list()
+    
+    def _pcb_to_canvas(self, x, y):
+        """Convertit coordonnées PCB -> canvas"""
+        bbox = self.parser.board_bbox
+        canvas_height = self.canvas.winfo_height() or 700
+        cx = self.offset_x + (x - bbox['minx']) * self.scale
+        cy = canvas_height - (self.offset_y + (y - bbox['miny']) * self.scale)
+        return cx, cy
+    
+    def _draw_pcb(self, recalculate_scale=True):
+        """Dessine le PCB avec highlight des composants sélectionnés"""
+        self.canvas.delete('all')
+        
+        bbox = self.parser.board_bbox
+        width = bbox['maxx'] - bbox['minx']
+        height = bbox['maxy'] - bbox['miny']
+        
+        canvas_width = self.canvas.winfo_width() or 700
+        canvas_height = self.canvas.winfo_height() or 700
+        
+        if recalculate_scale:
+            scale_x = (canvas_width - 50) / width if width > 0 else 1
+            scale_y = (canvas_height - 50) / height if height > 0 else 1
+            self.scale = min(scale_x, scale_y) * 0.9
+            self.offset_x = (canvas_width - width * self.scale) / 2
+            self.offset_y = (canvas_height - height * self.scale) / 2
+        
+        # Fond
+        x1, y1 = self._pcb_to_canvas(bbox['minx'], bbox['miny'])
+        x2, y2 = self._pcb_to_canvas(bbox['maxx'], bbox['maxy'])
+        self.canvas.create_rectangle(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2),
+                                     outline=self.theme['pcb_edge'], fill=self.theme['pcb_board'], width=2)
+        
+        # Tracks
+        if self.show_tracks_var.get():
+            for layer, layer_tracks in self.parser.tracks.items():
+                if not isinstance(layer_tracks, list):
+                    continue
+                is_front = layer.startswith('F') or layer == 'F.Cu'
+                color = self.theme['track_front'] if is_front else self.theme['track_back']
+                for track in layer_tracks:
+                    start = track.get('start')
+                    end = track.get('end')
+                    if start and end:
+                        tx1, ty1 = self._pcb_to_canvas(start[0], start[1])
+                        tx2, ty2 = self._pcb_to_canvas(end[0], end[1])
+                        w = max(0.5, track.get('width', 0.2) * self.scale)
+                        self.canvas.create_line(tx1, ty1, tx2, ty2, fill=color, width=w, capstyle=tk.ROUND)
+        
+        # Pads avec highlight
+        if self.show_pads_var.get():
+            for fp in self.parser.footprints:
+                ref = fp.get('ref', '')
+                fp_layer = fp.get('layer', 'F')
+                is_highlighted = ref in self.highlighted_refs
+                
+                for pad in fp.get('pads', []):
+                    self._draw_pad(pad, fp_layer, is_highlighted)
+        
+        # Silkscreen
+        if self.show_silk_var.get():
+            for fp in self.parser.footprints:
+                ref = fp.get('ref', '')
+                bbox_fp = fp.get('bbox', {})
+                if ref and bbox_fp:
+                    is_highlighted = ref in self.highlighted_refs
+                    self._draw_ref(ref, bbox_fp, is_highlighted)
+    
+    def _draw_pad(self, pad, fp_layer, is_highlighted=False):
+        """Dessine un pad"""
+        pos = pad.get('pos', [0, 0])
+        size = pad.get('size', [0.5, 0.5])
+        shape = pad.get('shape', 'rect')
+        layers = pad.get('layers', [fp_layer])
+        
+        cx, cy = self._pcb_to_canvas(pos[0], pos[1])
+        w = max(2, size[0] * self.scale)
+        h = max(2, size[1] * self.scale)
+        
+        if is_highlighted:
+            color = self.theme['pad_highlight']
+        else:
+            is_front = 'F' in layers or any(l.startswith('F.') for l in layers)
+            color = self.theme['pad_front'] if is_front else self.theme['pad_back']
+        
+        if shape == 'circle':
+            r = w / 2
+            self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r, fill=color, outline='')
+        else:
+            self.canvas.create_rectangle(cx - w/2, cy - h/2, cx + w/2, cy + h/2, fill=color, outline='')
+    
+    def _draw_ref(self, ref, bbox, is_highlighted=False):
+        """Dessine la référence d'un composant"""
+        if not ref or ref == 'REF**':
+            return
+        
+        pos = bbox.get('pos', [0, 0])
+        relpos = bbox.get('relpos', [0, 0])
+        size = bbox.get('size', [1, 1])
+        
+        center_x = pos[0] + relpos[0] + size[0] / 2
+        center_y = pos[1] + relpos[1] + size[1] / 2
+        cx, cy = self._pcb_to_canvas(center_x, center_y)
+        
+        font_size = max(6, min(10, int(min(size[0], size[1]) * self.scale * 0.4)))
+        color = self.theme['pad_highlight'] if is_highlighted else self.theme['silk_text']
+        
+        self.canvas.create_text(cx, cy, text=ref, fill=color, font=('Consolas', font_size, 'bold'))
+    
+    def _update_list(self):
+        """Met à jour la liste des composants"""
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        
+        if self.group_by_value_var.get():
+            grouped = {}
+            for comp in self.components:
+                key = (comp['value'], comp['footprint'], comp.get('lcsc', ''))
+                if key not in grouped:
+                    grouped[key] = []
+                grouped[key].append(comp['ref'])
+            
+            for (value, footprint, lcsc), refs in sorted(grouped.items()):
+                refs_sorted = sorted(refs, key=lambda r: (r[0], int(''.join(filter(str.isdigit, r)) or 0)))
+                key = (value, footprint, lcsc)
+                is_done = key in self.processed_items
+                tag = 'done' if is_done else 'pending'
+                
+                self.tree.insert('', tk.END, values=(
+                    '✓' if is_done else '', len(refs), ', '.join(refs_sorted),
+                    value, footprint, lcsc
+                ), tags=(tag,))
+        else:
+            for comp in sorted(self.components, key=lambda c: (c['value'], c['ref'])):
+                key = (comp['value'], comp['footprint'], comp.get('lcsc', ''))
+                is_done = key in self.processed_items
+                tag = 'done' if is_done else 'pending'
+                
+                self.tree.insert('', tk.END, values=(
+                    '✓' if is_done else '', 1, comp['ref'],
+                    comp['value'], comp['footprint'], comp.get('lcsc', '')
+                ), tags=(tag,))
+        
+        # Stats
+        total = len(self.tree.get_children())
+        done = sum(1 for item in self.tree.get_children() if self.tree.item(item, 'values')[0] == '✓')
+        self.stats_label.config(text=f"{done}/{total} faits ({int(done/total*100) if total > 0 else 0}%)")
+        self._update_nav_label()
+    
+    def _on_list_select(self, event=None):
+        """Highlight les composants sélectionnés sur le PCB"""
+        self.highlighted_refs.clear()
+        
+        for item in self.tree.selection():
+            values = self.tree.item(item, 'values')
+            if len(values) >= 3:
+                refs_str = values[2]
+                for ref in refs_str.split(', '):
+                    ref = ref.strip()
+                    if ref:
+                        self.highlighted_refs.add(ref)
+        
+        self._draw_pcb(recalculate_scale=False)
+    
+    def _on_toggle_processed(self, event=None):
+        """Bascule l'état traité"""
+        for item in self.tree.selection():
+            values = self.tree.item(item, 'values')
+            if len(values) >= 6:
+                key = (values[3], values[4], values[5])
+                if key in self.processed_items:
+                    self.processed_items.discard(key)
+                else:
+                    self.processed_items.add(key)
+        
+        self._update_list()
+        self.on_processed_change()
+    
+    def _mark_done(self):
+        """Marque comme fait"""
+        for item in self.tree.selection():
+            values = self.tree.item(item, 'values')
+            if len(values) >= 6:
+                key = (values[3], values[4], values[5])
+                self.processed_items.add(key)
+        self._update_list()
+        self.on_processed_change()
+    
+    def _mark_undone(self):
+        """Démarque"""
+        for item in self.tree.selection():
+            values = self.tree.item(item, 'values')
+            if len(values) >= 6:
+                key = (values[3], values[4], values[5])
+                self.processed_items.discard(key)
+        self._update_list()
+        self.on_processed_change()
+    
+    def _navigate_prev(self):
+        """Navigue vers l'élément précédent"""
+        children = self.tree.get_children()
+        if not children:
+            return
+        
+        selection = self.tree.selection()
+        if selection:
+            idx = children.index(selection[0])
+            new_idx = (idx - 1) % len(children)
+        else:
+            new_idx = len(children) - 1
+        
+        self.tree.selection_set(children[new_idx])
+        self.tree.see(children[new_idx])
+        self._on_list_select()
+        self._update_nav_label()
+    
+    def _navigate_next(self):
+        """Navigue vers l'élément suivant"""
+        children = self.tree.get_children()
+        if not children:
+            return
+        
+        selection = self.tree.selection()
+        if selection:
+            idx = children.index(selection[0])
+            new_idx = (idx + 1) % len(children)
+        else:
+            new_idx = 0
+        
+        self.tree.selection_set(children[new_idx])
+        self.tree.see(children[new_idx])
+        self._on_list_select()
+        self._update_nav_label()
+    
+    def _update_nav_label(self):
+        """Met à jour le label de navigation"""
+        children = self.tree.get_children()
+        selection = self.tree.selection()
+        if children and selection:
+            idx = children.index(selection[0]) + 1
+            self.nav_label.config(text=f"{idx}/{len(children)}")
+        else:
+            self.nav_label.config(text=f"0/{len(children)}")
+    
+    def _on_pan_start(self, event):
+        self.pan_start_x = event.x
+        self.pan_start_y = event.y
+    
+    def _on_pan_drag(self, event):
+        if self.pan_start_x is None:
+            return
+        self.offset_x += event.x - self.pan_start_x
+        self.offset_y -= event.y - self.pan_start_y
+        self.pan_start_x = event.x
+        self.pan_start_y = event.y
+        self._draw_pcb(recalculate_scale=False)
+    
+    def _on_mousewheel(self, event):
+        if event.delta > 0:
+            self._zoom_in()
+        else:
+            self._zoom_out()
+    
+    def _zoom_in(self):
+        self.scale *= 1.2
+        self._draw_pcb(recalculate_scale=False)
+    
+    def _zoom_out(self):
+        self.scale /= 1.2
+        self._draw_pcb(recalculate_scale=False)
+    
+    def _reset_view(self):
+        self._draw_pcb(recalculate_scale=True)
+
+
 # ==================== MAIN APPLICATION ====================
 
 class IBomSelectorApp:
@@ -1078,6 +1524,8 @@ class IBomSelectorApp:
         self.history_file = None
         self.current_history_index = None
         self.current_item_index = 0  # Pour navigation
+        self.view_mode = 'normal'  # 'normal', 'split', 'pcb_only'
+        self.split_window = None  # Fenêtre split
         
         # Variables
         self.layer_filter = tk.StringVar(value="all")
@@ -1127,6 +1575,7 @@ class IBomSelectorApp:
         
         tk.Button(header_frame, text="🌙 Thème", command=self._toggle_theme, **btn_style).pack(side=tk.RIGHT, padx=5)
         tk.Button(header_frame, text="⚙️ Options", command=self._show_options, **btn_style).pack(side=tk.RIGHT, padx=5)
+        tk.Button(header_frame, text="📐 Split PCB/Liste", command=self._open_split_view, **btn_style).pack(side=tk.RIGHT, padx=5)
         
         # Frame pour le fichier
         file_frame = tk.LabelFrame(main_frame, text="Fichier HTML", 
@@ -1346,6 +1795,37 @@ class IBomSelectorApp:
         self.nav_label = tk.Label(nav_frame, text="", bg=self.theme['bg_primary'],
                                  fg=self.theme['text_secondary'], font=('Segoe UI', 10))
         self.nav_label.pack(side=tk.RIGHT, padx=10)
+    
+    def _open_split_view(self):
+        """Ouvre la vue Split PCB/Liste"""
+        if not self.parser:
+            messagebox.showwarning("Attention", "Chargez d'abord un fichier HTML")
+            return
+        
+        if not self.selected_components:
+            messagebox.showwarning("Attention", "Sélectionnez d'abord des composants sur le PCB")
+            return
+        
+        if self.split_window and self.split_window.winfo_exists():
+            self.split_window.lift()
+            self.split_window.focus_force()
+            return
+        
+        def on_processed_change():
+            """Callback quand les items traités changent"""
+            self._update_tree()
+            self._update_progress()
+        
+        self.split_window = SplitView(
+            self.root, 
+            self.parser, 
+            self.selected_components,
+            self.processed_items,
+            self.prefs,
+            self.theme,
+            on_processed_change
+        )
+        self.split_window.transient(self.root)
     
     def _show_options(self):
         """Affiche la fenêtre d'options"""
