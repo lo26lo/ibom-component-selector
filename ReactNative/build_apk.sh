@@ -1,6 +1,8 @@
 #!/bin/bash
 # Script de build pour générer l'APK Release
-# Usage: ./build_apk.sh
+# Usage: ./build_apk.sh [--clean] [--share-logs]
+#   --clean      : Nettoie le cache avant le build
+#   --share-logs : Envoie les logs sur GitHub pour debug à distance
 
 set -e
 
@@ -10,6 +12,55 @@ echo ""
 # Aller dans le répertoire du script
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
+
+# Configuration des logs
+LOG_FILE="$SCRIPT_DIR/../build_log.txt"
+SHARE_LOGS=false
+
+# Vérifier si on doit partager les logs
+for arg in "$@"; do
+    if [ "$arg" == "--share-logs" ]; then
+        SHARE_LOGS=true
+    fi
+done
+
+# Fonction pour logger avec horodatage
+log_message() {
+    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+    echo "$msg"
+    if [ "$SHARE_LOGS" = true ]; then
+        echo "$msg" >> "$LOG_FILE"
+    fi
+}
+
+# Si partage des logs activé, initialiser le fichier
+if [ "$SHARE_LOGS" = true ]; then
+    echo "=== BUILD LOG - $(date) ===" > "$LOG_FILE"
+    echo "Script: build_apk.sh" >> "$LOG_FILE"
+    echo "Arguments: $@" >> "$LOG_FILE"
+    echo "========================================" >> "$LOG_FILE"
+    echo ""
+    log_message "Mode partage de logs activé - Les logs seront envoyés sur GitHub"
+fi
+
+# Fonction pour envoyer les logs sur GitHub en cas d'erreur
+push_logs_on_error() {
+    if [ "$SHARE_LOGS" = true ]; then
+        echo "" >> "$LOG_FILE"
+        echo "=== FIN DU BUILD (ERREUR) - $(date) ===" >> "$LOG_FILE"
+        
+        cd "$SCRIPT_DIR/.."
+        git add build_log.txt 2>/dev/null || true
+        git commit -m "build: Log d'erreur du build $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
+        git push 2>/dev/null || true
+        
+        echo ""
+        echo -e "${YELLOW}📤 Logs envoyés sur GitHub pour analyse${NC}"
+    fi
+}
+
+# Attraper les erreurs pour envoyer les logs
+trap 'push_logs_on_error' ERR
 
 # Couleurs pour les messages
 RED='\033[0;31m'
@@ -25,6 +76,7 @@ command_exists() {
 # ============================================
 # [1/6] Vérifier et installer les prérequis
 # ============================================
+log_message "[1/6] Vérification des prérequis..."
 echo -e "${YELLOW}[1/6] Vérification des prérequis...${NC}"
 
 # Vérifier Node.js
@@ -125,6 +177,7 @@ echo "      ✓ Android SDK: $ANDROID_HOME"
 # ============================================
 # [2/6] Créer un projet React Native propre
 # ============================================
+log_message "[2/6] Préparation du projet React Native..."
 echo -e "${YELLOW}[2/6] Préparation du projet React Native...${NC}"
 
 BUILD_DIR="$SCRIPT_DIR/../.rn_build"
@@ -199,6 +252,7 @@ fi
 # ============================================
 # [3/6] Copier les fichiers sources
 # ============================================
+log_message "[3/6] Copie des fichiers sources..."
 echo -e "${YELLOW}[3/6] Copie des fichiers sources...${NC}"
 
 # Supprimer l'ancien src et recopier (pour avoir les dernières modifications)
@@ -230,6 +284,7 @@ echo "      ✓ Fichiers sources copiés"
 # ============================================
 # [4/6] Configurer l'application
 # ============================================
+log_message "[4/6] Configuration de l'application..."
 echo -e "${YELLOW}[4/6] Configuration de l'application...${NC}"
 
 # Mettre à jour app.json
@@ -269,6 +324,7 @@ echo "      ✓ Application configurée"
 # ============================================
 # [5/6] Build APK Release
 # ============================================
+log_message "[5/6] Build APK Release..."
 echo -e "${YELLOW}[5/6] Build APK Release...${NC}"
 
 cd android
@@ -276,25 +332,45 @@ chmod +x gradlew
 
 # Nettoyer le cache si demandé
 if [ "$1" == "--clean" ] || [ "$2" == "--clean" ]; then
+    log_message "Nettoyage du cache Gradle..."
     echo "      Nettoyage du cache Gradle..."
     ./gradlew clean
 fi
 
 # Build avec gestion d'erreur détaillée
+log_message "Compilation en cours (peut prendre plusieurs minutes)..."
 echo "      Compilation en cours (peut prendre plusieurs minutes)..."
-if ! ./gradlew assembleRelease --stacktrace; then
-    echo -e "${RED}❌ Erreur lors du build${NC}"
-    echo ""
-    echo "Essayez:"
-    echo "  1. ./build_apk.sh --clean"
-    echo "  2. Vérifiez que Java 17 est installé: java --version"
-    echo "  3. Supprimez ~/.gradle/caches et réessayez"
-    exit 1
+
+# Capture du build avec logs
+if [ "$SHARE_LOGS" = true ]; then
+    echo "" >> "$LOG_FILE"
+    echo "=== GRADLE BUILD OUTPUT ===" >> "$LOG_FILE"
+    if ! ./gradlew assembleRelease --stacktrace 2>&1 | tee -a "$LOG_FILE"; then
+        log_message "❌ Erreur lors du build Gradle"
+        echo -e "${RED}❌ Erreur lors du build${NC}"
+        echo ""
+        echo "Essayez:"
+        echo "  1. ./build_apk.sh --clean --share-logs"
+        echo "  2. Vérifiez que Java 17 est installé: java --version"
+        echo "  3. Supprimez ~/.gradle/caches et réessayez"
+        exit 1
+    fi
+else
+    if ! ./gradlew assembleRelease --stacktrace; then
+        echo -e "${RED}❌ Erreur lors du build${NC}"
+        echo ""
+        echo "Essayez:"
+        echo "  1. ./build_apk.sh --clean"
+        echo "  2. Vérifiez que Java 17 est installé: java --version"
+        echo "  3. Supprimez ~/.gradle/caches et réessayez"
+        exit 1
+    fi
 fi
 
 # ============================================
 # [6/6] Copier l'APK
 # ============================================
+log_message "[6/6] Finalisation..."
 echo -e "${YELLOW}[6/6] Finalisation...${NC}"
 
 APK_SOURCE="app/build/outputs/apk/release/app-release.apk"
@@ -304,12 +380,29 @@ mkdir -p "$APK_DEST"
 
 if [ -f "$APK_SOURCE" ]; then
     cp "$APK_SOURCE" "$APK_DEST/IBomSelector.apk"
+    log_message "✅ Build réussi! APK: $APK_DEST/IBomSelector.apk"
     echo ""
     echo -e "${GREEN}✅ Build réussi!${NC}"
     echo -e "${GREEN}📱 APK: $APK_DEST/IBomSelector.apk${NC}"
     echo ""
     ls -lh "$APK_DEST/IBomSelector.apk"
+    
+    # Envoyer les logs de succès si demandé
+    if [ "$SHARE_LOGS" = true ]; then
+        echo "" >> "$LOG_FILE"
+        echo "=== BUILD RÉUSSI - $(date) ===" >> "$LOG_FILE"
+        ls -lh "$APK_DEST/IBomSelector.apk" >> "$LOG_FILE"
+        
+        cd "$SCRIPT_DIR/.."
+        git add build_log.txt 2>/dev/null || true
+        git commit -m "build: Build réussi $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
+        git push 2>/dev/null || true
+        
+        echo ""
+        echo -e "${GREEN}📤 Logs de succès envoyés sur GitHub${NC}"
+    fi
 else
+    log_message "❌ APK non trouvé"
     echo -e "${RED}❌ APK non trouvé${NC}"
     exit 1
 fi
