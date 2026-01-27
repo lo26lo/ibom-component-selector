@@ -60,12 +60,13 @@ export function FilePicker({
   const handleConfirm = useCallback(() => {
     if (htmlPath) {
       onFilesLoaded(htmlPath, csvPath || undefined);
+      // Ne pas effacer les données, juste réinitialiser l'état local du modal
       setHtmlPath(null);
       setCsvPath(null);
-      clearData();
+      // Note: clearData() n'est plus appelé ici - les données sont dans le store global
       onClose();
     }
-  }, [htmlPath, csvPath, onFilesLoaded, clearData, onClose]);
+  }, [htmlPath, csvPath, onFilesLoaded, onClose]);
 
   const handleCancel = useCallback(() => {
     setHtmlPath(null);
