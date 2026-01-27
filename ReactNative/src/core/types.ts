@@ -5,6 +5,7 @@
 // Composant électronique
 export interface Component {
   ref: string;
+  id?: number;  // ID du footprint pour correspondance BOM
   value: string;
   footprint: string;
   lcsc: string;

@@ -161,8 +161,10 @@ export class IBomParser {
 
     // Format avec footprints
     if (this.pcbData.footprints) {
+      let fpId = 0;
       for (const fp of this.pcbData.footprints) {
-        this.addComponentFromFootprint(fp);
+        this.addComponentFromFootprint(fp, fpId);
+        fpId++;
       }
     }
 
@@ -222,9 +224,9 @@ export class IBomParser {
           lcsc = this.lcscData[refName];
         }
 
-        // Mettre à jour le composant correspondant
+        // Mettre à jour le composant correspondant (par ref OU par id comme dans Kivy)
         for (const comp of this.components) {
-          if (comp.ref === refName) {
+          if (comp.ref === refName || comp.id === fpId) {
             comp.value = value;
             comp.footprint = footprintName;
             if (!comp.lcsc) {
@@ -288,7 +290,7 @@ export class IBomParser {
   /**
    * Ajoute un composant depuis un footprint
    */
-  private addComponentFromFootprint(fp: any): void {
+  private addComponentFromFootprint(fp: any, fpId: number): void {
     const ref = fp.ref || '';
     if (!ref) return;
 
@@ -326,6 +328,7 @@ export class IBomParser {
 
     const component: Component = {
       ref,
+      id: fpId,
       value: fp.val || '',
       footprint: fp.footprint || '',
       lcsc: this.lcscData[ref] || '',
