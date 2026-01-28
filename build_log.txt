@@ -1,14 +1,14 @@
-=== BUILD LOG - Wed Jan 28 08:32:49 AM CET 2026 ===
+=== BUILD LOG - Wed Jan 28 08:32:47 AM CET 2026 ===
 Script: build_apk.sh
 Arguments: --share-logs
 ========================================
-[2026-01-28 08:32:49] Mode partage de logs activé - Les logs seront envoyés sur GitHub
-[2026-01-28 08:32:49] [1/6] Vérification des prérequis...
-[2026-01-28 08:32:56] [2/6] Préparation du projet React Native...
-[2026-01-28 08:33:38] [3/6] Copie des fichiers sources...
-[2026-01-28 08:33:38] [4/6] Configuration de l'application...
-[2026-01-28 08:33:38] [5/6] Build APK Release...
-[2026-01-28 08:33:38] Compilation en cours (peut prendre plusieurs minutes)...
+[2026-01-28 08:32:47] Mode partage de logs activé - Les logs seront envoyés sur GitHub
+[2026-01-28 08:32:47] [1/6] Vérification des prérequis...
+[2026-01-28 08:32:54] [2/6] Préparation du projet React Native...
+[2026-01-28 08:52:10] [3/6] Copie des fichiers sources...
+[2026-01-28 08:52:10] [4/6] Configuration de l'application...
+[2026-01-28 08:52:10] [5/6] Build APK Release...
+[2026-01-28 08:52:10] Compilation en cours (peut prendre plusieurs minutes)...
 
 === GRADLE BUILD OUTPUT ===
 Downloading https://services.gradle.org/distributions/gradle-8.3-all.zip
@@ -76,43 +76,45 @@ Installing Android SDK Build-Tools 33.0.1 in /home/lololo/Android/Sdk/build-tool
 > Task :react-native-device-info:mergeReleaseJniLibFolders
 > Task :react-native-device-info:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-device-info:stripReleaseDebugSymbols NO-SOURCE
-> Task :react-native-async-storage_async-storage:parseReleaseLocalResources
 > Task :react-native-device-info:copyReleaseJniLibsProjectAndLocalJars
-> Task :react-native-async-storage_async-storage:writeReleaseAarMetadata
 > Task :react-native-device-info:generateReleaseResValues
+> Task :react-native-async-storage_async-storage:writeReleaseAarMetadata
 > Task :react-native-device-info:extractDeepLinksForAarRelease
 > Task :react-native-device-info:generateReleaseBuildConfig
 > Task :react-native-device-info:generateReleaseResources
+> Task :react-native-async-storage_async-storage:parseReleaseLocalResources
 > Task :react-native-device-info:packageReleaseResources
 > Task :react-native-device-info:parseReleaseLocalResources
 > Task :react-native-device-info:javaPreCompileRelease
-
-> Task :react-native-async-storage_async-storage:processReleaseManifest
-package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
-Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
-Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+> Task :react-native-device-info:mergeReleaseShaders
+> Task :react-native-device-info:compileReleaseShaders NO-SOURCE
+> Task :react-native-device-info:generateReleaseAssets UP-TO-DATE
+> Task :react-native-device-info:packageReleaseAssets
 
 > Task :react-native-device-info:processReleaseManifest
 package="com.learnium.RNDeviceInfo" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-device-info/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.learnium.RNDeviceInfo" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-device-info/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-device-info:mergeReleaseShaders
+> Task :react-native-async-storage_async-storage:processReleaseManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+
 > Task :react-native-async-storage_async-storage:mergeReleaseJavaResource
-> Task :react-native-device-info:compileReleaseShaders NO-SOURCE
-> Task :react-native-device-info:generateReleaseAssets UP-TO-DATE
-> Task :react-native-device-info:packageReleaseAssets
 > Task :react-native-device-info:prepareLintJarForPublish
 > Task :react-native-device-info:prepareReleaseArtProfile
 > Task :react-native-device-info:processReleaseJavaRes NO-SOURCE
 > Task :react-native-device-info:mergeReleaseJavaResource
-> Task :react-native-document-picker:preBuild UP-TO-DATE
 > Task :react-native-device-info:writeReleaseAarMetadata
+> Task :react-native-document-picker:preBuild UP-TO-DATE
 > Task :react-native-document-picker:preReleaseBuild UP-TO-DATE
 > Task :react-native-document-picker:mergeReleaseJniLibFolders
+> Task :react-native-document-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-document-picker:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-device-info:generateReleaseRFile
 > Task :react-native-async-storage_async-storage:generateReleaseRFile
-> Task :react-native-document-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-document-picker:copyReleaseJniLibsProjectAndLocalJars
 > Task :react-native-async-storage_async-storage:extractReleaseAnnotations
 
 > Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac
@@ -135,8 +137,6 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-device-info:mergeReleaseConsumerProguardFiles
 > Task :react-native-device-info:syncReleaseLibJars
 > Task :react-native-device-info:bundleReleaseLocalLintAar
-> Task :react-native-document-picker:stripReleaseDebugSymbols NO-SOURCE
-> Task :react-native-document-picker:copyReleaseJniLibsProjectAndLocalJars
 > Task :react-native-document-picker:generateReleaseResValues
 > Task :react-native-document-picker:extractDeepLinksForAarRelease
 > Task :react-native-document-picker:generateReleaseBuildConfig
@@ -166,13 +166,13 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-document-picker:mergeReleaseConsumerProguardFiles
 > Task :react-native-document-picker:prepareReleaseArtProfile
 > Task :react-native-document-picker:processReleaseJavaRes NO-SOURCE
-> Task :react-native-document-picker:mergeReleaseJavaResource
-> Task :react-native-document-picker:writeReleaseAarMetadata
 > Task :react-native-fs:preBuild UP-TO-DATE
+> Task :react-native-fs:preReleaseBuild UP-TO-DATE
+> Task :react-native-document-picker:writeReleaseAarMetadata
+> Task :react-native-document-picker:mergeReleaseJavaResource
+> Task :react-native-fs:mergeReleaseJniLibFolders
 > Task :react-native-document-picker:syncReleaseLibJars
 > Task :react-native-document-picker:bundleReleaseLocalLintAar
-> Task :react-native-fs:preReleaseBuild UP-TO-DATE
-> Task :react-native-fs:mergeReleaseJniLibFolders
 > Task :react-native-fs:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-fs:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-fs:copyReleaseJniLibsProjectAndLocalJars
@@ -205,12 +205,12 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-fs:prepareLintJarForPublish
 > Task :react-native-fs:prepareReleaseArtProfile
 > Task :react-native-fs:processReleaseJavaRes NO-SOURCE
-> Task :react-native-gesture-handler:preBuild UP-TO-DATE
-> Task :react-native-gesture-handler:preReleaseBuild UP-TO-DATE
-> Task :react-native-fs:writeReleaseAarMetadata
 > Task :react-native-fs:mergeReleaseJavaResource
+> Task :react-native-fs:writeReleaseAarMetadata
+> Task :react-native-gesture-handler:preBuild UP-TO-DATE
 > Task :react-native-fs:syncReleaseLibJars
 > Task :react-native-fs:bundleReleaseLocalLintAar
+> Task :react-native-gesture-handler:preReleaseBuild UP-TO-DATE
 > Task :react-native-gesture-handler:mergeReleaseJniLibFolders
 > Task :react-native-gesture-handler:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-gesture-handler:stripReleaseDebugSymbols NO-SOURCE
@@ -238,8 +238,8 @@ Recommendation: remove package="com.swmansion.gesturehandler" from the source An
 > Task :react-native-reanimated:generateReleaseResources
 > Task :react-native-reanimated:packageReleaseResources
 > Task :react-native-reanimated:parseReleaseLocalResources
-> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
 > Task :react-native-reanimated:javaPreCompileRelease
+> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
 > Task :react-native-gesture-handler:javaPreCompileRelease
 
 > Task :react-native-reanimated:processReleaseManifest
@@ -252,6 +252,7 @@ Recommendation: remove package="com.swmansion.reanimated" from the source Androi
 > Task :react-native-gesture-handler:generateReleaseAssets UP-TO-DATE
 > Task :react-native-gesture-handler:packageReleaseAssets
 > Task :react-native-reanimated:generateReleaseRFile
+> Task :react-native-gesture-handler:prepareLintJarForPublish
 
 > Task :react-native-reanimated:compileReleaseJavaWithJavac
 Note: Some input files use or override a deprecated API.
@@ -259,13 +260,12 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 
-> Task :react-native-gesture-handler:prepareLintJarForPublish
 > Task :react-native-gesture-handler:prepareReleaseArtProfile
 > Task :react-native-haptic-feedback:preBuild UP-TO-DATE
 > Task :react-native-haptic-feedback:preReleaseBuild UP-TO-DATE
 > Task :react-native-gesture-handler:writeReleaseAarMetadata
-> Task :react-native-reanimated:bundleLibCompileToJarRelease
 > Task :react-native-haptic-feedback:mergeReleaseJniLibFolders
+> Task :react-native-reanimated:bundleLibCompileToJarRelease
 > Task :react-native-haptic-feedback:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-haptic-feedback:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-haptic-feedback:copyReleaseJniLibsProjectAndLocalJars
@@ -286,6 +286,7 @@ Recommendation: remove package="com.mkuczera" from the source AndroidManifest.xm
 > Task :react-native-haptic-feedback:compileReleaseShaders NO-SOURCE
 > Task :react-native-haptic-feedback:generateReleaseAssets UP-TO-DATE
 > Task :react-native-haptic-feedback:generateReleaseRFile
+> Task :react-native-haptic-feedback:packageReleaseAssets
 > Task :react-native-haptic-feedback:extractReleaseAnnotations
 
 > Task :react-native-haptic-feedback:compileReleaseJavaWithJavac
@@ -294,9 +295,8 @@ Note: Recompile with -Xlint:deprecation for details.
 
 > Task :react-native-haptic-feedback:mergeReleaseGeneratedProguardFiles
 > Task :react-native-haptic-feedback:mergeReleaseConsumerProguardFiles
-> Task :react-native-haptic-feedback:packageReleaseAssets
-> Task :react-native-haptic-feedback:prepareReleaseArtProfile
 > Task :react-native-haptic-feedback:prepareLintJarForPublish
+> Task :react-native-haptic-feedback:prepareReleaseArtProfile
 > Task :react-native-haptic-feedback:processReleaseJavaRes NO-SOURCE
 > Task :react-native-haptic-feedback:mergeReleaseJavaResource
 > Task :react-native-haptic-feedback:writeReleaseAarMetadata
@@ -363,11 +363,11 @@ w: file:///home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelector
 > Task :react-native-reanimated:prepareReleaseArtProfile
 > Task :react-native-reanimated:processReleaseJavaRes NO-SOURCE
 > Task :react-native-reanimated:mergeReleaseJavaResource
+> Task :react-native-safe-area-context:preBuild UP-TO-DATE
 > Task :react-native-reanimated:writeReleaseAarMetadata
 > Task :react-native-reanimated:copyReleaseJniLibsProjectAndLocalJars
 > Task :react-native-reanimated:syncReleaseLibJars
 > Task :react-native-reanimated:bundleReleaseLocalLintAar
-> Task :react-native-safe-area-context:preBuild UP-TO-DATE
 > Task :react-native-safe-area-context:preReleaseBuild UP-TO-DATE
 > Task :react-native-safe-area-context:mergeReleaseJniLibFolders
 > Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
@@ -378,19 +378,19 @@ w: file:///home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelector
 > Task :react-native-safe-area-context:generateReleaseBuildConfig
 > Task :react-native-safe-area-context:generateReleaseResources
 > Task :react-native-safe-area-context:packageReleaseResources
-> Task :react-native-safe-area-context:javaPreCompileRelease
 > Task :react-native-safe-area-context:parseReleaseLocalResources
-> Task :react-native-safe-area-context:mergeReleaseShaders
+> Task :react-native-safe-area-context:javaPreCompileRelease
 
 > Task :react-native-safe-area-context:processReleaseManifest
 package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
 
+> Task :react-native-safe-area-context:mergeReleaseShaders
 > Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
 > Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
-> Task :react-native-safe-area-context:packageReleaseAssets
 > Task :react-native-safe-area-context:generateReleaseRFile
+> Task :react-native-safe-area-context:packageReleaseAssets
 > Task :react-native-safe-area-context:prepareLintJarForPublish
 > Task :react-native-safe-area-context:prepareReleaseArtProfile
 > Task :react-native-svg:preBuild UP-TO-DATE
@@ -406,15 +406,18 @@ Recommendation: remove package="com.th3rdwave.safeareacontext" from the source A
 > Task :react-native-svg:generateReleaseResources
 > Task :react-native-svg:packageReleaseResources
 > Task :react-native-svg:parseReleaseLocalResources
+> Task :react-native-svg:javaPreCompileRelease
 
 > Task :react-native-svg:processReleaseManifest
 package="com.horcrux.svg" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-svg/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.horcrux.svg" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-svg/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-svg:javaPreCompileRelease
-> Task :react-native-svg:generateReleaseRFile
 > Task :react-native-svg:mergeReleaseShaders
+> Task :react-native-svg:compileReleaseShaders NO-SOURCE
+> Task :react-native-svg:generateReleaseAssets UP-TO-DATE
+> Task :react-native-svg:generateReleaseRFile
+> Task :react-native-svg:packageReleaseAssets
 > Task :react-native-svg:extractReleaseAnnotations
 
 > Task :react-native-svg:compileReleaseJavaWithJavac
@@ -429,17 +432,14 @@ Note: Recompile with -Xlint:unchecked for details.
 
 > Task :react-native-svg:mergeReleaseGeneratedProguardFiles
 > Task :react-native-svg:mergeReleaseConsumerProguardFiles
-> Task :react-native-svg:compileReleaseShaders NO-SOURCE
-> Task :react-native-svg:generateReleaseAssets UP-TO-DATE
-> Task :react-native-svg:packageReleaseAssets
 > Task :react-native-svg:prepareLintJarForPublish
 > Task :react-native-svg:prepareReleaseArtProfile
 > Task :react-native-svg:processReleaseJavaRes NO-SOURCE
 > Task :react-native-svg:mergeReleaseJavaResource
 > Task :react-native-svg:writeReleaseAarMetadata
-> Task :app:buildKotlinToolingMetadata
 > Task :react-native-svg:syncReleaseLibJars
 > Task :react-native-svg:bundleReleaseLocalLintAar
+> Task :app:buildKotlinToolingMetadata
 > Task :app:generateCodegenSchemaFromJavaScript SKIPPED
 > Task :app:generateCodegenArtifactsFromSchema SKIPPED
 > Task :app:generatePackageList
@@ -594,9 +594,9 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-gesture-handler:extractDeepLinksRelease
 > Task :react-native-haptic-feedback:extractDeepLinksRelease
 > Task :react-native-reanimated:extractDeepLinksRelease
+> Task :app:parseReleaseLocalResources
 > Task :react-native-safe-area-context:extractDeepLinksRelease
 > Task :react-native-svg:extractDeepLinksRelease
-> Task :app:parseReleaseLocalResources
 > Task :app:mergeReleaseResources
 > Task :app:processReleaseMainManifest
 > Task :app:processReleaseManifest
@@ -604,22 +604,22 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-device-info:compileReleaseLibraryResources
 > Task :react-native-document-picker:compileReleaseLibraryResources
 > Task :react-native-fs:compileReleaseLibraryResources
-> Task :app:processReleaseManifestForPackage
 > Task :react-native-gesture-handler:compileReleaseLibraryResources
 > Task :react-native-haptic-feedback:compileReleaseLibraryResources
 > Task :react-native-reanimated:compileReleaseLibraryResources
 > Task :react-native-safe-area-context:compileReleaseLibraryResources
 > Task :react-native-svg:compileReleaseLibraryResources
-> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
 > Task :react-native-device-info:bundleLibCompileToJarRelease
 > Task :react-native-document-picker:bundleLibCompileToJarRelease
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
+> Task :react-native-fs:bundleLibCompileToJarRelease
 > Task :react-native-haptic-feedback:bundleLibCompileToJarRelease
 > Task :react-native-safe-area-context:bundleLibCompileToJarRelease
-> Task :react-native-fs:bundleLibCompileToJarRelease
 > Task :react-native-gesture-handler:bundleLibCompileToJarRelease
 > Task :app:javaPreCompileRelease
-> Task :app:extractProguardFiles
+> Task :app:processReleaseManifestForPackage
 > Task :react-native-svg:bundleLibCompileToJarRelease
+> Task :app:extractProguardFiles
 > Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease
 > Task :react-native-async-storage_async-storage:writeReleaseLintModelMetadata
 > Task :react-native-async-storage_async-storage:createFullJarRelease
@@ -629,25 +629,25 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-device-info:createFullJarRelease
 > Task :react-native-document-picker:createFullJarRelease
 > Task :react-native-document-picker:writeReleaseLintModelMetadata
-> Task :react-native-fs:writeReleaseLintModelMetadata
 > Task :react-native-fs:bundleLibRuntimeToJarRelease
-> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease
+> Task :react-native-fs:writeReleaseLintModelMetadata
 > Task :react-native-fs:createFullJarRelease
-> Task :react-native-gesture-handler:createFullJarRelease
 > Task :react-native-gesture-handler:writeReleaseLintModelMetadata
 > Task :react-native-haptic-feedback:bundleLibRuntimeToJarRelease
 > Task :react-native-haptic-feedback:writeReleaseLintModelMetadata
+> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease
 > Task :react-native-haptic-feedback:createFullJarRelease
+> Task :react-native-gesture-handler:createFullJarRelease
 > Task :react-native-reanimated:writeReleaseLintModelMetadata
 > Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
-> Task :react-native-safe-area-context:createFullJarRelease
-> Task :react-native-safe-area-context:writeReleaseLintModelMetadata
 > Task :react-native-reanimated:bundleLibRuntimeToJarRelease
+> Task :react-native-safe-area-context:createFullJarRelease
 > Task :react-native-reanimated:createFullJarRelease
-> Task :react-native-svg:writeReleaseLintModelMetadata
+> Task :react-native-safe-area-context:writeReleaseLintModelMetadata
 > Task :react-native-svg:bundleLibRuntimeToJarRelease
-> Task :app:mergeReleaseJniLibFolders
 > Task :react-native-svg:createFullJarRelease
+> Task :react-native-svg:writeReleaseLintModelMetadata
+> Task :app:mergeReleaseJniLibFolders
 > Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectOnly
 > Task :react-native-device-info:copyReleaseJniLibsProjectOnly
 > Task :react-native-document-picker:copyReleaseJniLibsProjectOnly
@@ -657,300 +657,85 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-reanimated:copyReleaseJniLibsProjectOnly
 > Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
 > Task :react-native-svg:copyReleaseJniLibsProjectOnly
-> Task :app:processReleaseResources FAILED
+> Task :app:processReleaseResources
 > Task :app:mergeReleaseNativeLibs
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:processReleaseResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > Android resource linking failed
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:68: AAPT: error: attribute android:cx not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:68: AAPT: error: attribute android:cy not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:68: AAPT: error: attribute android:r not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:73: AAPT: error: attribute android:cx not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:73: AAPT: error: attribute android:cy not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:73: AAPT: error: attribute android:r not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:78: AAPT: error: attribute android:cx not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:78: AAPT: error: attribute android:cy not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:78: AAPT: error: attribute android:r not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:83: AAPT: error: attribute android:cx not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:83: AAPT: error: attribute android:cy not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:83: AAPT: error: attribute android:r not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:88: AAPT: error: attribute android:cx not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:88: AAPT: error: attribute android:cy not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:88: AAPT: error: attribute android:r not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:93: AAPT: error: attribute android:cx not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:93: AAPT: error: attribute android:cy not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:93: AAPT: error: attribute android:r not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_pcb.xml:45: AAPT: error: attribute android:cx not found.
-         
-     ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_pcb.xml:45: AAPT: error: attribute android:cy not found.
-         
-
-* Try:
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:processReleaseResources'.
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:149)
-	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:282)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:147)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:80)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:283)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:130)
-	at org.gradle.internal.Factories$1.create(Factories.java:31)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:336)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:319)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLock(DefaultWorkerLeaseService.java:324)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:126)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:92)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:78)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:66)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:256)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.run(DefaultBuildOperationExecutor.java:68)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:233)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:216)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:199)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:166)
-	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
-	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
-	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:41)
-	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:74)
-	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
-	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:50)
-	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:28)
-	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.executeDelegateBroadcastingChanges(CaptureStateAfterExecutionStep.java:100)
-	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:72)
-	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:50)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:179)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:70)
-	at org.gradle.internal.Either$Right.fold(Either.java:175)
-	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:59)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:68)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:46)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:25)
-	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:36)
-	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:22)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:91)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:55)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:55)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:37)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
-	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:77)
-	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:38)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:94)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:49)
-	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:71)
-	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:45)
-	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.executeWithNonEmptySources(SkipEmptyWorkStep.java:177)
-	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:81)
-	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:53)
-	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:32)
-	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:21)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
-	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:75)
-	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:41)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:66)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:66)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:38)
-	at org.gradle.internal.execution.steps.AssignWorkspaceStep.lambda$execute$0(AssignWorkspaceStep.java:32)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:293)
-	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:30)
-	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:21)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:37)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:27)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:47)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:34)
-	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:64)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:146)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:80)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: com.android.builder.internal.aapt.v2.Aapt2Exception: Android resource linking failed
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:68: AAPT: error: attribute android:cx not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:68: AAPT: error: attribute android:cy not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:68: AAPT: error: attribute android:r not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:73: AAPT: error: attribute android:cx not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:73: AAPT: error: attribute android:cy not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:73: AAPT: error: attribute android:r not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:78: AAPT: error: attribute android:cx not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:78: AAPT: error: attribute android:cy not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:78: AAPT: error: attribute android:r not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:83: AAPT: error: attribute android:cx not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:83: AAPT: error: attribute android:cy not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:83: AAPT: error: attribute android:r not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:88: AAPT: error: attribute android:cx not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:88: AAPT: error: attribute android:cy not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:88: AAPT: error: attribute android:r not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:93: AAPT: error: attribute android:cx not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:93: AAPT: error: attribute android:cy not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_bom.xml:93: AAPT: error: attribute android:r not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_pcb.xml:45: AAPT: error: attribute android:cx not found.
-    
-ERROR: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/src/main/res/drawable/ic_launcher_foreground_pcb.xml:45: AAPT: error: attribute android:cy not found.
-    
-	at com.android.builder.internal.aapt.v2.Aapt2Exception$Companion.create(Aapt2Exception.kt:45)
-	at com.android.builder.internal.aapt.v2.Aapt2Exception$Companion.create$default(Aapt2Exception.kt:33)
-	at com.android.build.gradle.internal.res.Aapt2ErrorUtils.rewriteException(Aapt2ErrorUtils.kt:260)
-	at com.android.build.gradle.internal.res.Aapt2ErrorUtils.rewriteLinkException(Aapt2ErrorUtils.kt:133)
-	at com.android.build.gradle.internal.res.Aapt2ProcessResourcesRunnableKt.processResources(Aapt2ProcessResourcesRunnable.kt:76)
-	at com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$Companion.invokeAaptForSplit(LinkApplicationAndroidResourcesTask.kt:941)
-	at com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$Companion.access$invokeAaptForSplit(LinkApplicationAndroidResourcesTask.kt:796)
-	at com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction.run(LinkApplicationAndroidResourcesTask.kt:431)
-	at com.android.build.gradle.internal.profile.ProfileAwareWorkAction.execute(ProfileAwareWorkAction.kt:74)
-	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
-	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
-	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:170)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:187)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:120)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:162)
-	at org.gradle.internal.Factories$1.create(Factories.java:31)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:264)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:128)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:157)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:126)
-	... 2 more
-
+> Task :app:compileReleaseKotlin
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:checkReleaseDuplicateClasses
+> Task :app:stripReleaseDebugSymbols
+> Task :app:dexBuilderRelease
+> Task :app:extractReleaseNativeSymbolTables
+> Task :app:desugarReleaseFileDependencies
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:mergeReleaseNativeDebugMetadata
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+> Task :app:mergeReleaseArtProfile
+> Task :app:mergeReleaseShaders
+> Task :app:mergeReleaseGlobalSynthetics
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets
+> Task :app:processReleaseJavaRes
+> Task :app:compressReleaseAssets
+> Task :app:collectReleaseDependencies
+> Task :app:mergeReleaseJavaResource
+> Task :app:sdkReleaseDependencyData
+> Task :app:validateSigningRelease
+> Task :app:writeReleaseAppMetadata
+> Task :app:writeReleaseSigningConfigVersions
+> Task :react-native-async-storage_async-storage:bundleReleaseAar
+> Task :react-native-async-storage_async-storage:mapReleaseSourceSetPaths
+> Task :react-native-async-storage_async-storage:mergeReleaseResources
+> Task :react-native-device-info:bundleReleaseAar
+> Task :react-native-device-info:mapReleaseSourceSetPaths
+> Task :react-native-async-storage_async-storage:verifyReleaseResources
+> Task :react-native-device-info:mergeReleaseResources
+> Task :react-native-async-storage_async-storage:assembleRelease
+> Task :react-native-document-picker:bundleReleaseAar
+> Task :react-native-document-picker:mapReleaseSourceSetPaths
+> Task :react-native-device-info:verifyReleaseResources
+> Task :react-native-document-picker:mergeReleaseResources
+> Task :react-native-device-info:assembleRelease
+> Task :react-native-fs:bundleReleaseAar
+> Task :react-native-fs:mapReleaseSourceSetPaths
+> Task :app:mergeExtDexRelease
+> Task :react-native-document-picker:verifyReleaseResources
+> Task :react-native-fs:mergeReleaseResources
+> Task :react-native-document-picker:assembleRelease
+> Task :react-native-gesture-handler:bundleReleaseAar
+> Task :react-native-gesture-handler:mapReleaseSourceSetPaths
+> Task :react-native-fs:verifyReleaseResources
+> Task :react-native-gesture-handler:mergeReleaseResources
+> Task :react-native-fs:assembleRelease
+> Task :react-native-haptic-feedback:bundleReleaseAar
+> Task :react-native-haptic-feedback:mapReleaseSourceSetPaths
+> Task :react-native-gesture-handler:verifyReleaseResources
+> Task :react-native-haptic-feedback:mergeReleaseResources
+> Task :react-native-gesture-handler:assembleRelease
+> Task :react-native-haptic-feedback:verifyReleaseResources
+> Task :app:mergeDexRelease
+> Task :react-native-reanimated:bundleReleaseAar
+> Task :react-native-haptic-feedback:assembleRelease
+> Task :react-native-reanimated:mapReleaseSourceSetPaths
+> Task :app:compileReleaseArtProfile
+> Task :react-native-reanimated:mergeReleaseResources
+> Task :app:optimizeReleaseResources
+> Task :react-native-safe-area-context:bundleReleaseAar
+> Task :react-native-safe-area-context:mapReleaseSourceSetPaths
+> Task :react-native-reanimated:verifyReleaseResources
+> Task :react-native-safe-area-context:mergeReleaseResources
+> Task :react-native-reanimated:assembleRelease
+> Task :react-native-svg:bundleReleaseAar
+> Task :react-native-svg:mapReleaseSourceSetPaths
+> Task :react-native-svg:mergeReleaseResources
+> Task :react-native-safe-area-context:verifyReleaseResources
+> Task :react-native-safe-area-context:assembleRelease
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
+> Task :react-native-svg:verifyReleaseResources
+> Task :react-native-svg:assembleRelease
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
@@ -958,9 +743,10 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m 45s
-304 actionable tasks: 304 executed
-[2026-01-28 08:36:23] [6/6] Finalisation...
-[2026-01-28 08:36:23] ❌ APK non trouvé
+BUILD SUCCESSFUL in 5m 4s
+369 actionable tasks: 369 executed
+[2026-01-28 08:57:15] [6/6] Finalisation...
+[2026-01-28 08:57:15] ✅ Build réussi! APK: /home/lololo/iboom/ibom-component-selector-main/ReactNative/build/IBomSelector.apk
 
-=== FIN DU BUILD (ERREUR code: 1) - Wed Jan 28 08:36:23 AM CET 2026 ===
+=== BUILD RÉUSSI - Wed Jan 28 08:57:15 AM CET 2026 ===
+-rw-rw-r-- 1 lololo lololo 23M Jan 28 08:57 /home/lololo/iboom/ibom-component-selector-main/ReactNative/build/IBomSelector.apk
