@@ -13,9 +13,9 @@ Migration complète de l'application IBom Selector de **Kivy/Python** vers **Rea
 
 ## 📱 Captures d'écran
 
-| Vue principale | Vue PCB | Mode E-ink |
-|---------------|---------|------------|
-| Liste composants avec filtres | Vue interactive du circuit | Thème optimisé e-paper |
+| Vue principale | Vue liste | Mode E-ink |
+|----------------|-----------|------------|
+| ![Vue principale](../pictures/Vue%20principale.jpg) | ![Vue liste](../pictures/Vue%20liste.jpg) | ![Mode E-ink](../pictures/Mode%20E-ink.jpg) |
 
 ---
 
