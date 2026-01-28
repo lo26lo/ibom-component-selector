@@ -13,9 +13,18 @@ Migration complète de l'application IBom Selector de **Kivy/Python** vers **Rea
 
 ## 📱 Captures d'écran
 
-| Vue principale | Vue liste | Mode E-ink |
-|----------------|-----------|------------|
-| ![Vue principale](../pictures/Vue-principale.jpg) | ![Vue liste](../pictures/Vue-liste.jpg) | ![Mode E-ink](../pictures/Mode-E-ink.jpg) |
+<table>
+  <tr>
+    <th>Vue principale</th>
+    <th>Vue liste</th>
+    <th>Mode E-ink</th>
+  </tr>
+  <tr>
+    <td><img src="../pictures/Vue-principale.jpg" width="250" alt="Vue principale"></td>
+    <td><img src="../pictures/Vue-liste.jpg" width="250" alt="Vue liste"></td>
+    <td><img src="../pictures/Mode-E-ink.jpg" width="250" alt="Mode E-ink"></td>
+  </tr>
+</table>
 
 ---
 
