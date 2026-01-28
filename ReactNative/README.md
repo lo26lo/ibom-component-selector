@@ -13,18 +13,9 @@ Complete migration of IBom Selector from **Kivy/Python** to **React Native/TypeS
 
 ## 📱 Screenshots
 
-<table>
-  <tr>
-    <th>Main View</th>
-    <th>List View</th>
-    <th>E-ink Mode</th>
-  </tr>
-  <tr>
-    <td><img src="../pictures/Vue-principale.jpg" width="250" alt="Main View"></td>
-    <td><img src="../pictures/Vue-liste.jpg" width="250" alt="List View"></td>
-    <td><img src="../pictures/Mode-E-ink.jpg" width="250" alt="E-ink Mode"></td>
-  </tr>
-</table>
+| Main View | List View | E-ink Mode |
+|-----------|-----------|------------|
+| ![Main View](../pictures/Vue-principale.jpg) | ![List View](../pictures/Vue-liste.jpg) | ![E-ink Mode](../pictures/Mode-E-ink.jpg) |
 
 ---
 
