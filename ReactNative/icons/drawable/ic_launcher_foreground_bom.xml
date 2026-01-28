@@ -60,35 +60,23 @@
         android:strokeWidth="1.5"
         android:pathData="M84,68 L88,68" />
     
-    <!-- Small circuit dots -->
-    <circle
+    <!-- Small circuit dots (circles as paths) -->
+    <path
         android:fillColor="#64B5F6"
-        android:cx="20"
-        android:cy="40"
-        android:r="2" />
-    <circle
+        android:pathData="M18,40 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path
         android:fillColor="#64B5F6"
-        android:cx="18"
-        android:cy="54"
-        android:r="2" />
-    <circle
+        android:pathData="M16,54 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path
         android:fillColor="#64B5F6"
-        android:cx="20"
-        android:cy="68"
-        android:r="2" />
-    <circle
+        android:pathData="M18,68 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path
         android:fillColor="#64B5F6"
-        android:cx="88"
-        android:cy="40"
-        android:r="2" />
-    <circle
+        android:pathData="M86,40 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path
         android:fillColor="#64B5F6"
-        android:cx="90"
-        android:cy="54"
-        android:r="2" />
-    <circle
+        android:pathData="M88,54 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path
         android:fillColor="#64B5F6"
-        android:cx="88"
-        android:cy="68"
-        android:r="2" />
+        android:pathData="M86,68 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
 </vector>

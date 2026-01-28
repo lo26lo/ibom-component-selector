@@ -37,52 +37,34 @@
         android:strokeWidth="2"
         android:pathData="M78,65 L72,65 L72,70 L65,70" />
     
-    <!-- Component pads (vias) -->
-    <circle
+    <!-- Component pads (vias - circles as paths) -->
+    <path
         android:fillColor="#FFD700"
-        android:cx="45"
-        android:cy="40"
-        android:r="3" />
-    <circle
+        android:pathData="M42,40 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="60"
-        android:cy="55"
-        android:r="3" />
-    <circle
+        android:pathData="M57,55 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="40"
-        android:cy="50"
-        android:r="3" />
-    <circle
+        android:pathData="M37,50 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="55"
-        android:cy="65"
-        android:r="3" />
-    <circle
+        android:pathData="M52,65 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="35"
-        android:cy="60"
-        android:r="3" />
-    <circle
+        android:pathData="M32,60 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="50"
-        android:cy="75"
-        android:r="3" />
-    <circle
+        android:pathData="M47,75 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="65"
-        android:cy="45"
-        android:r="3" />
-    <circle
+        android:pathData="M62,45 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="70"
-        android:cy="60"
-        android:r="3" />
-    <circle
+        android:pathData="M67,60 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
         android:fillColor="#FFD700"
-        android:cx="65"
-        android:cy="70"
-        android:r="3" />
+        android:pathData="M62,70 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
     
     <!-- SMD Component (IC chip) -->
     <path
@@ -116,11 +98,10 @@
         android:strokeWidth="3"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
-    <circle
+    <!-- Green circle background for checkmark -->
+    <path
         android:fillColor="#4CAF50"
-        android:cx="77"
-        android:cy="28"
-        android:r="10" />
+        android:pathData="M67,28 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0" />
     <path
         android:pathData="M73,28 L76,31 L82,24"
         android:strokeColor="#FFFFFF"
