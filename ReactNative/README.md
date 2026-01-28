@@ -15,7 +15,7 @@ Migration complète de l'application IBom Selector de **Kivy/Python** vers **Rea
 
 | Vue principale | Vue liste | Mode E-ink |
 |----------------|-----------|------------|
-| ![Vue principale](../pictures/Vue%20principale.jpg) | ![Vue liste](../pictures/Vue%20liste.jpg) | ![Mode E-ink](../pictures/Mode%20E-ink.jpg) |
+| ![Vue principale](../pictures/Vue-principale.jpg) | ![Vue liste](../pictures/Vue-liste.jpg) | ![Mode E-ink](../pictures/Mode-E-ink.jpg) |
 
 ---
 
