@@ -45,8 +45,29 @@ export function valuesMatch(value1: string, value2: string): boolean {
 }
 
 /**
+ * Détecte le délimiteur utilisé dans le CSV (tab, virgule, ou point-virgule)
+ */
+function detectDelimiter(headerLine: string): string {
+  // Compter les occurrences de chaque délimiteur potentiel
+  const tabCount = (headerLine.match(/\t/g) || []).length;
+  const commaCount = (headerLine.match(/,/g) || []).length;
+  const semicolonCount = (headerLine.match(/;/g) || []).length;
+  
+  console.log(`Délimiteurs détectés - Tab: ${tabCount}, Virgule: ${commaCount}, Point-virgule: ${semicolonCount}`);
+  
+  // Choisir le délimiteur le plus fréquent
+  if (tabCount >= commaCount && tabCount >= semicolonCount && tabCount > 0) {
+    return '\t';
+  } else if (semicolonCount >= commaCount && semicolonCount > 0) {
+    return ';';
+  }
+  return ',';
+}
+
+/**
  * Parse un fichier CSV LCSC et retourne les données
  * Format attendu: Comment,Designator,Footprint,LCSC
+ * Supporte les délimiteurs: tabulation, virgule, point-virgule
  */
 export function parseCSV(csvContent: string): LCSCData {
   const lcscData: LCSCData = {};
@@ -55,8 +76,12 @@ export function parseCSV(csvContent: string): LCSCData {
     const lines = csvContent.split('\n');
     if (lines.length < 2) return lcscData;
 
+    // Détecter le délimiteur
+    const delimiter = detectDelimiter(lines[0]);
+    console.log(`Délimiteur utilisé: "${delimiter === '\t' ? 'TAB' : delimiter}"`);
+
     // Parser l'en-tête pour trouver les colonnes
-    const header = parseCSVLine(lines[0]);
+    const header = parseCSVLine(lines[0], delimiter);
     console.log('CSV headers:', header);
     
     // Chercher les colonnes Designator et LCSC (insensible à la casse)
@@ -80,7 +105,7 @@ export function parseCSV(csvContent: string): LCSCData {
       const line = lines[i].trim();
       if (!line) continue;
 
-      const values = parseCSVLine(line);
+      const values = parseCSVLine(line, delimiter);
       const designators = values[designatorIndex] || '';
       const lcscCode = (values[lcscIndex] || '').trim();
 
@@ -109,8 +134,10 @@ export function parseCSV(csvContent: string): LCSCData {
 
 /**
  * Parse une ligne CSV en gérant les guillemets
+ * @param line La ligne à parser
+ * @param delimiter Le délimiteur à utiliser (par défaut: virgule)
  */
-function parseCSVLine(line: string): string[] {
+function parseCSVLine(line: string, delimiter: string = ','): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
@@ -126,7 +153,7 @@ function parseCSVLine(line: string): string[] {
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === delimiter && !inQuotes) {
       result.push(current.trim());
       current = '';
     } else {
