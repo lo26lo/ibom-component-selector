@@ -5,6 +5,46 @@
 import type { LCSCData } from './types';
 
 /**
+ * Normalise une valeur de composant pour uniformiser les notations ohm.
+ * Gère: Ω, ohm, Ohm, OHM, R (comme suffixe)
+ */
+export function normalizeValue(value: string): string {
+  if (!value) return '';
+  
+  let normalized = value.trim();
+  
+  // Remplacer toutes les variantes de ohm par rien
+  // Ω (symbole unicode), Ω (ohm symbol), ohm, Ohm, OHM
+  normalized = normalized.replace(/[ΩΩ]/g, '');
+  normalized = normalized.replace(/\s*[Oo][Hh][Mm]\s*/g, '');
+  
+  // Gérer le cas "100R" -> "100" (R comme suffixe pour les résistances)
+  // Mais attention à ne pas toucher "R1" (référence) ou "4R7" (notation européenne)
+  if (/^\d+R$/i.test(normalized)) {
+    normalized = normalized.replace(/R$/i, '');
+  }
+  // Notation européenne: 4R7 -> 4.7
+  if (/^\d+R\d+$/i.test(normalized)) {
+    normalized = normalized.replace(/R/i, '.');
+  }
+  
+  // Supprimer les espaces superflus
+  normalized = normalized.replace(/\s+/g, '').trim();
+  
+  // Uniformiser la casse des multiplicateurs (K -> k)
+  normalized = normalized.replace(/K/g, 'k');
+  
+  return normalized;
+}
+
+/**
+ * Compare deux valeurs de composants de manière normalisée
+ */
+export function valuesMatch(value1: string, value2: string): boolean {
+  return normalizeValue(value1) === normalizeValue(value2);
+}
+
+/**
  * Parse un fichier CSV LCSC et retourne les données
  * Format attendu: Comment,Designator,Footprint,LCSC
  */
@@ -195,4 +235,6 @@ export default {
   parseCSV,
   generateCSV,
   generateLCSCCSV,
+  normalizeValue,
+  valuesMatch,
 };

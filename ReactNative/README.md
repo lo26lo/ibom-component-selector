@@ -304,7 +304,7 @@ src/
 ## 🎯 Usage
 
 1. **Open an IBom file** - Tap "Open file"
-2. **Optional: Load LCSC CSV** - For order info
+2. **Optional: Load LCSC CSV** - For order info (⚠️ **UTF-8 encoding required**)
 3. **Browse components** - List or PCB view
 4. **Check processed components** - Track progress
 5. **Save** - Manual or automatic

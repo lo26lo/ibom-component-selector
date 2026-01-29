@@ -80,6 +80,16 @@ Comment,Designator,Footprint,LCSC
 
 The program will automatically match component references to LCSC codes.
 
+### CSV Requirements
+
+| Requirement | PC Version | Mobile App |
+|-------------|------------|------------|
+| **Encoding** | UTF-8, UTF-16, Latin-1 | **UTF-8 only** |
+| **Delimiter** | Comma, Tab, Semicolon | Comma, Tab, Semicolon |
+| **Columns** | `Designator` + `LCSC` | `Designator` + `LCSC` |
+
+> ⚠️ **Excel exports** are often in UTF-16 format. For the mobile app, save as "CSV UTF-8" or convert the file encoding.
+
 ## PCB Viewer Controls
 
 - **Left click + drag** - Draw selection rectangle

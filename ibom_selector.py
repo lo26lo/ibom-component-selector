@@ -97,6 +97,45 @@ THEMES = {
 }
 
 
+# ==================== VALUE NORMALIZATION ====================
+
+def normalize_value(value: str) -> str:
+    """
+    Normalise une valeur de composant pour uniformiser les notations ohm.
+    Gère: Ω, ohm, Ohm, OHM, R (comme suffixe)
+    """
+    if not value:
+        return ''
+    
+    normalized = value.strip()
+    
+    # Remplacer toutes les variantes de ohm par rien
+    # Ω (symbole unicode), ohm, Ohm, OHM
+    normalized = re.sub(r'[ΩΩ]', '', normalized)
+    normalized = re.sub(r'\s*[Oo][Hh][Mm]\s*', '', normalized)
+    
+    # Gérer le cas "100R" -> "100" (R comme suffixe pour les résistances)
+    # Mais attention à ne pas toucher "R1" (référence) ou "4R7" (notation européenne)
+    if re.match(r'^\d+R$', normalized, re.IGNORECASE):
+        normalized = re.sub(r'R$', '', normalized, flags=re.IGNORECASE)
+    # Notation européenne: 4R7 -> 4.7
+    if re.match(r'^\d+R\d+$', normalized, re.IGNORECASE):
+        normalized = re.sub(r'R', '.', normalized, flags=re.IGNORECASE)
+    
+    # Supprimer les espaces superflus
+    normalized = re.sub(r'\s+', '', normalized).strip()
+    
+    # Uniformiser la casse des multiplicateurs (K -> k)
+    normalized = normalized.replace('K', 'k')
+    
+    return normalized
+
+
+def values_match(value1: str, value2: str) -> bool:
+    """Compare deux valeurs de composants de manière normalisée"""
+    return normalize_value(value1) == normalize_value(value2)
+
+
 # ==================== PREFERENCES ====================
 
 class Preferences:
@@ -352,17 +391,65 @@ class IBomParser:
             return
         
         try:
-            with open(csv_path, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    designators = row.get('Designator', '')
-                    lcsc_code = row.get('LCSC', '').strip()
-                    
-                    if lcsc_code:
-                        for ref in designators.split(','):
-                            ref = ref.strip()
-                            if ref:
-                                self.lcsc_data[ref] = lcsc_code
+            # Essayer différents encodages (UTF-16 pour les exports Excel)
+            content = None
+            encoding_used = None
+            
+            for encoding in ['utf-8-sig', 'utf-16', 'utf-16-le', 'utf-8', 'latin-1', 'cp1252']:
+                try:
+                    with open(csv_path, 'r', encoding=encoding) as f:
+                        content = f.read()
+                        encoding_used = encoding
+                        break
+                except (UnicodeDecodeError, UnicodeError):
+                    continue
+            
+            if content is None:
+                print(f"Impossible de décoder le fichier CSV avec les encodages supportés")
+                return
+            
+            print(f"Encodage CSV détecté: {encoding_used}")
+            
+            # Détecter le délimiteur (tabulation, virgule ou point-virgule)
+            if '\t' in content[:2048]:
+                delimiter = '\t'
+            elif ';' in content[:2048]:
+                delimiter = ';'
+            else:
+                delimiter = ','
+            
+            # Parser le CSV depuis la chaîne
+            import io
+            reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
+            headers = reader.fieldnames or []
+            headers_clean = [h.strip().strip('"').strip() for h in headers]
+            
+            # Chercher les colonnes (insensible à la casse)
+            designator_col = None
+            lcsc_col = None
+            
+            for i, h in enumerate(headers_clean):
+                h_lower = h.lower()
+                if h_lower == 'designator':
+                    designator_col = headers[i]
+                elif h_lower == 'lcsc' or h_lower == 'lcsc part number':
+                    lcsc_col = headers[i]
+                elif h_lower == 'supplier part' and not lcsc_col:
+                    lcsc_col = headers[i]
+            
+            if not designator_col or not lcsc_col:
+                print(f"Colonnes CSV manquantes. Headers: {headers_clean}")
+                return
+            
+            for row in reader:
+                designators = row.get(designator_col, '')
+                lcsc_code = row.get(lcsc_col, '').strip()
+                
+                if lcsc_code:
+                    for ref in designators.split(','):
+                        ref = ref.strip()
+                        if ref:
+                            self.lcsc_data[ref] = lcsc_code
             
             print(f"Fichier LCSC chargé: {len(self.lcsc_data)} références")
         except Exception as e:
@@ -1344,24 +1431,29 @@ class SplitView(tk.Toplevel):
         if self.group_by_value_var.get():
             grouped = {}
             for comp in self.components:
-                key = (comp['value'], comp['footprint'], comp.get('lcsc', ''))
+                # Normaliser la valeur pour le groupement (10kΩ = 10k)
+                norm_value = normalize_value(comp['value'])
+                key = (norm_value, comp['footprint'], comp.get('lcsc', ''))
                 if key not in grouped:
-                    grouped[key] = []
-                grouped[key].append(comp['ref'])
+                    grouped[key] = {'refs': [], 'original_value': comp['value']}
+                grouped[key]['refs'].append(comp['ref'])
             
-            for (value, footprint, lcsc), refs in sorted(grouped.items()):
+            for (norm_value, footprint, lcsc), data in sorted(grouped.items()):
+                refs = data['refs']
+                original_value = data['original_value']
                 refs_sorted = sorted(refs, key=lambda r: (r[0], int(''.join(filter(str.isdigit, r)) or 0)))
-                key = (value, footprint, lcsc)
+                key = (norm_value, footprint, lcsc)
                 is_done = key in self.processed_items
                 tag = 'done' if is_done else 'pending'
                 
                 self.tree.insert('', tk.END, values=(
                     '✓' if is_done else '', len(refs), ', '.join(refs_sorted),
-                    value, footprint, lcsc
+                    original_value, footprint, lcsc
                 ), tags=(tag,))
         else:
             for comp in sorted(self.components, key=lambda c: (c['value'], c['ref'])):
-                key = (comp['value'], comp['footprint'], comp.get('lcsc', ''))
+                norm_value = normalize_value(comp['value'])
+                key = (norm_value, comp['footprint'], comp.get('lcsc', ''))
                 is_done = key in self.processed_items
                 tag = 'done' if is_done else 'pending'
                 
@@ -1396,7 +1488,8 @@ class SplitView(tk.Toplevel):
         for item in self.tree.selection():
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
-                key = (values[3], values[4], values[5])
+                # Normaliser la valeur pour la clé
+                key = (normalize_value(values[3]), values[4], values[5])
                 if key in self.processed_items:
                     self.processed_items.discard(key)
                 else:
@@ -1410,7 +1503,7 @@ class SplitView(tk.Toplevel):
         for item in self.tree.selection():
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
-                key = (values[3], values[4], values[5])
+                key = (normalize_value(values[3]), values[4], values[5])
                 self.processed_items.add(key)
         self._update_list()
         self.on_processed_change()
@@ -1420,7 +1513,7 @@ class SplitView(tk.Toplevel):
         for item in self.tree.selection():
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
-                key = (values[3], values[4], values[5])
+                key = (normalize_value(values[3]), values[4], values[5])
                 self.processed_items.discard(key)
         self._update_list()
         self.on_processed_change()
@@ -2308,16 +2401,19 @@ class IBomSelectorApp:
             # Regrouper
             grouped = {}
             for comp in self.filtered_components:
-                key = (comp['value'], comp['footprint'], comp['lcsc'])
+                norm_value = normalize_value(comp['value'])
+                key = (norm_value, comp['footprint'], comp['lcsc'])
                 if key not in grouped:
-                    grouped[key] = []
-                grouped[key].append(comp['ref'])
+                    grouped[key] = {'refs': [], 'original_value': comp['value']}
+                grouped[key]['refs'].append(comp['ref'])
             
             data_list = []
-            for (value, footprint, lcsc), refs in grouped.items():
+            for (norm_value, footprint, lcsc), data in grouped.items():
+                refs = data['refs']
+                original_value = data['original_value']
                 refs_sorted = sorted(refs, key=lambda r: (r[0], int(''.join(filter(str.isdigit, r)) or 0)))
                 refs_str = ', '.join(refs_sorted)
-                key = (value, footprint, lcsc)
+                key = (norm_value, footprint, lcsc)
                 is_done = key in self.processed_items
                 
                 # Filtre statut
@@ -2331,7 +2427,7 @@ class IBomSelectorApp:
                     'done': '✓' if is_done else '',
                     'qty': len(refs),
                     'ref': refs_str,
-                    'value': value,
+                    'value': original_value,
                     'footprint': footprint,
                     'lcsc': lcsc,
                     'is_done': is_done
@@ -2340,7 +2436,8 @@ class IBomSelectorApp:
             # Sans groupement
             data_list = []
             for comp in self.filtered_components:
-                key = (comp['value'], comp['footprint'], comp['lcsc'])
+                norm_value = normalize_value(comp['value'])
+                key = (norm_value, comp['footprint'], comp['lcsc'])
                 is_done = key in self.processed_items
                 
                 if status_filter == 'done' and not is_done:
@@ -2410,7 +2507,7 @@ class IBomSelectorApp:
         for item in selection:
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
-                key = (values[3], values[4], values[5])
+                key = (normalize_value(values[3]), values[4], values[5])
                 if key in self.processed_items:
                     self.processed_items.discard(key)
                 else:
@@ -2425,7 +2522,7 @@ class IBomSelectorApp:
         for item in selection:
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
-                key = (values[3], values[4], values[5])
+                key = (normalize_value(values[3]), values[4], values[5])
                 self.processed_items.add(key)
         self._update_tree()
         self._update_progress()
@@ -2436,7 +2533,7 @@ class IBomSelectorApp:
         for item in selection:
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
-                key = (values[3], values[4], values[5])
+                key = (normalize_value(values[3]), values[4], values[5])
                 self.processed_items.discard(key)
         self._update_tree()
         self._update_progress()
