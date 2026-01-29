@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTheme } from '../theme';
-import { useAppStore, usePreferencesStore, useHistoryStore } from '../store';
-import { useHaptic } from '../hooks';
+import { useAppStore, usePreferencesStore, useHistoryStore, useSessionStore } from '../store';
+import { useHaptic, useToastContext } from '../hooks';
 import { PCBView } from '../components/PCBView';
 import { ComponentList } from '../components/ComponentList';
 import { ThemedButton, ProgressBar } from '../components/common';
@@ -25,6 +25,8 @@ import {
   ExportModal,
   ComponentDetailModal,
   FilePicker,
+  HelpModal,
+  HiddenColumnsModal,
 } from '../components/Modals';
 import { spacing } from '../theme/spacing';
 import type { Component } from '../core/types';
@@ -34,6 +36,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 export function HomeScreen() {
   const { theme, isEinkMode } = useTheme();
   const haptic = useHaptic();
+  const toast = useToastContext();
 
   // Stores
   const components = useAppStore((s) => s.components);
@@ -49,6 +52,14 @@ export function HomeScreen() {
 
   const addHistory = useHistoryStore((s) => s.addHistory);
 
+  // Session store pour persistance
+  const sessionHasHydrated = useSessionStore((s) => s._hasHydrated);
+  const saveSession = useSessionStore((s) => s.saveSession);
+  const restoreSession = useSessionStore((s) => s.restoreSession);
+  const hiddenColumns = useSessionStore((s) => s.hiddenColumns);
+  const showColumn = useSessionStore((s) => s.showColumn);
+  const clearValidatedColumns = useSessionStore((s) => s.clearValidatedColumns);
+
   // View mode: 'split' | 'list' | 'pcb'
   const [viewMode, setViewMode] = useState<'split' | 'list' | 'pcb'>('split');
 
@@ -59,10 +70,53 @@ export function HomeScreen() {
   const [showSave, setShowSave] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showHiddenColumns, setShowHiddenColumns] = useState(false);
   const [detailComponent, setDetailComponent] = useState<Component | null>(null);
+
+  // Session restoration flag
+  const [sessionRestored, setSessionRestored] = useState(false);
 
   // Auto-save timer
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Restaurer la session au démarrage
+  useEffect(() => {
+    if (sessionHasHydrated && !sessionRestored) {
+      const session = restoreSession();
+      if (session && session.selectedComponents.length > 0) {
+        // Restaurer les composants sélectionnés
+        setSelectedComponents(session.selectedComponents);
+        
+        // Restaurer le path
+        if (session.lastHtmlPath) {
+          setCurrentHtmlPath(session.lastHtmlPath);
+        }
+
+        // Restaurer les processedItems
+        session.processedItems.forEach((key) => {
+          // Note: toggleProcessed ajoute ou supprime, donc on vérifie si pas déjà présent
+          if (!processedItems.has(key)) {
+            toggleProcessed(key);
+          }
+        });
+
+        console.log('Session restaurée:', session.selectedComponents.length, 'composants');
+      }
+      setSessionRestored(true);
+    }
+  }, [sessionHasHydrated, sessionRestored, restoreSession, setSelectedComponents, setCurrentHtmlPath, processedItems, toggleProcessed]);
+
+  // Sauvegarder la session à chaque changement
+  useEffect(() => {
+    if (sessionRestored && selectedComponents.length > 0) {
+      saveSession({
+        lastHtmlPath: currentHtmlPath,
+        selectedComponents,
+        processedItems: Array.from(processedItems),
+      });
+    }
+  }, [sessionRestored, currentHtmlPath, selectedComponents, processedItems, saveSession]);
 
   useEffect(() => {
     if (autoSave && currentHtmlPath && selectedComponents.length > 0) {
@@ -177,11 +231,23 @@ export function HomeScreen() {
             style={styles.toolButton}
           />
           <ThemedButton
+            title={`Masq (${hiddenColumns.length})`}
+            onPress={() => setShowHiddenColumns(true)}
+            size="small"
+            style={[styles.toolButton, hiddenColumns.length > 0 && { backgroundColor: theme.bgHidden }]}
+          />
+          <ThemedButton
             title={viewMode.toUpperCase()}
             onPress={toggleView}
             size="small"
             active
             style={styles.toolButton}
+          />
+          <ThemedButton
+            title="?"
+            onPress={() => setShowHelp(true)}
+            size="small"
+            style={styles.helpButton}
           />
         </View>
 
@@ -256,6 +322,14 @@ export function HomeScreen() {
           isProcessed={isComponentProcessed(detailComponent)}
           onToggleProcessed={toggleProcessed}
         />
+        <HelpModal
+          visible={showHelp}
+          onClose={() => setShowHelp(false)}
+        />
+        <HiddenColumnsModal
+          visible={showHiddenColumns}
+          onClose={() => setShowHiddenColumns(false)}
+        />
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -276,8 +350,13 @@ const styles = StyleSheet.create({
   },
   toolButton: {
     flex: 1,
-    minWidth: 55,
+    minWidth: 50,
     height: 35,
+  },
+  helpButton: {
+    width: 35,
+    height: 35,
+    minWidth: 35,
   },
   progressContainer: {
     paddingHorizontal: spacing.md,

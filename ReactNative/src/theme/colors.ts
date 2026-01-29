@@ -11,9 +11,17 @@ export interface ThemeColors {
   bgButton: string;
   bgButtonActive: string;
 
+  // États des colonnes/composants
+  bgValidated: string;      // Vert - colonne validée
+  bgHidden: string;         // Jaune - colonne masquée
+  bgHighlighted: string;    // Bleu - surligné via double-tap
+
   // Texte
   textPrimary: string;
   textSecondary: string;
+  textOnValidated: string;  // Texte sur fond vert
+  textOnHidden: string;     // Texte sur fond jaune
+  textOnHighlighted: string; // Texte sur fond bleu
 
   // Bordures
   border: string;
@@ -45,9 +53,17 @@ export const normalTheme: ThemeColors = {
   bgButton: '#597399',
   bgButtonActive: '#738cb3',
 
+  // États des colonnes/composants
+  bgValidated: '#2d5a2d',     // Vert foncé
+  bgHidden: '#8a7a2a',        // Jaune/doré foncé
+  bgHighlighted: '#2a4a6a',   // Bleu foncé
+
   // Texte
   textPrimary: '#ffffff',
   textSecondary: '#cccccc',
+  textOnValidated: '#90ee90',  // Vert clair
+  textOnHidden: '#ffeb3b',     // Jaune vif
+  textOnHighlighted: '#87ceeb', // Bleu clair
 
   // Bordures
   border: '#808099',
@@ -79,9 +95,17 @@ export const einkTheme: ThemeColors = {
   bgButton: '#e6e6e6',
   bgButtonActive: '#bfbfbf',
 
+  // États des colonnes/composants
+  bgValidated: '#c8e6c9',     // Vert pâle
+  bgHidden: '#fff9c4',        // Jaune pâle
+  bgHighlighted: '#bbdefb',   // Bleu pâle
+
   // Texte
   textPrimary: '#000000',
   textSecondary: '#4d4d4d',
+  textOnValidated: '#1b5e20',  // Vert foncé
+  textOnHidden: '#f57f17',     // Orange/jaune foncé
+  textOnHighlighted: '#0d47a1', // Bleu foncé
 
   // Bordures
   border: '#000000',

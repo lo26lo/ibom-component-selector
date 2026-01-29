@@ -13,14 +13,16 @@
  * - Mode E-ink pour écrans e-paper
  * - Sauvegarde automatique
  * - Retour haptique
+ * - Restauration automatique de la dernière session
+ * - Gestion des colonnes validées/masquées/surlignées
  */
 
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, LogBox } from 'react-native';
 import { ThemeProvider } from './theme';
-import { usePreferencesStore, useHistoryStore } from './store';
+import { usePreferencesStore, useHistoryStore, useSessionStore } from './store';
 import { HomeScreen, LoadingScreen } from './screens';
-import { useEinkDetect } from './hooks';
+import { useEinkDetect, ToastProvider } from './hooks';
 
 // Ignorer certains warnings en développement
 LogBox.ignoreLogs([
@@ -37,6 +39,7 @@ function AppContent() {
   // Hydrate les stores au démarrage
   const hydratePreferences = usePreferencesStore((s) => s._hasHydrated);
   const loadHistory = useHistoryStore((s) => s.loadHistory);
+  const sessionHasHydrated = useSessionStore((s) => s._hasHydrated);
 
   useEffect(() => {
     const initialize = async () => {
@@ -44,8 +47,11 @@ function AppContent() {
         // Charger l'historique depuis AsyncStorage
         await loadHistory();
         
-        // Petit délai pour l'animation
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Attendre que le store de session soit hydraté
+        // (zustand persist le fait automatiquement)
+        
+        // Petit délai pour l'animation et hydratation
+        await new Promise((resolve) => setTimeout(resolve, 800));
         
         setIsReady(true);
       } catch (error) {
@@ -57,8 +63,9 @@ function AppContent() {
     initialize();
   }, [loadHistory]);
 
-  if (!isReady) {
-    return <LoadingScreen message="Initialisation..." />;
+  // Attendre que tous les stores soient hydratés
+  if (!isReady || !sessionHasHydrated) {
+    return <LoadingScreen message="Restauration de la session..." />;
   }
 
   return <HomeScreen />;
@@ -67,7 +74,9 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </ThemeProvider>
   );
 }

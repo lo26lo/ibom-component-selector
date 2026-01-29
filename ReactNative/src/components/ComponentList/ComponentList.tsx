@@ -5,7 +5,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, FlatList, StyleSheet, Text } from 'react-native';
 import { useTheme } from '../../theme';
-import { useAppStore, usePreferencesStore } from '../../store';
+import { useAppStore, usePreferencesStore, useSessionStore } from '../../store';
 import { ComponentRow } from './ComponentRow';
 import { ListHeader } from './ListHeader';
 import { FilterBar } from './FilterBar';
@@ -36,10 +36,23 @@ export function ComponentList({
   const markAllProcessed = useAppStore((s) => s.markAllProcessed);
 
   const prefFontSize = usePreferencesStore((s) => s.fontSize);
+  const hideHiddenComponents = usePreferencesStore((s) => s.hideHiddenComponents);
+
+  // Session store pour les états de colonnes
+  const hiddenColumns = useSessionStore((s) => s.hiddenColumns);
+  const clearHighlightedColumns = useSessionStore((s) => s.clearHighlightedColumns);
 
   // Filter and sort components
   const filteredComponents = useMemo(() => {
     let result = [...selectedComponents];
+
+    // Filtrer les composants masqués si l'option est activée
+    if (hideHiddenComponents && hiddenColumns.length > 0) {
+      result = result.filter((c) => {
+        const key = `${c.value}|${c.footprint}|${c.lcsc}`;
+        return !hiddenColumns.includes(key);
+      });
+    }
 
     // Layer filter
     if (filters.layer !== 'all') {
@@ -196,6 +209,11 @@ export function ComponentList({
     done: 'Faits',
   }[filters.status];
 
+  // Handler pour effacer les highlights
+  const handleClearHighlights = useCallback(() => {
+    clearHighlightedColumns();
+  }, [clearHighlightedColumns]);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
       {/* Filter bar */}
@@ -210,10 +228,10 @@ export function ComponentList({
       {/* Info bar */}
       <View style={[styles.infoBar, { backgroundColor: theme.bgSecondary }]}>
         <Text style={[styles.infoText, { color: theme.textPrimary }]}>
-          Selection: {selectedComponents.length} comp.
+          Sel: {selectedComponents.length} | Masq: {hiddenColumns.length}
         </Text>
         <Text style={[styles.infoText, { color: theme.textPrimary }]}>
-          Traites: {progressStats.done}/{progressStats.total}
+          Traités: {progressStats.done}/{progressStats.total}
         </Text>
         
         {/* Navigation buttons */}
@@ -229,6 +247,12 @@ export function ComponentList({
         <ThemedButton
           title={statusLabel}
           onPress={handleStatusChange}
+          size="small"
+          style={styles.statusButton}
+        />
+        <ThemedButton
+          title="✕HL"
+          onPress={handleClearHighlights}
           size="small"
           style={styles.statusButton}
         />

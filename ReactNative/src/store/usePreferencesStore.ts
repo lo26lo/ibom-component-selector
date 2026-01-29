@@ -21,6 +21,7 @@ interface PreferencesState extends Preferences {
   setAutoSave: (value: boolean) => void;
   setAutoSaveMinutes: (value: number) => void;
   setShowSilkscreen: (value: boolean) => void;
+  setHideHiddenComponents: (value: boolean) => void;
   resetPreferences: () => void;
 }
 
@@ -33,6 +34,7 @@ const defaultPreferences: Preferences = {
   autoSave: false,
   autoSaveMinutes: 5,
   showSilkscreen: false,
+  hideHiddenComponents: false, // Par défaut, afficher en jaune
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -58,6 +60,8 @@ export const usePreferencesStore = create<PreferencesState>()(
       setAutoSaveMinutes: (value) => set({ autoSaveMinutes: value }),
       
       setShowSilkscreen: (value) => set({ showSilkscreen: value }),
+      
+      setHideHiddenComponents: (value) => set({ hideHiddenComponents: value }),
       
       resetPreferences: () => set(defaultPreferences),
     }),

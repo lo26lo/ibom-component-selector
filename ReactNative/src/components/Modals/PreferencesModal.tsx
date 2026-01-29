@@ -32,6 +32,8 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
     setGroupByValue,
     showSilkscreen,
     setShowSilkscreen,
+    hideHiddenComponents,
+    setHideHiddenComponents,
     resetPreferences,
   } = usePreferencesStore();
 
@@ -111,6 +113,13 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
           label="Afficher silkscreen (texte PCB)"
           value={showSilkscreen} 
           onValueChange={setShowSilkscreen} 
+        />
+
+        {/* Cacher les composants masqués */}
+        <ThemedToggle 
+          label="Cacher composants masqués"
+          value={hideHiddenComponents} 
+          onValueChange={setHideHiddenComponents} 
         />
 
         {/* Reset button */}

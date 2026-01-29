@@ -60,11 +60,23 @@ Complete migration of IBom Selector from **Kivy/Python** to **React Native/TypeS
 - ✅ **"Processed" state** - Mark placed components
 - ✅ **Automatic persistence** - State survives restarts
 
+### 🎨 Column States & Visual Feedback
+- ✅ **Validated columns (Green)** - Long-press to validate all components of a type
+- ✅ **Hidden columns (Yellow)** - Swipe right to hide, components stay visible in yellow
+- ✅ **Highlighted columns (Blue)** - Double-tap column header to highlight without filtering
+- ✅ **Hidden columns manager** - Restore hidden columns via "Masq" button
+
 ### 📁 History & Backup
 - ✅ **Session history** - Timestamped recording
 - ✅ **Named backup** - Create save points
 - ✅ **Restore** - Reload a previous session
 - ✅ **Auto-save** - Configurable interval (5, 10, 15, 30 min)
+- ✅ **Session restoration** - Automatically restore last session on app start
+
+### ❓ Help & Documentation
+- ✅ **Integrated help** - "?" button for quick access to help modal
+- ✅ **Color legend** - Explains green/yellow/blue states
+- ✅ **Gesture guide** - Explains swipe, double-tap, long-press actions
 
 ### 📤 Export
 - ✅ **LCSC CSV export** - Order-compatible format

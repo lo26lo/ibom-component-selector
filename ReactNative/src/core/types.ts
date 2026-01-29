@@ -133,6 +133,7 @@ export interface Preferences {
   autoSave: boolean;
   autoSaveMinutes: number;
   showSilkscreen: boolean;
+  hideHiddenComponents: boolean; // Cacher complètement les composants masqués
 }
 
 // Rectangle de sélection
