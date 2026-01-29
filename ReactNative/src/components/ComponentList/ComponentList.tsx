@@ -46,8 +46,8 @@ export function ComponentList({
   const filteredComponents = useMemo(() => {
     let result = [...selectedComponents];
 
-    // Filtrer les composants masqués si l'option est activée
-    if (hideHiddenComponents && hiddenColumns.length > 0) {
+    // Toujours filtrer les composants masqués (ils disparaissent de la liste)
+    if (hiddenColumns.length > 0) {
       result = result.filter((c) => {
         const key = `${c.value}|${c.footprint}|${c.lcsc}`;
         return !hiddenColumns.includes(key);

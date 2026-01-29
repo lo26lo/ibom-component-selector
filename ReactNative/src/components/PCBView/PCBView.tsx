@@ -16,15 +16,19 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useTheme } from '../../theme';
-import { useAppStore } from '../../store';
+import { useAppStore, useSessionStore } from '../../store';
 import type { Component, BoundingBox, SelectionRect } from '../../core/types';
 import { usePreferencesStore } from '../../store';
+
+// Types de filtres de couleur pour le PCB
+export type PCBColorFilter = 'all' | 'validated' | 'hidden' | 'highlighted' | 'normal';
 
 interface PCBViewProps {
   onSelectionComplete?: (components: Component[]) => void;
   showPads?: boolean;
   showEdges?: boolean;
   showTracks?: boolean;
+  colorFilter?: PCBColorFilter;
 }
 
 export function PCBView({ 
@@ -32,6 +36,7 @@ export function PCBView({
   showPads = true,
   showEdges = true,
   showTracks = true,
+  colorFilter = 'all',
 }: PCBViewProps) {
   const { theme, isEinkMode } = useTheme();
   const containerRef = useRef<View>(null);
@@ -49,6 +54,11 @@ export function PCBView({
   const setSelectedComponents = useAppStore((s) => s.setSelectedComponents);
   const selectionRect = useAppStore((s) => s.selectionRect);
   const setSelectionRect = useAppStore((s) => s.setSelectionRect);
+
+  // Session store pour les états des colonnes
+  const validatedColumns = useSessionStore((s) => s.validatedColumns);
+  const hiddenColumns = useSessionStore((s) => s.hiddenColumns);
+  const highlightedColumns = useSessionStore((s) => s.highlightedColumns);
 
   // Récupérer les footprints et edges depuis le parser
   const footprints = useMemo(() => parser?.getFootprints() || [], [parser]);
@@ -368,27 +378,53 @@ export function PCBView({
     });
   }, [showEdges, edges, boardToScreen, transform.scale, isEinkMode]);
 
-  // Render pads from footprints - avec highlight des composants sélectionnés
+  // Render pads from footprints - avec couleurs selon l'état des colonnes
   const renderPads = useMemo(() => {
     if (!showPads || !footprints.length) return null;
 
     const padElements: React.ReactNode[] = [];
     
-    // Couleurs inspirées de ibom.html
+    // Couleurs selon l'état
     const padHoleColor = isEinkMode ? '#AAAAAA' : '#CCCCCC';
-    const frontColor = isEinkMode ? '#808080' : '#B0A050';  // Or/cuivre pour F
-    const backColor = isEinkMode ? '#606060' : '#5050A0';   // Bleu pour B
-    const highlightColor = isEinkMode ? '#404040' : '#D04040';  // Rouge pour highlight
+    const frontColor = isEinkMode ? '#808080' : '#B0A050';  // Or/cuivre pour F (normal)
+    const backColor = isEinkMode ? '#606060' : '#5050A0';   // Bleu pour B (normal)
+    const validatedColor = theme.bgValidated;  // Vert - validé
+    const hiddenColor = theme.bgHidden;        // Jaune - masqué
+    const highlightedColor = theme.bgHighlighted; // Bleu - surligné
     
-    // Créer des Sets pour lookup rapide
+    // Créer des Sets pour lookup rapide des refs sélectionnées
     const highlightedRefs = new Set(highlightedComponents.map(c => c.ref));
     const selectedRefs = new Set(selectedComponents.map(c => c.ref));
+
+    // Créer une map des composants par ref pour trouver leur groupKey
+    const componentsByRef = new Map<string, Component>();
+    selectedComponents.forEach(c => componentsByRef.set(c.ref, c));
     
     footprints.forEach((fp: any, fpIndex: number) => {
       const pads = fp.pads || [];
       const fpLayer = fp.layer || 'F';
       const fpRef = fp.ref || '';
-      const isHighlighted = highlightedRefs.has(fpRef) || selectedRefs.has(fpRef);
+      
+      // Trouver le composant correspondant pour obtenir son groupKey
+      const component = componentsByRef.get(fpRef);
+      const groupKey = component 
+        ? `${component.value}|${component.footprint}|${component.lcsc}`
+        : '';
+      
+      // Déterminer l'état de ce composant
+      const isValidated = validatedColumns.includes(groupKey);
+      const isHidden = hiddenColumns.includes(groupKey);
+      const isHighlighted = highlightedColumns.includes(groupKey) || 
+                           highlightedRefs.has(fpRef) || 
+                           selectedRefs.has(fpRef);
+
+      // Appliquer le filtre de couleur
+      if (colorFilter !== 'all') {
+        if (colorFilter === 'validated' && !isValidated) return;
+        if (colorFilter === 'hidden' && !isHidden) return;
+        if (colorFilter === 'highlighted' && !isHighlighted) return;
+        if (colorFilter === 'normal' && (isValidated || isHidden || isHighlighted)) return;
+      }
       
       pads.forEach((pad: any, padIndex: number) => {
         const pos = pad.pos || [0, 0];
@@ -410,10 +446,23 @@ export function PCBView({
         const w = Math.max(1.5, size[0] * transform.scale);
         const h = Math.max(1.5, size[1] * transform.scale);
         
-        // Couleur selon la couche principale OU highlight
+        // Couleur selon l'état (priorité: surligné > validé > masqué > normal)
         const isTopLayer = layers.includes('F') || layers.some((l: string) => l.startsWith('F.'));
-        const fillColor = isHighlighted ? highlightColor : (isTopLayer ? frontColor : backColor);
-        const opacity = isHighlighted ? 1.0 : 0.85;
+        let fillColor: string;
+        let opacity = 0.85;
+        
+        if (isHighlighted) {
+          fillColor = highlightedColor;
+          opacity = 1.0;
+        } else if (isValidated) {
+          fillColor = validatedColor;
+          opacity = 0.9;
+        } else if (isHidden) {
+          fillColor = hiddenColor;
+          opacity = 0.7;
+        } else {
+          fillColor = isTopLayer ? frontColor : backColor;
+        }
         
         const key = `pad-${fpIndex}-${padIndex}`;
         
@@ -508,7 +557,7 @@ export function PCBView({
     });
     
     return padElements;
-  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents, selectedComponents]);
+  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents, selectedComponents, theme, validatedColumns, hiddenColumns, highlightedColumns, colorFilter]);
 
   // Render silkscreen drawings from footprints - avec texte des références
   const renderSilkscreen = useMemo(() => {

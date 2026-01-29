@@ -15,7 +15,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTheme } from '../theme';
 import { useAppStore, usePreferencesStore, useHistoryStore, useSessionStore } from '../store';
 import { useHaptic, useToastContext } from '../hooks';
-import { PCBView } from '../components/PCBView';
+import { PCBView, PCBColorFilter } from '../components/PCBView';
 import { ComponentList } from '../components/ComponentList';
 import { ThemedButton, ProgressBar } from '../components/common';
 import {
@@ -73,6 +73,9 @@ export function HomeScreen() {
   const [showHelp, setShowHelp] = useState(false);
   const [showHiddenColumns, setShowHiddenColumns] = useState(false);
   const [detailComponent, setDetailComponent] = useState<Component | null>(null);
+
+  // Filtre de couleur pour le PCB
+  const [pcbColorFilter, setPcbColorFilter] = useState<PCBColorFilter>('all');
 
   // Session restoration flag
   const [sessionRestored, setSessionRestored] = useState(false);
@@ -168,6 +171,36 @@ export function HomeScreen() {
     setViewMode(modes[nextIndex]);
   }, [viewMode]);
 
+  // Cycle le filtre de couleur du PCB
+  const cycleColorFilter = useCallback(() => {
+    const filters: PCBColorFilter[] = ['all', 'validated', 'hidden', 'highlighted', 'normal'];
+    const currentIndex = filters.indexOf(pcbColorFilter);
+    const nextIndex = (currentIndex + 1) % filters.length;
+    setPcbColorFilter(filters[nextIndex]);
+    haptic.trigger('selection');
+  }, [pcbColorFilter, haptic]);
+
+  // Label pour le bouton de filtre de couleur
+  const getColorFilterLabel = useCallback(() => {
+    switch (pcbColorFilter) {
+      case 'all': return '🎨';
+      case 'validated': return '🟢';
+      case 'hidden': return '🟡';
+      case 'highlighted': return '🔵';
+      case 'normal': return '⚪';
+    }
+  }, [pcbColorFilter]);
+
+  // Style pour le bouton de filtre de couleur
+  const getColorFilterStyle = useCallback(() => {
+    switch (pcbColorFilter) {
+      case 'validated': return { backgroundColor: theme.bgValidated };
+      case 'hidden': return { backgroundColor: theme.bgHidden };
+      case 'highlighted': return { backgroundColor: theme.bgHighlighted };
+      default: return {};
+    }
+  }, [pcbColorFilter, theme]);
+
   // Progress stats
   const totalCount = selectedComponents.length;
   const processedCount = selectedComponents.filter((c) => {
@@ -237,6 +270,12 @@ export function HomeScreen() {
             style={[styles.toolButton, hiddenColumns.length > 0 && { backgroundColor: theme.bgHidden }]}
           />
           <ThemedButton
+            title={getColorFilterLabel()}
+            onPress={cycleColorFilter}
+            size="small"
+            style={[styles.toolButton, getColorFilterStyle()]}
+          />
+          <ThemedButton
             title={viewMode.toUpperCase()}
             onPress={toggleView}
             size="small"
@@ -271,6 +310,7 @@ export function HomeScreen() {
                   setSelectedComponents(selected);
                   haptic.trigger('selection');
                 }}
+                colorFilter={pcbColorFilter}
               />
             </View>
           )}

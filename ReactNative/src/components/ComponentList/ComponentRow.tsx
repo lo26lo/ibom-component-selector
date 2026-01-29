@@ -119,7 +119,7 @@ export const ComponentRow = memo(function ComponentRow({
   // Session store pour highlight
   const toggleHighlightColumn = useSessionStore((s) => s.toggleHighlightColumn);
 
-  // Simple tap = afficher détails, Double-tap = surligner en bleu ce groupe
+  // Double-tap = surligner en bleu ce groupe
   const handlePress = useCallback(() => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
@@ -131,21 +131,20 @@ export const ComponentRow = memo(function ComponentRow({
       lastTapRef.current = 0;
     } else {
       lastTapRef.current = now;
-      if (onPress) {
-        onPress(component);
-      }
+      // Simple tap - ne fait rien (évite conflit avec double-tap)
     }
-  }, [componentKey, toggleHighlightColumn, haptic, onPress, component]);
+  }, [componentKey, toggleHighlightColumn, haptic]);
 
-  // Long press = valider la colonne (vert) + toggle processed
+  // Long press = afficher les détails du composant
   const handleLongPress = useCallback(() => {
     haptic.trigger('medium');
-    // Toggle l'état traité
-    onToggleProcessed(componentKey);
+    if (onPress) {
+      onPress(component);
+    }
     if (onLongPress) {
       onLongPress(component);
     }
-  }, [component, componentKey, onToggleProcessed, onLongPress, haptic]);
+  }, [component, onPress, onLongPress, haptic]);
 
   // Swipe vers la droite = masquer la colonne (jaune)
   const renderRightActions = (

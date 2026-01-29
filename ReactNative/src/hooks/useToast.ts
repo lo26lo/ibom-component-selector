@@ -28,7 +28,7 @@ export function useToast() {
         message,
         type,
         undoAction,
-        duration: duration || (undoAction ? 5000 : 3000), // Plus long si undo disponible
+        duration: duration || (undoAction ? 2500 : 1500), // Durée courte
       };
 
       // Stocker l'action undo si fournie

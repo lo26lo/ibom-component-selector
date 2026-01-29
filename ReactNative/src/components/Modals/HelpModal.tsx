@@ -51,19 +51,14 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
       title: '👆 Gestes sur les lignes de composants',
       items: [
         {
-          icon: '👆',
-          color: theme.textPrimary,
-          text: 'Tap : Afficher les détails du composant',
-        },
-        {
           icon: '👆👆',
           color: theme.bgHighlighted,
-          text: 'Double-tap : Surligner en bleu tous les composants de ce groupe (sans filtrer)',
+          text: 'Double-tap : Surligner en bleu tous les composants de ce groupe',
         },
         {
           icon: '👆⏳',
           color: theme.textPrimary,
-          text: 'Appui long : Marquer comme traité/non-traité',
+          text: 'Appui long : Afficher les détails du composant',
         },
         {
           icon: '👈',
@@ -73,7 +68,7 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
         {
           icon: '👉',
           color: theme.bgHidden,
-          text: 'Swipe droite : Masquer ce groupe (composants en jaune)',
+          text: 'Swipe droite : Masquer ce groupe (disparaît de la liste)',
         },
       ],
     },
@@ -124,6 +119,11 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
           icon: '👁️',
           color: theme.bgHidden,
           text: 'Masqués : Gérer les colonnes masquées (les restaurer)',
+        },
+        {
+          icon: '🎨',
+          color: theme.textPrimary,
+          text: 'Filtre PCB : Choisir quelles couleurs afficher sur le dessin (🟢 validé, 🟡 masqué, 🔵 surligné, ⚪ normal)',
         },
       ],
     },
