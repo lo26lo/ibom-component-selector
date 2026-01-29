@@ -14,7 +14,7 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTheme } from '../theme';
 import { useAppStore, usePreferencesStore, useHistoryStore, useSessionStore } from '../store';
-import { useHaptic, useToastContext } from '../hooks';
+import { useHaptic, useToastContext, useFileSystem } from '../hooks';
 import { PCBView, PCBColorFilter } from '../components/PCBView';
 import { ComponentList } from '../components/ComponentList';
 import { ThemedButton, ProgressBar } from '../components/common';
@@ -80,35 +80,48 @@ export function HomeScreen() {
   // Session restoration flag
   const [sessionRestored, setSessionRestored] = useState(false);
 
+  // File system hook pour recharger le fichier
+  const { loadHTMLFile } = useFileSystem();
+
   // Auto-save timer
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Restaurer la session au démarrage
   useEffect(() => {
-    if (sessionHasHydrated && !sessionRestored) {
-      const session = restoreSession();
-      if (session && session.selectedComponents.length > 0) {
-        // Restaurer les composants sélectionnés
-        setSelectedComponents(session.selectedComponents);
-        
-        // Restaurer le path
-        if (session.lastHtmlPath) {
-          setCurrentHtmlPath(session.lastHtmlPath);
-        }
-
-        // Restaurer les processedItems
-        session.processedItems.forEach((key) => {
-          // Note: toggleProcessed ajoute ou supprime, donc on vérifie si pas déjà présent
-          if (!processedItems.has(key)) {
-            toggleProcessed(key);
+    const restoreAsync = async () => {
+      if (sessionHasHydrated && !sessionRestored) {
+        const session = restoreSession();
+        if (session) {
+          // Recharger le fichier HTML pour avoir le parser et les footprints
+          if (session.lastHtmlPath) {
+            try {
+              await loadHTMLFile(session.lastHtmlPath);
+              setCurrentHtmlPath(session.lastHtmlPath);
+              console.log('Fichier PCB rechargé:', session.lastHtmlPath);
+            } catch (e) {
+              console.warn('Impossible de recharger le fichier PCB:', e);
+            }
           }
-        });
 
-        console.log('Session restaurée:', session.selectedComponents.length, 'composants');
+          // Restaurer les composants sélectionnés
+          if (session.selectedComponents.length > 0) {
+            setSelectedComponents(session.selectedComponents);
+          }
+
+          // Restaurer les processedItems
+          session.processedItems.forEach((key) => {
+            if (!processedItems.has(key)) {
+              toggleProcessed(key);
+            }
+          });
+
+          console.log('Session restaurée:', session.selectedComponents.length, 'composants');
+        }
+        setSessionRestored(true);
       }
-      setSessionRestored(true);
-    }
-  }, [sessionHasHydrated, sessionRestored, restoreSession, setSelectedComponents, setCurrentHtmlPath, processedItems, toggleProcessed]);
+    };
+    restoreAsync();
+  }, [sessionHasHydrated, sessionRestored, restoreSession, setSelectedComponents, setCurrentHtmlPath, processedItems, toggleProcessed, loadHTMLFile]);
 
   // Sauvegarder la session à chaque changement
   useEffect(() => {

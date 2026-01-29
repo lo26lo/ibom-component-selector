@@ -388,17 +388,18 @@ export function PCBView({
     const padHoleColor = isEinkMode ? '#AAAAAA' : '#CCCCCC';
     const frontColor = isEinkMode ? '#808080' : '#B0A050';  // Or/cuivre pour F (normal)
     const backColor = isEinkMode ? '#606060' : '#5050A0';   // Bleu pour B (normal)
+    const selectionColor = isEinkMode ? '#404040' : '#D04040';  // Rouge - sélection rectangle
     const validatedColor = theme.bgValidated;  // Vert - validé
     const hiddenColor = theme.bgHidden;        // Jaune - masqué
-    const highlightedColor = theme.bgHighlighted; // Bleu - surligné
+    const highlightedColor = theme.bgHighlighted; // Bleu - surligné (double-tap)
     
-    // Créer des Sets pour lookup rapide des refs sélectionnées
+    // Créer des Sets pour lookup rapide
     const highlightedRefs = new Set(highlightedComponents.map(c => c.ref));
     const selectedRefs = new Set(selectedComponents.map(c => c.ref));
 
-    // Créer une map des composants par ref pour trouver leur groupKey
+    // Créer une map de TOUS les composants par ref pour trouver leur groupKey
     const componentsByRef = new Map<string, Component>();
-    selectedComponents.forEach(c => componentsByRef.set(c.ref, c));
+    components.forEach(c => componentsByRef.set(c.ref, c));
     
     footprints.forEach((fp: any, fpIndex: number) => {
       const pads = fp.pads || [];
@@ -412,11 +413,10 @@ export function PCBView({
         : '';
       
       // Déterminer l'état de ce composant
-      const isValidated = validatedColumns.includes(groupKey);
-      const isHidden = hiddenColumns.includes(groupKey);
-      const isHighlighted = highlightedColumns.includes(groupKey) || 
-                           highlightedRefs.has(fpRef) || 
-                           selectedRefs.has(fpRef);
+      const isSelected = selectedRefs.has(fpRef);  // Sélection rectangle = rouge
+      const isHighlighted = highlightedColumns.includes(groupKey) || highlightedRefs.has(fpRef);  // Double-tap = bleu
+      const isValidated = groupKey ? validatedColumns.includes(groupKey) : false;
+      const isHidden = groupKey ? hiddenColumns.includes(groupKey) : false;
 
       // Appliquer le filtre de couleur
       if (colorFilter !== 'all') {
@@ -446,19 +446,22 @@ export function PCBView({
         const w = Math.max(1.5, size[0] * transform.scale);
         const h = Math.max(1.5, size[1] * transform.scale);
         
-        // Couleur selon l'état (priorité: surligné > validé > masqué > normal)
+        // Couleur selon l'état (priorité: sélection > surligné > validé > masqué > normal)
         const isTopLayer = layers.includes('F') || layers.some((l: string) => l.startsWith('F.'));
         let fillColor: string;
         let opacity = 0.85;
         
-        if (isHighlighted) {
-          fillColor = highlightedColor;
+        if (isSelected) {
+          fillColor = selectionColor;  // Rouge - sélection rectangle
+          opacity = 1.0;
+        } else if (isHighlighted) {
+          fillColor = highlightedColor;  // Bleu - double-tap
           opacity = 1.0;
         } else if (isValidated) {
-          fillColor = validatedColor;
+          fillColor = validatedColor;  // Vert - swipe gauche
           opacity = 0.9;
         } else if (isHidden) {
-          fillColor = hiddenColor;
+          fillColor = hiddenColor;  // Jaune - swipe droite
           opacity = 0.7;
         } else {
           fillColor = isTopLayer ? frontColor : backColor;
@@ -557,7 +560,7 @@ export function PCBView({
     });
     
     return padElements;
-  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents, selectedComponents, theme, validatedColumns, hiddenColumns, highlightedColumns, colorFilter]);
+  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents, selectedComponents, components, theme, validatedColumns, hiddenColumns, highlightedColumns, colorFilter]);
 
   // Render silkscreen drawings from footprints - avec texte des références
   const renderSilkscreen = useMemo(() => {
