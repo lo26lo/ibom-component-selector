@@ -55,14 +55,14 @@ export const normalTheme: ThemeColors = {
 
   // États des colonnes/composants
   bgValidated: '#2d5a2d',     // Vert foncé
-  bgHidden: '#8a7a2a',        // Jaune/doré foncé
+  bgHidden: '#808080',        // Gris (masqué)
   bgHighlighted: '#2a4a6a',   // Bleu foncé
 
   // Texte
   textPrimary: '#ffffff',
   textSecondary: '#cccccc',
   textOnValidated: '#90ee90',  // Vert clair
-  textOnHidden: '#ffeb3b',     // Jaune vif
+  textOnHidden: '#ffffff',     // Blanc
   textOnHighlighted: '#87ceeb', // Bleu clair
 
   // Bordures

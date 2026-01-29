@@ -162,6 +162,7 @@ export const ComponentRow = memo(function ComponentRow({
         style={[styles.swipeAction, { backgroundColor: theme.bgHidden }]}
         onPress={() => {
           haptic.trigger('medium');
+          console.log('Hiding column:', componentKey);
           hideColumn(componentKey);
           
           // Toast avec undo
@@ -206,6 +207,7 @@ export const ComponentRow = memo(function ComponentRow({
         style={[styles.swipeAction, { backgroundColor: theme.bgValidated }]}
         onPress={() => {
           haptic.trigger('medium');
+          console.log('Toggling validate for:', componentKey, 'willValidate:', willValidate);
           toggleColumnValidated(componentKey);
           
           // Toast avec undo

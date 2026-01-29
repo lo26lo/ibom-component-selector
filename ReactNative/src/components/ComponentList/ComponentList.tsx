@@ -46,12 +46,20 @@ export function ComponentList({
   const filteredComponents = useMemo(() => {
     let result = [...selectedComponents];
 
+    // Debug: log pour le filtrage des masqués
+    console.log('ComponentList filter:', {
+      selectedCount: selectedComponents.length,
+      hiddenColumnsCount: hiddenColumns.length,
+      hiddenColumns: hiddenColumns.slice(0, 3),
+    });
+
     // Toujours filtrer les composants masqués (ils disparaissent de la liste)
     if (hiddenColumns.length > 0) {
       result = result.filter((c) => {
         const key = `${c.value}|${c.footprint}|${c.lcsc}`;
         return !hiddenColumns.includes(key);
       });
+      console.log('Après filtrage masqués:', result.length);
     }
 
     // Layer filter
