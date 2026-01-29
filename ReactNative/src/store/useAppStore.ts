@@ -124,7 +124,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       boardBbox,
       // Mettre à jour pcbData pour compatibilité
       pcbData: { components, boardBbox },
-      selectedComponents: [],
+      // Auto-sélectionner tous les composants au chargement
+      selectedComponents: components,
       highlightedComponents: [],
       processedItems: new Set<string>(),
       currentNavIndex: -1,

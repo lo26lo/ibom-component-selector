@@ -401,6 +401,17 @@ export function PCBView({
     const componentsByRef = new Map<string, Component>();
     components.forEach(c => componentsByRef.set(c.ref, c));
     
+    // Debug: log pour vérifier les données
+    console.log('PCB renderPads:', {
+      footprintsCount: footprints.length,
+      componentsCount: components.length,
+      validatedColumnsCount: validatedColumns.length,
+      hiddenColumnsCount: hiddenColumns.length,
+      highlightedColumnsCount: highlightedColumns.length,
+      validatedColumns: validatedColumns.slice(0, 3),
+      firstComponent: components[0] ? `${components[0].ref}: ${components[0].value}|${components[0].footprint}|${components[0].lcsc}` : 'none',
+    });
+    
     footprints.forEach((fp: any, fpIndex: number) => {
       const pads = fp.pads || [];
       const fpLayer = fp.layer || 'F';
@@ -417,6 +428,11 @@ export function PCBView({
       const isHighlighted = highlightedColumns.includes(groupKey) || highlightedRefs.has(fpRef);  // Double-tap = bleu
       const isValidated = groupKey ? validatedColumns.includes(groupKey) : false;
       const isHidden = groupKey ? hiddenColumns.includes(groupKey) : false;
+
+      // Debug pour les premiers footprints
+      if (fpIndex < 3 && (isValidated || isHidden)) {
+        console.log(`Footprint ${fpRef} (${groupKey}): validated=${isValidated}, hidden=${isHidden}`);
+      }
 
       // Appliquer le filtre de couleur
       if (colorFilter !== 'all') {

@@ -93,19 +93,16 @@ export function HomeScreen() {
         const session = restoreSession();
         if (session) {
           // Recharger le fichier HTML pour avoir le parser et les footprints
+          // setParser auto-sélectionne tous les composants maintenant
           if (session.lastHtmlPath) {
             try {
               await loadHTMLFile(session.lastHtmlPath);
               setCurrentHtmlPath(session.lastHtmlPath);
               console.log('Fichier PCB rechargé:', session.lastHtmlPath);
+              // Note: setParser() auto-sélectionne TOUS les composants du fichier
             } catch (e) {
               console.warn('Impossible de recharger le fichier PCB:', e);
             }
-          }
-
-          // Restaurer les composants sélectionnés
-          if (session.selectedComponents.length > 0) {
-            setSelectedComponents(session.selectedComponents);
           }
 
           // Restaurer les processedItems
@@ -115,13 +112,13 @@ export function HomeScreen() {
             }
           });
 
-          console.log('Session restaurée:', session.selectedComponents.length, 'composants');
+          console.log('Session restaurée avec tous les composants du fichier');
         }
         setSessionRestored(true);
       }
     };
     restoreAsync();
-  }, [sessionHasHydrated, sessionRestored, restoreSession, setSelectedComponents, setCurrentHtmlPath, processedItems, toggleProcessed, loadHTMLFile]);
+  }, [sessionHasHydrated, sessionRestored, restoreSession, setCurrentHtmlPath, processedItems, toggleProcessed, loadHTMLFile]);
 
   // Sauvegarder la session à chaque changement
   useEffect(() => {
