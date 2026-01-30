@@ -52,13 +52,17 @@ export function HomeScreen() {
 
   const addHistory = useHistoryStore((s) => s.addHistory);
 
-  // Session store pour persistance
+  // Session store pour persistance - nouveau système unifié
   const sessionHasHydrated = useSessionStore((s) => s._hasHydrated);
   const saveSession = useSessionStore((s) => s.saveSession);
   const restoreSession = useSessionStore((s) => s.restoreSession);
-  const hiddenColumns = useSessionStore((s) => s.hiddenColumns);
-  const showColumn = useSessionStore((s) => s.showColumn);
-  const clearValidatedColumns = useSessionStore((s) => s.clearValidatedColumns);
+  const componentStatus = useSessionStore((s) => s.componentStatus);
+  const setComponentStatus = useSessionStore((s) => s.setComponentStatus);
+  const clearAllStatus = useSessionStore((s) => s.clearAllStatus);
+  
+  // Compter les états
+  const hiddenCount = Object.values(componentStatus).filter(s => s === 'hidden').length;
+  const validatedCount = Object.values(componentStatus).filter(s => s === 'validated').length;
 
   // View mode: 'split' | 'list' | 'pcb'
   const [viewMode, setViewMode] = useState<'split' | 'list' | 'pcb'>('split');
@@ -274,10 +278,10 @@ export function HomeScreen() {
             style={styles.toolButton}
           />
           <ThemedButton
-            title={`Masq (${hiddenColumns.length})`}
+            title={`Masq (${hiddenCount})`}
             onPress={() => setShowHiddenColumns(true)}
             size="small"
-            style={[styles.toolButton, hiddenColumns.length > 0 && { backgroundColor: theme.bgHidden }]}
+            style={[styles.toolButton, hiddenCount > 0 && { backgroundColor: theme.bgHidden }]}
           />
           <ThemedButton
             title={getColorFilterLabel()}

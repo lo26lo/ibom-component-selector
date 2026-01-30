@@ -55,10 +55,8 @@ export function PCBView({
   const selectionRect = useAppStore((s) => s.selectionRect);
   const setSelectionRect = useAppStore((s) => s.setSelectionRect);
 
-  // Session store pour les états des colonnes
-  const validatedColumns = useSessionStore((s) => s.validatedColumns);
-  const hiddenColumns = useSessionStore((s) => s.hiddenColumns);
-  const highlightedColumns = useSessionStore((s) => s.highlightedColumns);
+  // Session store - nouveau système unifié
+  const componentStatus = useSessionStore((s) => s.componentStatus);
 
   // Récupérer les footprints et edges depuis le parser
   const footprints = useMemo(() => parser?.getFootprints() || [], [parser]);
@@ -394,22 +392,26 @@ export function PCBView({
     const highlightedColor = theme.bgHighlighted; // Bleu - surligné (double-tap)
     
     // Créer des Sets pour lookup rapide
-    const highlightedRefs = new Set(highlightedComponents.map(c => c.ref));
-    const selectedRefs = new Set(selectedComponents.map(c => c.ref));
+    // highlightedComponents = sélection rectangle sur le PCB (rouge)
+    // highlightedColumns = double-tap sur la liste (bleu)
+    const rectangleSelectionRefs = new Set(highlightedComponents.map(c => c.ref));
 
     // Créer une map de TOUS les composants par ref pour trouver leur groupKey
     const componentsByRef = new Map<string, Component>();
     components.forEach(c => componentsByRef.set(c.ref, c));
     
     // Debug: log pour vérifier les données
+    const validatedCount = Object.values(componentStatus).filter(s => s === 'validated').length;
+    const hiddenCount = Object.values(componentStatus).filter(s => s === 'hidden').length;
+    const highlightedCount = Object.values(componentStatus).filter(s => s === 'highlighted').length;
+    
     console.log('PCB renderPads:', {
       footprintsCount: footprints.length,
       componentsCount: components.length,
-      validatedColumnsCount: validatedColumns.length,
-      hiddenColumnsCount: hiddenColumns.length,
-      highlightedColumnsCount: highlightedColumns.length,
-      validatedColumns: validatedColumns.slice(0, 3),
-      firstComponent: components[0] ? `${components[0].ref}: ${components[0].value}|${components[0].footprint}|${components[0].lcsc}` : 'none',
+      rectangleSelectionCount: highlightedComponents.length,
+      validatedCount,
+      hiddenCount,
+      highlightedCount,
     });
     
     footprints.forEach((fp: any, fpIndex: number) => {
@@ -423,15 +425,16 @@ export function PCBView({
         ? `${component.value}|${component.footprint}|${component.lcsc}`
         : '';
       
-      // Déterminer l'état de ce composant
-      const isSelected = selectedRefs.has(fpRef);  // Sélection rectangle = rouge
-      const isHighlighted = highlightedColumns.includes(groupKey) || highlightedRefs.has(fpRef);  // Double-tap = bleu
-      const isValidated = groupKey ? validatedColumns.includes(groupKey) : false;
-      const isHidden = groupKey ? hiddenColumns.includes(groupKey) : false;
+      // Déterminer l'état de ce composant avec le nouveau système
+      const isRectangleSelected = rectangleSelectionRefs.has(fpRef);  // Sélection rectangle = rouge
+      const status = groupKey ? componentStatus[groupKey] : null;
+      const isHighlighted = status === 'highlighted';  // Double-tap = bleu
+      const isValidated = status === 'validated';
+      const isHidden = status === 'hidden';
 
-      // Debug pour les premiers footprints
-      if (fpIndex < 3 && (isValidated || isHidden)) {
-        console.log(`Footprint ${fpRef} (${groupKey}): validated=${isValidated}, hidden=${isHidden}`);
+      // Debug pour les premiers footprints avec état
+      if (fpIndex < 3 && (isValidated || isHidden || isHighlighted)) {
+        console.log(`Footprint ${fpRef} (${groupKey}): validated=${isValidated}, hidden=${isHidden}, highlighted=${isHighlighted}`);
       }
 
       // Appliquer le filtre de couleur
@@ -462,22 +465,22 @@ export function PCBView({
         const w = Math.max(1.5, size[0] * transform.scale);
         const h = Math.max(1.5, size[1] * transform.scale);
         
-        // Couleur selon l'état (priorité: sélection > surligné > validé > masqué > normal)
+        // Couleur selon l'état (priorité: sélection rectangle > surligné > validé > masqué > normal)
         const isTopLayer = layers.includes('F') || layers.some((l: string) => l.startsWith('F.'));
         let fillColor: string;
         let opacity = 0.85;
         
-        if (isSelected) {
-          fillColor = selectionColor;  // Rouge - sélection rectangle
+        if (isRectangleSelected) {
+          fillColor = selectionColor;  // Rouge - sélection rectangle sur PCB
           opacity = 1.0;
         } else if (isHighlighted) {
-          fillColor = highlightedColor;  // Bleu - double-tap
+          fillColor = highlightedColor;  // Bleu - double-tap dans la liste
           opacity = 1.0;
         } else if (isValidated) {
           fillColor = validatedColor;  // Vert - swipe gauche
           opacity = 0.9;
         } else if (isHidden) {
-          fillColor = hiddenColor;  // Jaune - swipe droite
+          fillColor = hiddenColor;  // Gris - swipe droite
           opacity = 0.7;
         } else {
           fillColor = isTopLayer ? frontColor : backColor;
@@ -576,7 +579,7 @@ export function PCBView({
     });
     
     return padElements;
-  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents, selectedComponents, components, theme, validatedColumns, hiddenColumns, highlightedColumns, colorFilter]);
+  }, [showPads, footprints, boardToScreen, transform.scale, isEinkMode, highlightedComponents, components, theme, componentStatus, colorFilter]);
 
   // Render silkscreen drawings from footprints - avec texte des références
   const renderSilkscreen = useMemo(() => {

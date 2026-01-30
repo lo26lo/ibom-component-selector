@@ -1,12 +1,22 @@
 /**
  * Store de session - Persistance de l'état de travail actuel
- * Permet de restaurer automatiquement la dernière session au démarrage
+ * 
+ * SYSTÈME SIMPLIFIÉ: Un seul état par composant (groupKey)
+ * États possibles: 'validated' | 'hidden' | 'highlighted' | null (normal)
+ * 
+ * - Swipe gauche = validated (vert)
+ * - Swipe droite = hidden (gris)  
+ * - Double-tap = highlighted (bleu)
+ * - Sélection rectangle PCB = état temporaire séparé (rouge)
  */
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Component } from '../core/types';
+
+// Type unique pour l'état d'un composant
+export type ComponentStatus = 'validated' | 'hidden' | 'highlighted';
 
 // État de session sauvegardé
 export interface SessionState {
@@ -17,17 +27,11 @@ export interface SessionState {
   // Composants sélectionnés
   selectedComponents: Component[];
 
-  // Composants traités (validés)
+  // Composants traités (ancienne logique, gardée pour compatibilité)
   processedItems: string[];
 
-  // Colonnes validées (groupKeys)
-  validatedColumns: string[];
-
-  // Colonnes masquées (groupKeys)
-  hiddenColumns: string[];
-
-  // Colonnes surlignées (pour double-tap, non persisté)
-  highlightedColumns: string[];
+  // NOUVEAU: État unique par composant (groupKey -> status)
+  componentStatus: Record<string, ComponentStatus>;
 
   // Timestamp de dernière modification
   lastModified: number;
@@ -44,29 +48,46 @@ interface SessionStoreState extends SessionState {
   // Actions pour les fichiers
   setLastPaths: (htmlPath: string | null, lcscPath: string | null) => void;
 
-  // Actions pour les colonnes validées
-  toggleColumnValidated: (groupKey: string) => void;
-  isColumnValidated: (groupKey: string) => boolean;
-  clearValidatedColumns: () => void;
+  // NOUVEAU: Actions unifiées pour l'état des composants
+  setComponentStatus: (groupKey: string, status: ComponentStatus | null) => void;
+  getComponentStatus: (groupKey: string) => ComponentStatus | null;
+  toggleStatus: (groupKey: string, status: ComponentStatus) => void;
+  
+  // Helpers pour vérifier l'état
+  isValidated: (groupKey: string) => boolean;
+  isHidden: (groupKey: string) => boolean;
+  isHighlighted: (groupKey: string) => boolean;
 
-  // Actions pour les colonnes masquées
-  hideColumn: (groupKey: string) => void;
-  showColumn: (groupKey: string) => void;
-  isColumnHidden: (groupKey: string) => boolean;
-  getHiddenColumns: () => string[];
-  clearHiddenColumns: () => void;
+  // Actions pour récupérer les listes par état
+  getValidatedKeys: () => string[];
+  getHiddenKeys: () => string[];
+  getHighlightedKeys: () => string[];
 
-  // Actions pour le highlight (double-tap)
-  setHighlightedColumns: (groupKeys: string[]) => void;
-  toggleHighlightColumn: (groupKey: string) => void;
-  isColumnHighlighted: (groupKey: string) => boolean;
-  clearHighlightedColumns: () => void;
+  // Actions pour effacer par type
+  clearValidated: () => void;
+  clearHidden: () => void;
+  clearHighlighted: () => void;
+  clearAllStatus: () => void;
 
   // Action pour restaurer une session
   restoreSession: () => SessionState | null;
 
   // Action pour effacer la session
   clearSession: () => void;
+
+  // === COMPATIBILITÉ (pour migration progressive) ===
+  // Ces fonctions redirigent vers le nouveau système
+  toggleColumnValidated: (groupKey: string) => void;
+  isColumnValidated: (groupKey: string) => boolean;
+  clearValidatedColumns: () => void;
+  hideColumn: (groupKey: string) => void;
+  showColumn: (groupKey: string) => void;
+  isColumnHidden: (groupKey: string) => boolean;
+  getHiddenColumns: () => string[];
+  clearHiddenColumns: () => void;
+  toggleHighlightColumn: (groupKey: string) => void;
+  isColumnHighlighted: (groupKey: string) => boolean;
+  clearHighlightedColumns: () => void;
 }
 
 const defaultSession: SessionState = {
@@ -74,9 +95,7 @@ const defaultSession: SessionState = {
   lastLcscPath: null,
   selectedComponents: [],
   processedItems: [],
-  validatedColumns: [],
-  hiddenColumns: [],
-  highlightedColumns: [],
+  componentStatus: {},
   lastModified: 0,
 };
 
@@ -103,73 +122,93 @@ export const useSessionStore = create<SessionStoreState>()(
         });
       },
 
-      // Colonnes validées
-      toggleColumnValidated: (groupKey) => {
-        const current = get().validatedColumns;
-        const isValidated = current.includes(groupKey);
-        const newValidated = isValidated
-          ? current.filter((k) => k !== groupKey)
-          : [...current, groupKey];
-        set({ validatedColumns: newValidated, lastModified: Date.now() });
-      },
+      // === NOUVEAU SYSTÈME UNIFIÉ ===
 
-      isColumnValidated: (groupKey) => {
-        return get().validatedColumns.includes(groupKey);
-      },
-
-      clearValidatedColumns: () => {
-        set({ validatedColumns: [], lastModified: Date.now() });
-      },
-
-      // Colonnes masquées
-      hideColumn: (groupKey) => {
-        const current = get().hiddenColumns;
-        if (!current.includes(groupKey)) {
-          set({ hiddenColumns: [...current, groupKey], lastModified: Date.now() });
+      setComponentStatus: (groupKey, status) => {
+        const current = { ...get().componentStatus };
+        if (status === null) {
+          delete current[groupKey];
+        } else {
+          current[groupKey] = status;
         }
+        set({ componentStatus: current, lastModified: Date.now() });
       },
 
-      showColumn: (groupKey) => {
-        const current = get().hiddenColumns;
-        set({
-          hiddenColumns: current.filter((k) => k !== groupKey),
-          lastModified: Date.now(),
+      getComponentStatus: (groupKey) => {
+        return get().componentStatus[groupKey] || null;
+      },
+
+      toggleStatus: (groupKey, status) => {
+        const current = get().componentStatus[groupKey];
+        const newStatus = current === status ? null : status;
+        get().setComponentStatus(groupKey, newStatus);
+      },
+
+      isValidated: (groupKey) => get().componentStatus[groupKey] === 'validated',
+      isHidden: (groupKey) => get().componentStatus[groupKey] === 'hidden',
+      isHighlighted: (groupKey) => get().componentStatus[groupKey] === 'highlighted',
+
+      getValidatedKeys: () => {
+        const status = get().componentStatus;
+        return Object.keys(status).filter(k => status[k] === 'validated');
+      },
+
+      getHiddenKeys: () => {
+        const status = get().componentStatus;
+        return Object.keys(status).filter(k => status[k] === 'hidden');
+      },
+
+      getHighlightedKeys: () => {
+        const status = get().componentStatus;
+        return Object.keys(status).filter(k => status[k] === 'highlighted');
+      },
+
+      clearValidated: () => {
+        const current = { ...get().componentStatus };
+        Object.keys(current).forEach(k => {
+          if (current[k] === 'validated') delete current[k];
         });
+        set({ componentStatus: current, lastModified: Date.now() });
       },
 
-      isColumnHidden: (groupKey) => {
-        return get().hiddenColumns.includes(groupKey);
+      clearHidden: () => {
+        const current = { ...get().componentStatus };
+        Object.keys(current).forEach(k => {
+          if (current[k] === 'hidden') delete current[k];
+        });
+        set({ componentStatus: current, lastModified: Date.now() });
       },
 
-      getHiddenColumns: () => {
-        return get().hiddenColumns;
+      clearHighlighted: () => {
+        const current = { ...get().componentStatus };
+        Object.keys(current).forEach(k => {
+          if (current[k] === 'highlighted') delete current[k];
+        });
+        set({ componentStatus: current, lastModified: Date.now() });
       },
 
-      clearHiddenColumns: () => {
-        set({ hiddenColumns: [], lastModified: Date.now() });
+      clearAllStatus: () => {
+        set({ componentStatus: {}, lastModified: Date.now() });
       },
 
-      // Highlight (double-tap) - non persisté, état temporaire
-      setHighlightedColumns: (groupKeys) => {
-        set({ highlightedColumns: groupKeys });
-      },
+      // === COMPATIBILITÉ AVEC L'ANCIEN CODE ===
 
-      toggleHighlightColumn: (groupKey) => {
-        const current = get().highlightedColumns;
-        const isHighlighted = current.includes(groupKey);
-        const newHighlighted = isHighlighted
-          ? current.filter((k) => k !== groupKey)
-          : [...current, groupKey];
-        set({ highlightedColumns: newHighlighted });
-      },
+      // Colonnes validées (redirige vers le nouveau système)
+      toggleColumnValidated: (groupKey) => get().toggleStatus(groupKey, 'validated'),
+      isColumnValidated: (groupKey) => get().isValidated(groupKey),
+      clearValidatedColumns: () => get().clearValidated(),
 
-      isColumnHighlighted: (groupKey) => {
-        return get().highlightedColumns.includes(groupKey);
-      },
+      // Colonnes masquées (redirige vers le nouveau système)
+      hideColumn: (groupKey) => get().setComponentStatus(groupKey, 'hidden'),
+      showColumn: (groupKey) => get().setComponentStatus(groupKey, null),
+      isColumnHidden: (groupKey) => get().isHidden(groupKey),
+      getHiddenColumns: () => get().getHiddenKeys(),
+      clearHiddenColumns: () => get().clearHidden(),
 
-      clearHighlightedColumns: () => {
-        set({ highlightedColumns: [] });
-      },
+      // Colonnes surlignées (redirige vers le nouveau système)
+      toggleHighlightColumn: (groupKey) => get().toggleStatus(groupKey, 'highlighted'),
+      isColumnHighlighted: (groupKey) => get().isHighlighted(groupKey),
+      clearHighlightedColumns: () => get().clearHighlighted(),
 
       restoreSession: () => {
         const state = get();
@@ -179,9 +218,7 @@ export const useSessionStore = create<SessionStoreState>()(
             lastLcscPath: state.lastLcscPath,
             selectedComponents: state.selectedComponents,
             processedItems: state.processedItems,
-            validatedColumns: state.validatedColumns,
-            hiddenColumns: state.hiddenColumns,
-            highlightedColumns: [], // Ne pas restaurer les highlights
+            componentStatus: state.componentStatus,
             lastModified: state.lastModified,
           };
         }
@@ -198,19 +235,28 @@ export const useSessionStore = create<SessionStoreState>()(
     {
       name: 'ibom-session',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state: SessionStoreState | undefined) => {
         state?.setHasHydrated(true);
       },
-      // Ne pas persister les colonnes surlignées (état temporaire)
-      partialize: (state) => ({
-        lastHtmlPath: state.lastHtmlPath,
-        lastLcscPath: state.lastLcscPath,
-        selectedComponents: state.selectedComponents,
-        processedItems: state.processedItems,
-        validatedColumns: state.validatedColumns,
-        hiddenColumns: state.hiddenColumns,
-        lastModified: state.lastModified,
-      }),
+      // Persister uniquement les données importantes (pas highlighted, c'est temporaire)
+      partialize: (state: SessionStoreState) => {
+        // Filtrer les highlighted pour ne pas les persister
+        const persistedStatus: Record<string, ComponentStatus> = {};
+        Object.entries(state.componentStatus).forEach(([key, status]) => {
+          if (status !== 'highlighted') {
+            persistedStatus[key] = status as ComponentStatus;
+          }
+        });
+        
+        return {
+          lastHtmlPath: state.lastHtmlPath,
+          lastLcscPath: state.lastLcscPath,
+          selectedComponents: state.selectedComponents,
+          processedItems: state.processedItems,
+          componentStatus: persistedStatus,
+          lastModified: state.lastModified,
+        };
+      },
     }
   )
 );

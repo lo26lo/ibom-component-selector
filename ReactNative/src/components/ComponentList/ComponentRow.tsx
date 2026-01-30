@@ -1,6 +1,10 @@
 /**
- * ComponentRow - Ligne de composant avec double-tap pour marquer traité
- * Supporte les états: validé (vert), masqué (jaune), surligné (bleu)
+ * ComponentRow - Ligne de composant avec gestes
+ * 
+ * SYSTÈME SIMPLIFIÉ: Un seul état par composant
+ * - Swipe gauche = validated (vert)
+ * - Swipe droite = hidden (gris)
+ * - Double-tap = highlighted (bleu)
  */
 
 import React, { useCallback, memo, useRef } from 'react';
@@ -13,16 +17,12 @@ import {
 import {
   Swipeable,
   RectButton,
-  GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import { useTheme } from '../../theme';
 import { useHaptic, useToastContext } from '../../hooks';
-import { useSessionStore } from '../../store';
+import { useSessionStore, type ComponentStatus } from '../../store';
 import { spacing, fontSize, heights } from '../../theme/spacing';
 import type { Component } from '../../core/types';
-
-// Type d'état visuel du composant
-type ComponentVisualState = 'normal' | 'processed' | 'validated' | 'hidden' | 'highlighted';
 
 interface ComponentRowProps {
   component: Component;
@@ -53,24 +53,13 @@ export const ComponentRow = memo(function ComponentRow({
 
   const componentKey = `${component.value}|${component.footprint}|${component.lcsc}`;
 
-  // États depuis le store de session
-  const isColumnValidated = useSessionStore((s) => s.isColumnValidated(componentKey));
-  const isColumnHidden = useSessionStore((s) => s.isColumnHidden(componentKey));
-  const isColumnHighlighted = useSessionStore((s) => s.isColumnHighlighted(componentKey));
-  const hideColumn = useSessionStore((s) => s.hideColumn);
-  const showColumn = useSessionStore((s) => s.showColumn);
-  const toggleColumnValidated = useSessionStore((s) => s.toggleColumnValidated);
+  // Nouveau système unifié: un seul état par composant
+  const componentStatus = useSessionStore((s) => s.getComponentStatus(componentKey));
+  const setComponentStatus = useSessionStore((s) => s.setComponentStatus);
+  const toggleStatus = useSessionStore((s) => s.toggleStatus);
 
-  // Déterminer l'état visuel prioritaire
-  const getVisualState = (): ComponentVisualState => {
-    if (isColumnHighlighted) return 'highlighted';
-    if (isColumnValidated) return 'validated';
-    if (isColumnHidden) return 'hidden';
-    if (isProcessed) return 'processed';
-    return 'normal';
-  };
-
-  const visualState = getVisualState();
+  // L'état visuel est directement le status (ou 'normal' si null)
+  const visualState = componentStatus || 'normal';
 
   // Couleurs selon l'état
   const getBackgroundColor = () => {
@@ -116,24 +105,21 @@ export const ComponentRow = memo(function ComponentRow({
     }
   };
 
-  // Session store pour highlight
-  const toggleHighlightColumn = useSessionStore((s) => s.toggleHighlightColumn);
-
-  // Double-tap = surligner en bleu ce groupe
+  // Double-tap = surligner en bleu ce groupe (toggle)
   const handlePress = useCallback(() => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
     
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double-tap détecté - surligner ce groupe en bleu
-      toggleHighlightColumn(componentKey);
+      // Double-tap détecté - toggle highlight
+      toggleStatus(componentKey, 'highlighted');
       haptic.trigger('selection');
       lastTapRef.current = 0;
     } else {
       lastTapRef.current = now;
       // Simple tap - ne fait rien (évite conflit avec double-tap)
     }
-  }, [componentKey, toggleHighlightColumn, haptic]);
+  }, [componentKey, toggleStatus, haptic]);
 
   // Long press = afficher les détails du composant
   const handleLongPress = useCallback(() => {
@@ -146,7 +132,7 @@ export const ComponentRow = memo(function ComponentRow({
     }
   }, [component, onPress, onLongPress, haptic]);
 
-  // Swipe vers la droite = masquer la colonne (jaune)
+  // Swipe vers la droite = masquer (gris) - remplace tout autre état
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>
@@ -157,19 +143,26 @@ export const ComponentRow = memo(function ComponentRow({
       extrapolate: 'clamp',
     });
 
+    const isCurrentlyHidden = visualState === 'hidden';
+
     return (
       <RectButton
         style={[styles.swipeAction, { backgroundColor: theme.bgHidden }]}
         onPress={() => {
           haptic.trigger('medium');
-          console.log('Hiding column:', componentKey);
-          hideColumn(componentKey);
           
-          // Toast avec undo
-          toast.warning(`${component.value || component.ref} masqué`, () => {
-            // Undo: réafficher la colonne
-            showColumn(componentKey);
-          });
+          if (isCurrentlyHidden) {
+            // Déjà masqué -> restaurer
+            setComponentStatus(componentKey, null);
+            toast.info(`${component.value || component.ref} restauré`);
+          } else {
+            // Masquer (remplace tout autre état)
+            setComponentStatus(componentKey, 'hidden');
+            toast.warning(`${component.value || component.ref} masqué`, () => {
+              // Undo: restaurer
+              setComponentStatus(componentKey, null);
+            });
+          }
           
           if (onHide) {
             onHide(componentKey);
@@ -183,13 +176,13 @@ export const ComponentRow = memo(function ComponentRow({
             { color: theme.textOnHidden, transform: [{ scale }] },
           ]}
         >
-          Masquer
+          {isCurrentlyHidden ? 'Restaurer' : 'Masquer'}
         </Animated.Text>
       </RectButton>
     );
   };
 
-  // Swipe vers la gauche = valider la colonne (vert)
+  // Swipe vers la gauche = valider (vert) - remplace tout autre état
   const renderLeftActions = (
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>
@@ -200,24 +193,25 @@ export const ComponentRow = memo(function ComponentRow({
       extrapolate: 'clamp',
     });
 
-    const willValidate = !isColumnValidated;
+    const isCurrentlyValidated = visualState === 'validated';
 
     return (
       <RectButton
         style={[styles.swipeAction, { backgroundColor: theme.bgValidated }]}
         onPress={() => {
           haptic.trigger('medium');
-          console.log('Toggling validate for:', componentKey, 'willValidate:', willValidate);
-          toggleColumnValidated(componentKey);
           
-          // Toast avec undo
-          if (willValidate) {
-            toast.success(`${component.value || component.ref} validé`, () => {
-              // Undo: dévalider
-              toggleColumnValidated(componentKey);
-            });
-          } else {
+          if (isCurrentlyValidated) {
+            // Déjà validé -> restaurer
+            setComponentStatus(componentKey, null);
             toast.info(`${component.value || component.ref} dévalidé`);
+          } else {
+            // Valider (remplace tout autre état)
+            setComponentStatus(componentKey, 'validated');
+            toast.success(`${component.value || component.ref} validé`, () => {
+              // Undo: restaurer
+              setComponentStatus(componentKey, null);
+            });
           }
           
           if (onValidate) {
@@ -232,7 +226,7 @@ export const ComponentRow = memo(function ComponentRow({
             { color: theme.textOnValidated, transform: [{ scale }] },
           ]}
         >
-          {isColumnValidated ? 'Dévalider' : 'Valider'}
+          {isCurrentlyValidated ? 'Dévalider' : 'Valider'}
         </Animated.Text>
       </RectButton>
     );
@@ -272,13 +266,15 @@ export const ComponentRow = memo(function ComponentRow({
           },
         ]}
       >
-        {/* Indicateur traité (icône si traité/validé) */}
+        {/* Indicateur de statut */}
         <View style={styles.processedIndicator}>
           <Text style={[styles.processedText, { 
             color: textColor,
-            opacity: isProcessed || isColumnValidated ? 1 : 0.3,
+            opacity: visualState !== 'normal' ? 1 : 0.3,
           }]}>
-            {isColumnValidated ? '✓✓' : isProcessed ? '✓' : '○'}
+            {visualState === 'validated' ? '✓' : 
+             visualState === 'hidden' ? '−' : 
+             visualState === 'highlighted' ? '●' : '○'}
           </Text>
         </View>
 

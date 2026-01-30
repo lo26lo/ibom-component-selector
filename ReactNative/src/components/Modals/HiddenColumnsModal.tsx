@@ -30,15 +30,20 @@ export function HiddenColumnsModal({
   const { theme, isEinkMode } = useTheme();
   const toast = useToastContext();
 
-  const hiddenColumns = useSessionStore((s) => s.hiddenColumns);
-  const showColumn = useSessionStore((s) => s.showColumn);
-  const hideColumn = useSessionStore((s) => s.hideColumn);
-  const clearHiddenColumns = useSessionStore((s) => s.clearHiddenColumns);
+  // Nouveau système unifié
+  const componentStatus = useSessionStore((s) => s.componentStatus);
+  const setComponentStatus = useSessionStore((s) => s.setComponentStatus);
+  const clearHidden = useSessionStore((s) => s.clearHidden);
 
   const selectedComponents = useAppStore((s) => s.selectedComponents);
 
+  // Filtrer les groupKeys qui ont le statut 'hidden'
+  const hiddenKeys = Object.entries(componentStatus)
+    .filter(([_, status]) => status === 'hidden')
+    .map(([key]) => key);
+
   // Construire les infos des colonnes masquées
-  const hiddenColumnInfos: HiddenColumnInfo[] = hiddenColumns.map((groupKey) => {
+  const hiddenColumnInfos: HiddenColumnInfo[] = hiddenKeys.map((groupKey) => {
     const parts = groupKey.split('|');
     const value = parts[0] || '-';
     const footprint = parts[1] || '-';
@@ -55,23 +60,23 @@ export function HiddenColumnsModal({
 
   const handleShowColumn = useCallback(
     (groupKey: string, value: string) => {
-      showColumn(groupKey);
+      setComponentStatus(groupKey, null);  // Restaurer = supprimer le statut
       toast.info(`${value} restauré`, () => {
         // Undo: re-masquer
-        hideColumn(groupKey);
+        setComponentStatus(groupKey, 'hidden');
       });
     },
-    [showColumn, hideColumn, toast]
+    [setComponentStatus, toast]
   );
 
   const handleShowAll = useCallback(() => {
-    const previousHidden = [...hiddenColumns];
-    clearHiddenColumns();
+    const previousHidden = [...hiddenKeys];
+    clearHidden();
     toast.info(`${previousHidden.length} groupe(s) restauré(s)`, () => {
       // Undo: re-masquer tous
-      previousHidden.forEach((key) => hideColumn(key));
+      previousHidden.forEach((key) => setComponentStatus(key, 'hidden'));
     });
-  }, [clearHiddenColumns, hiddenColumns, hideColumn, toast]);
+  }, [clearHidden, hiddenKeys, setComponentStatus, toast]);
 
   const renderItem = useCallback(
     ({ item }: { item: HiddenColumnInfo }) => {
