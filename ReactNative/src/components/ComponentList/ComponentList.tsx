@@ -50,6 +50,19 @@ export function ComponentList({
   const componentStatus = useSessionStore((s) => s.componentStatus) || {};
   const clearHighlighted = useSessionStore((s) => s.clearHighlighted);
 
+  // Debug: log des clés au démarrage
+  const statusKeys = Object.keys(componentStatus);
+  if (statusKeys.length > 0 && selectedComponents.length > 0) {
+    const firstComponent = selectedComponents[0];
+    const generatedKey = `${firstComponent.value}|${firstComponent.footprint}|${firstComponent.lcsc}`;
+    console.log('DEBUG KEYS:', {
+      storedKeysCount: statusKeys.length,
+      storedKeysSample: statusKeys.slice(0, 2),
+      generatedKeySample: generatedKey,
+      match: statusKeys.includes(generatedKey),
+    });
+  }
+
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
