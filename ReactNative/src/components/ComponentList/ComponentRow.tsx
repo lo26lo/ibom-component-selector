@@ -54,11 +54,17 @@ export const ComponentRow = memo(function ComponentRow({
   const componentKey = `${component.value}|${component.footprint}|${component.lcsc}`;
 
   // Nouveau système unifié: un seul état par composant
-  // IMPORTANT: On doit aussi écouter _hasHydrated pour forcer le re-render après hydratation
+  // Lire tout le componentStatus pour forcer le re-render quand le store change
   const hasHydrated = useSessionStore((s) => s._hasHydrated);
-  const componentStatus = useSessionStore((s) => s.componentStatus[componentKey] || null);
+  const allComponentStatus = useSessionStore((s) => s.componentStatus);
+  const componentStatus = allComponentStatus[componentKey] || null;
   const setComponentStatus = useSessionStore((s) => s.setComponentStatus);
   const toggleStatus = useSessionStore((s) => s.toggleStatus);
+
+  // Debug log pour les premiers composants
+  if (component.ref === 'C1' || component.ref === 'R1') {
+    console.log(`ComponentRow ${component.ref}: hydrated=${hasHydrated}, status=${componentStatus}, key=${componentKey.substring(0, 30)}...`);
+  }
 
   // L'état visuel est directement le status (ou 'normal' si null)
   const visualState = componentStatus || 'normal';
