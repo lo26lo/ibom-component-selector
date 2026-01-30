@@ -32,8 +32,6 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
     setGroupByValue,
     showSilkscreen,
     setShowSilkscreen,
-    hideHiddenComponents,
-    setHideHiddenComponents,
     resetPreferences,
   } = usePreferencesStore();
 
@@ -115,14 +113,7 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
           onValueChange={setShowSilkscreen} 
         />
 
-        {/* Cacher les composants masqués */}
-        <ThemedToggle 
-          label="Cacher composants masqués"
-          value={hideHiddenComponents} 
-          onValueChange={setHideHiddenComponents} 
-        />
-
-        {/* Reset button */}
+        {/* Reset button */}}
         <View style={styles.resetRow}>
           <ThemedButton
             title="Réinitialiser"

@@ -28,22 +28,22 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
         {
           icon: '●',
           color: theme.bgValidated,
-          text: 'Vert : Colonne validée - tous les composants de cette valeur sont traités',
+          text: 'Vert : Validé (swipe gauche) - ce groupe est terminé',
         },
         {
           icon: '●',
           color: theme.bgHidden,
-          text: 'Jaune : Colonne masquée - ces composants sont mis de côté temporairement',
+          text: 'Gris : Masqué (swipe droite) - disparaît de la liste',
         },
         {
           icon: '●',
           color: theme.bgHighlighted,
-          text: 'Bleu : Surligné - composants mis en évidence via double-tap sur la colonne',
+          text: 'Bleu : Surligné (double-tap) - mis en évidence temporairement',
         },
         {
-          icon: '✓',
-          color: theme.bgProcessed,
-          text: 'Gris/Barré : Composant individuel marqué comme traité',
+          icon: '🔴',
+          color: '#D04040',
+          text: 'Rouge : Sélection rectangle sur le PCB (temporaire)',
         },
       ],
     },
@@ -51,24 +51,44 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
       title: '👆 Gestes sur les lignes de composants',
       items: [
         {
+          icon: '�',
+          color: theme.bgValidated,
+          text: 'Swipe gauche : Valider ce groupe (🟢 vert)',
+        },
+        {
+          icon: '👉',
+          color: theme.bgHidden,
+          text: 'Swipe droite : Masquer ce groupe (⚫ gris, disparaît)',
+        },
+        {
           icon: '👆👆',
           color: theme.bgHighlighted,
-          text: 'Double-tap : Surligner en bleu tous les composants de ce groupe',
+          text: 'Double-tap : Surligner ce groupe (🔵 bleu, temporaire)',
         },
         {
           icon: '👆⏳',
           color: theme.textPrimary,
           text: 'Appui long : Afficher les détails du composant',
         },
+      ],
+    },
+    {
+      title: '📌 Un seul état par composant',
+      items: [
         {
-          icon: '👈',
-          color: theme.bgValidated,
-          text: 'Swipe gauche : Valider ce groupe (composants en vert)',
+          icon: 'ℹ️',
+          color: theme.textSecondary,
+          text: 'Un composant ne peut avoir qu\'un seul état (validé OU masqué OU surligné)',
         },
         {
-          icon: '👉',
-          color: theme.bgHidden,
-          text: 'Swipe droite : Masquer ce groupe (disparaît de la liste)',
+          icon: '🔄',
+          color: theme.textSecondary,
+          text: 'Le dernier geste gagne : valider un masqué le rend validé',
+        },
+        {
+          icon: '↩️',
+          color: theme.textSecondary,
+          text: 'Re-geste : refaire le même geste annule l\'action (retour normal)',
         },
       ],
     },
@@ -118,12 +138,12 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
         {
           icon: '👁️',
           color: theme.bgHidden,
-          text: 'Masqués : Gérer les colonnes masquées (les restaurer)',
+          text: 'Masqués : Gérer les groupes masqués (les restaurer)',
         },
         {
           icon: '🎨',
           color: theme.textPrimary,
-          text: 'Filtre PCB : Choisir quelles couleurs afficher sur le dessin (🟢 validé, 🟡 masqué, 🔵 surligné, ⚪ normal)',
+          text: 'Filtre PCB : Choisir quelles couleurs afficher (🟢 validé, ⚫ masqué, 🔵 surligné, ⚪ normal)',
         },
       ],
     },

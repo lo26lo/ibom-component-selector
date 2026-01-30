@@ -199,7 +199,7 @@ export function HomeScreen() {
     switch (pcbColorFilter) {
       case 'all': return '🎨';
       case 'validated': return '🟢';
-      case 'hidden': return '🟡';
+      case 'hidden': return '⚫';  // Gris au lieu de jaune
       case 'highlighted': return '🔵';
       case 'normal': return '⚪';
     }
