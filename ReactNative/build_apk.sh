@@ -223,7 +223,10 @@ if [ ! -d "$BUILD_DIR/$PROJECT_NAME/android" ]; then
         @react-native-async-storage/async-storage@1.21.0 \
         react-native-haptic-feedback@2.2.0 \
         react-native-device-info@10.12.0 \
-        react-native-safe-area-context@4.8.2
+        react-native-safe-area-context@4.8.2 \
+        react-native-qrcode-svg@6.2.0 \
+        pako@2.1.0 \
+        buffer@6.0.3
     
     # Configurer Babel pour react-native-reanimated
     echo "      Configuration de Babel pour reanimated..."
