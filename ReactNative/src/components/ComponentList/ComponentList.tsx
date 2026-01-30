@@ -2,8 +2,8 @@
  * ComponentList - Liste scrollable des composants
  */
 
-import React, { useCallback, useMemo } from 'react';
-import { View, FlatList, StyleSheet, Text } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, FlatList, StyleSheet, Text, RefreshControl } from 'react-native';
 import { useTheme } from '../../theme';
 import { useAppStore, usePreferencesStore, useSessionStore } from '../../store';
 import { ComponentRow } from './ComponentRow';
@@ -16,13 +16,21 @@ import type { Component, ListFilters, GroupedComponent } from '../../core/types'
 interface ComponentListProps {
   onComponentPress?: (component: Component) => void;
   onComponentLongPress?: (component: Component) => void;
+  onShowHiddenModal?: () => void;
+  onRefresh?: () => Promise<void>;
 }
 
 export function ComponentList({
   onComponentPress,
   onComponentLongPress,
+  onShowHiddenModal,
+  onRefresh,
 }: ComponentListProps) {
   const { theme } = useTheme();
+
+  // État local pour toggle "voir masqués"
+  const [showHidden, setShowHidden] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Store
   const selectedComponents = useAppStore((s) => s.selectedComponents);
@@ -42,6 +50,15 @@ export function ComponentList({
   const componentStatus = useSessionStore((s) => s.componentStatus) || {};
   const clearHighlighted = useSessionStore((s) => s.clearHighlighted);
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    if (onRefresh) {
+      await onRefresh();
+    }
+    setRefreshing(false);
+  }, [onRefresh]);
+
   // Filter and sort components
   const filteredComponents = useMemo(() => {
     let result = [...selectedComponents];
@@ -55,10 +72,11 @@ export function ComponentList({
     console.log('ComponentList filter:', {
       selectedCount: selectedComponents.length,
       hiddenCount: hiddenKeys.length,
+      showHidden,
     });
 
-    // Toujours filtrer les composants masqués (ils disparaissent de la liste)
-    if (hiddenKeys.length > 0) {
+    // Filtrer les masqués sauf si showHidden est activé
+    if (hiddenKeys.length > 0 && !showHidden) {
       result = result.filter((c) => {
         const key = `${c.value}|${c.footprint}|${c.lcsc}`;
         return !hiddenKeys.includes(key);
@@ -137,7 +155,7 @@ export function ComponentList({
     });
 
     return result;
-  }, [selectedComponents, filters, processedItems, componentStatus]);
+  }, [selectedComponents, filters, processedItems, componentStatus, showHidden]);
 
   // Progress stats
   const progressStats = useMemo(() => {
@@ -271,6 +289,24 @@ export function ComponentList({
           size="small"
           style={styles.statusButton}
         />
+        {/* Toggle voir masqués */}
+        {hiddenCount > 0 && (
+          <ThemedButton
+            title={showHidden ? `👁️ (${hiddenCount})` : `👁️‍🗨️ (${hiddenCount})`}
+            onPress={() => setShowHidden(!showHidden)}
+            size="small"
+            style={[styles.statusButton, showHidden ? { backgroundColor: theme.bgHidden } : {}]}
+          />
+        )}
+        {/* Bouton pour gérer les masqués */}
+        {hiddenCount > 0 && onShowHiddenModal && (
+          <ThemedButton
+            title="⚙️"
+            onPress={onShowHiddenModal}
+            size="small"
+            style={styles.navButton}
+          />
+        )}
       </View>
 
       {/* List header */}
@@ -290,6 +326,18 @@ export function ComponentList({
         maxToRenderPerBatch={20}
         windowSize={10}
         removeClippedSubviews
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[theme.accent]}
+              tintColor={theme.accent}
+              title="Tirer pour recharger..."
+              titleColor={theme.textSecondary}
+            />
+          ) : undefined
+        }
       />
     </View>
   );

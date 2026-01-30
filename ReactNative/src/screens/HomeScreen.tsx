@@ -366,6 +366,18 @@ export function HomeScreen() {
               <ComponentList
                 onComponentPress={handleComponentPress}
                 onComponentLongPress={handleComponentLongPress}
+                onShowHiddenModal={() => setShowHiddenColumns(true)}
+                onRefresh={async () => {
+                  // Recharger le fichier HTML si disponible
+                  if (currentHtmlPath) {
+                    try {
+                      await loadHTMLFile(currentHtmlPath);
+                      toast.info('Fichier rechargé');
+                    } catch (e) {
+                      console.warn('Erreur rechargement:', e);
+                    }
+                  }
+                }}
               />
             </View>
           )}

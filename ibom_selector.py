@@ -1621,6 +1621,8 @@ class IBomSelectorApp:
         self.selection_rect = None
         # component_status: dict {key: status} où status = 'validated' | 'hidden' | 'highlighted'
         self.component_status = {}
+        self.undo_stack = []  # Stack pour Ctrl+Z
+        self.redo_stack = []  # Stack pour Ctrl+Y
         self.sort_column = None
         self.sort_reverse = False
         self.history = []
@@ -2330,12 +2332,21 @@ class IBomSelectorApp:
   Ctrl+O = Ouvrir fichier
   Ctrl+L = Charger fichier
   Ctrl+S = Exporter Excel
-  Ctrl+F = Recherche
+  Ctrl+F = Recherche (focus)
+  Ctrl+Z = Annuler (undo)
+  Ctrl+Y = Refaire (redo)
   ← → = Navigation préc/suiv
   Espace = Valider sélection
   H = Surligner sélection
   Échap = Effacer sélection
   F5 = Rafraîchir PCB
+
+═══════════════════════════════════════════
+
+📂 DRAG & DROP
+
+  • Glissez un fichier .html sur la fenêtre
+    pour le charger automatiquement
 
 ═══════════════════════════════════════════
 
@@ -2722,6 +2733,7 @@ class IBomSelectorApp:
         if not selection:
             return
         
+        self._push_undo()
         for item in selection:
             values = self.tree.item(item, 'values')
             key = self._get_key_from_values(values)
@@ -2742,6 +2754,7 @@ class IBomSelectorApp:
         if not selection:
             return
         
+        self._push_undo()
         for item in selection:
             values = self.tree.item(item, 'values')
             key = self._get_key_from_values(values)
@@ -2762,6 +2775,7 @@ class IBomSelectorApp:
         if not selection:
             return
         
+        self._push_undo()
         for item in selection:
             values = self.tree.item(item, 'values')
             key = self._get_key_from_values(values)
@@ -2787,6 +2801,7 @@ class IBomSelectorApp:
             values = self.tree.item(item, 'values')
             key = self._get_key_from_values(values)
             if key:
+                self._push_undo()
                 self.component_status[key] = 'hidden'
                 self._update_tree()
                 self._update_progress()
@@ -2798,6 +2813,7 @@ class IBomSelectorApp:
         if not selection:
             return
         
+        self._push_undo()
         for item in selection:
             values = self.tree.item(item, 'values')
             key = self._get_key_from_values(values)
@@ -2830,9 +2846,57 @@ class IBomSelectorApp:
     
     def _clear_all_status(self):
         """Tout reset"""
+        self._push_undo()
         self.component_status.clear()
         self._update_tree()
         self._update_progress()
+    
+    def _push_undo(self):
+        """Sauvegarde l'état actuel dans la pile undo"""
+        self.undo_stack.append(self.component_status.copy())
+        self.redo_stack.clear()
+        # Limiter la taille de la pile
+        if len(self.undo_stack) > 50:
+            self.undo_stack.pop(0)
+    
+    def _undo(self):
+        """Annule la dernière action (Ctrl+Z)"""
+        if not self.undo_stack:
+            return
+        
+        # Sauvegarder l'état actuel dans redo
+        self.redo_stack.append(self.component_status.copy())
+        
+        # Restaurer l'état précédent
+        self.component_status = self.undo_stack.pop()
+        self._update_tree()
+        self._update_progress()
+        self._draw_main_pcb(recalculate_scale=False)
+        self.status_var.set("↩️ Annulé")
+    
+    def _redo(self):
+        """Refait la dernière action annulée (Ctrl+Y)"""
+        if not self.redo_stack:
+            return
+        
+        # Sauvegarder l'état actuel dans undo
+        self.undo_stack.append(self.component_status.copy())
+        
+        # Restaurer l'état suivant
+        self.component_status = self.redo_stack.pop()
+        self._update_tree()
+        self._update_progress()
+        self._draw_main_pcb(recalculate_scale=False)
+        self.status_var.set("↪️ Refait")
+    
+    def _on_drop_file(self, event):
+        """Gère le drag & drop de fichiers"""
+        filepath = event.data
+        # Nettoyer le chemin (enlever les accolades sur Windows)
+        filepath = filepath.strip('{}')
+        if filepath.lower().endswith('.html'):
+            self.file_var.set(filepath)
+            self._load_file()
     
     def _clear_selection(self):
         """Efface la sélection"""
@@ -3114,12 +3178,22 @@ class IBomSelectorApp:
         self.root.bind('<Control-o>', lambda e: self._browse_file())
         self.root.bind('<Control-s>', lambda e: self._export_excel() if self.filtered_components else None)
         self.root.bind('<Control-l>', lambda e: self._load_file())
+        self.root.bind('<Control-z>', lambda e: self._undo())
+        self.root.bind('<Control-y>', lambda e: self._redo())
+        self.root.bind('<Control-Shift-z>', lambda e: self._redo())
         self.root.bind('<Escape>', lambda e: self._clear_selection())
         self.root.bind('<Control-f>', lambda e: self.search_entry.focus_set())
         self.root.bind('<F5>', lambda e: self._draw_main_pcb() if self.parser else None)
         self.root.bind('<Left>', lambda e: self._navigate_prev())
         self.root.bind('<Right>', lambda e: self._navigate_next())
-        self.root.bind('<space>', lambda e: self._toggle_processed())
+        self.root.bind('<space>', lambda e: self._toggle_validated())
+        
+        # Drag & drop support (nécessite tkinterdnd2)
+        try:
+            self.root.drop_target_register('DND_Files')
+            self.root.dnd_bind('<<Drop>>', self._on_drop_file)
+        except Exception:
+            pass  # Si tkinterdnd2 n'est pas disponible
     
     def _auto_load_bom(self):
         """Charge automatiquement bom/ibom.html"""

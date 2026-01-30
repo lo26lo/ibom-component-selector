@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Alert, Share, Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import { useTheme } from '../../theme';
-import { useAppStore } from '../../store';
+import { useAppStore, useSessionStore } from '../../store';
 import { ThemedModal, ThemedButton, ThemedToggle } from '../common';
 import { generateCSV, generateLCSCCSV } from '../../core/CSVLoader';
 import { spacing, fontSize } from '../../theme/spacing';
@@ -21,6 +21,10 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
 
   const selectedComponents = useAppStore((s) => s.selectedComponents);
   const processedItems = useAppStore((s) => s.processedItems);
+  const currentHtmlPath = useAppStore((s) => s.currentHtmlPath);
+  
+  // Session store pour les statuts
+  const componentStatus = useSessionStore((s) => s.componentStatus);
 
   const [exportProcessedOnly, setExportProcessedOnly] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -31,6 +35,32 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
         return processedItems.has(key);
       })
     : selectedComponents;
+
+  // Partager l'état complet (JSON avec statuts)
+  const handleShareState = useCallback(async () => {
+    try {
+      const stateData = {
+        timestamp: new Date().toISOString(),
+        htmlPath: currentHtmlPath,
+        componentsCount: selectedComponents.length,
+        componentStatus: componentStatus,
+        summary: {
+          validated: Object.values(componentStatus).filter(s => s === 'validated').length,
+          hidden: Object.values(componentStatus).filter(s => s === 'hidden').length,
+          highlighted: Object.values(componentStatus).filter(s => s === 'highlighted').length,
+        }
+      };
+
+      const jsonStr = JSON.stringify(stateData, null, 2);
+      
+      await Share.share({
+        message: jsonStr,
+        title: 'État IBom Selector',
+      });
+    } catch (error: any) {
+      Alert.alert('Erreur', error.message);
+    }
+  }, [currentHtmlPath, selectedComponents, componentStatus]);
 
   const handleExportLCSC = useCallback(async () => {
     try {
@@ -151,6 +181,11 @@ export function ExportModal({ visible, onClose }: ExportModalProps) {
             title="Partager références"
             onPress={handleExportRefList}
             disabled={componentsToExport.length === 0}
+            style={styles.exportButton}
+          />
+          <ThemedButton
+            title="📤 Partager état (JSON)"
+            onPress={handleShareState}
             style={styles.exportButton}
           />
         </View>
