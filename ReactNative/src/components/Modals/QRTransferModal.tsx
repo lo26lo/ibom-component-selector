@@ -14,6 +14,7 @@ import {
   ScrollView,
   Clipboard,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { useTheme } from '../../theme';
 import { useSessionStore, useAppStore } from '../../store';
 import { useToastContext } from '../../hooks';
@@ -191,14 +192,35 @@ export function QRTransferModal({ visible, onClose }: QRTransferModalProps) {
           
           {hasData ? (
             <>
-              {/* Code compressé */}
+              {/* QR Code visuel */}
+              {exportCode.length <= 2500 ? (
+                <View style={[styles.qrContainer, { backgroundColor: '#FFFFFF' }]}>
+                  <QRCode
+                    value={exportCode}
+                    size={220}
+                    backgroundColor="#FFFFFF"
+                    color="#000000"
+                  />
+                </View>
+              ) : (
+                <View style={[styles.codeBox, { backgroundColor: theme.bgHighlighted + '40' }]}>
+                  <Text style={[styles.codeLabel, { color: theme.bgHighlighted }]}>
+                    ⚠️ Données trop volumineuses pour QR ({exportCode.length} car.)
+                  </Text>
+                  <Text style={[styles.helpText, { color: theme.textSecondary }]}>
+                    Utilisez le partage texte à la place
+                  </Text>
+                </View>
+              )}
+              
+              {/* Code compressé (pour copie) */}
               <View style={[styles.codeBox, { backgroundColor: theme.bgSecondary }]}>
                 <Text style={[styles.codeLabel, { color: theme.textSecondary }]}>
                   Code ({exportCode.length} caractères)
                 </Text>
                 <Text 
                   style={[styles.codeText, { color: theme.textPrimary }]}
-                  numberOfLines={4}
+                  numberOfLines={3}
                   selectable
                 >
                   {exportCode}
@@ -220,8 +242,9 @@ export function QRTransferModal({ visible, onClose }: QRTransferModalProps) {
               </View>
               
               <Text style={[styles.helpText, { color: theme.textSecondary }]}>
-                Copiez ce code et collez-le sur le PC{'\n'}
-                (Bouton "📥 QR" → Coller → Importer)
+                {exportCode.length <= 2500 
+                  ? 'Scannez ce QR code depuis le PC\n(Bouton "📥 QR" → Scanner ou Coller)'
+                  : 'Copiez ce code et collez-le sur le PC\n(Bouton "📥 QR" → Coller → Importer)'}
               </Text>
             </>
           ) : (
@@ -332,6 +355,13 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     textAlign: 'center',
     marginTop: spacing.xl,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
   },
   importTitle: {
     fontSize: fontSize.md,
