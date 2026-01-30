@@ -355,7 +355,7 @@ export function HomeScreen() {
             </View>
           )}
 
-          {/* Component List */}
+          {/* Component List - key force re-render après hydratation */}
           {showList && (
             <View
               style={[
@@ -364,6 +364,7 @@ export function HomeScreen() {
               ]}
             >
               <ComponentList
+                key={`list-${sessionHasHydrated}-${sessionRestored}`}
                 onComponentPress={handleComponentPress}
                 onComponentLongPress={handleComponentLongPress}
                 onShowHiddenModal={() => setShowHiddenColumns(true)}
