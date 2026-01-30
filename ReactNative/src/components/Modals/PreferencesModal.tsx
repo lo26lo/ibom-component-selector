@@ -113,7 +113,7 @@ export function PreferencesModal({ visible, onClose }: PreferencesModalProps) {
           onValueChange={setShowSilkscreen} 
         />
 
-        {/* Reset button */}}
+        {/* Reset button */}
         <View style={styles.resetRow}>
           <ThemedButton
             title="Réinitialiser"
