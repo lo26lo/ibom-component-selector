@@ -53,18 +53,24 @@ Complete migration of IBom Selector from **Kivy/Python** to **React Native/TypeS
 - ✅ **Group by value** - Group identical components
 - ✅ **Progress bar** - Visual progress tracking
 - ✅ **Sequential navigation** - Previous/Next between components
+- ✅ **Swipe gestures** - Quick actions on each row
 
-### 💾 Selection Management
-- ✅ **Checkbox on each component** - Individual marking
-- ✅ **Check/uncheck all** - Batch actions
-- ✅ **"Processed" state** - Mark placed components
-- ✅ **Automatic persistence** - State survives restarts
+### 👆 Touch Gestures
+| Gesture | Action | Result |
+|---------|--------|--------|
+| **Swipe Left** | Validate | 🟢 Green - component done |
+| **Swipe Right** | Hide | ⚫ Gray - disappears from list |
+| **Double-tap** | Highlight | 🔵 Blue - temporary highlight |
+| **Long-press** | Details | Show component details modal |
 
-### 🎨 Column States & Visual Feedback
-- ✅ **Validated columns (Green)** - Long-press to validate all components of a type
-- ✅ **Hidden columns (Yellow)** - Swipe right to hide, components stay visible in yellow
-- ✅ **Highlighted columns (Blue)** - Double-tap column header to highlight without filtering
-- ✅ **Hidden columns manager** - Restore hidden columns via "Masq" button
+### 🎨 Component Status System (Single State)
+- ✅ **One state per component** - No conflicts, last gesture wins
+- ✅ **Validated (Green 🟢)** - Swipe left to mark as done
+- ✅ **Hidden (Gray ⚫)** - Swipe right to hide from list
+- ✅ **Highlighted (Blue 🔵)** - Double-tap to highlight temporarily
+- ✅ **Rectangle Selection (Red 🔴)** - Draw on PCB to select components
+- ✅ **Hidden manager** - Restore hidden groups via "Masq" button
+- ✅ **Toast with Undo** - Quick undo after each action
 
 ### 📁 History & Backup
 - ✅ **Session history** - Timestamped recording
@@ -75,8 +81,9 @@ Complete migration of IBom Selector from **Kivy/Python** to **React Native/TypeS
 
 ### ❓ Help & Documentation
 - ✅ **Integrated help** - "?" button for quick access to help modal
-- ✅ **Color legend** - Explains green/yellow/blue states
+- ✅ **Color legend** - Explains green/gray/blue/red states
 - ✅ **Gesture guide** - Explains swipe, double-tap, long-press actions
+- ✅ **Single state rule** - One state per component explanation
 
 ### 📤 Export
 - ✅ **LCSC CSV export** - Order-compatible format
@@ -89,6 +96,7 @@ Complete migration of IBom Selector from **Kivy/Python** to **React Native/TypeS
 - ✅ **Vibration** - Haptic feedback on/off
 - ✅ **Silkscreen display** - Toggle on/off
 - ✅ **Group by value** - Enable/disable
+- ✅ **Auto-save** - Configurable interval
 
 ---
 
