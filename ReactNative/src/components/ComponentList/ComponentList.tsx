@@ -245,7 +245,7 @@ export function ComponentList({
   }, [clearHighlighted]);
 
   // Info bar - calculer le nombre de masqués
-  const hiddenCount = Object.values(componentStatus).filter(s => s === 'hidden').length;
+  const hiddenCount = sessionHasHydrated ? Object.values(componentStatus).filter(s => s === 'hidden').length : 0;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
