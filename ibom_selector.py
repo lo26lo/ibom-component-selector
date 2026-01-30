@@ -67,6 +67,8 @@ THEMES = {
         'progress_fill': '#4ecca3',
         'row_done': '#1a3a2a',
         'row_pending': '#1a1a2e',
+        'row_hidden': '#404040',
+        'row_highlighted': '#4a2020',
     },
     'light': {
         'bg_primary': '#ffffff',
@@ -93,6 +95,8 @@ THEMES = {
         'progress_fill': '#28a745',
         'row_done': '#c8e6c9',
         'row_pending': '#ffffff',
+        'row_hidden': '#c0c0c0',
+        'row_highlighted': '#ffcccc',
     }
 }
 
@@ -148,7 +152,7 @@ class Preferences:
         'show_silkscreen': True,
         'show_tracks': True,
         'show_pads': True,
-        'auto_save': False,
+        'auto_save': True,
         'auto_save_minutes': 5,
     }
     
@@ -1148,14 +1152,14 @@ class PCBViewer(tk.Toplevel):
 class SplitView(tk.Toplevel):
     """Fenêtre Split avec PCB et Liste côte à côte, synchronisés"""
     
-    def __init__(self, parent, parser, components, processed_items, prefs, theme, on_processed_change):
+    def __init__(self, parent, parser, components, component_status, prefs, theme, on_status_change):
         super().__init__(parent)
         self.parser = parser
         self.components = components
-        self.processed_items = processed_items
+        self.component_status = component_status  # dict {key: status}
         self.prefs = prefs
         self.theme = theme
-        self.on_processed_change = on_processed_change
+        self.on_status_change = on_status_change
         
         self.title("Split View - PCB + Liste")
         self.geometry("1400x900")
@@ -1443,22 +1447,24 @@ class SplitView(tk.Toplevel):
                 original_value = data['original_value']
                 refs_sorted = sorted(refs, key=lambda r: (r[0], int(''.join(filter(str.isdigit, r)) or 0)))
                 key = (norm_value, footprint, lcsc)
-                is_done = key in self.processed_items
-                tag = 'done' if is_done else 'pending'
+                status = self.component_status.get(key)
+                is_validated = status == 'validated'
+                tag = 'done' if is_validated else 'pending'
                 
                 self.tree.insert('', tk.END, values=(
-                    '✓' if is_done else '', len(refs), ', '.join(refs_sorted),
+                    '✓' if is_validated else '', len(refs), ', '.join(refs_sorted),
                     original_value, footprint, lcsc
                 ), tags=(tag,))
         else:
             for comp in sorted(self.components, key=lambda c: (c['value'], c['ref'])):
                 norm_value = normalize_value(comp['value'])
                 key = (norm_value, comp['footprint'], comp.get('lcsc', ''))
-                is_done = key in self.processed_items
-                tag = 'done' if is_done else 'pending'
+                status = self.component_status.get(key)
+                is_validated = status == 'validated'
+                tag = 'done' if is_validated else 'pending'
                 
                 self.tree.insert('', tk.END, values=(
-                    '✓' if is_done else '', 1, comp['ref'],
+                    '✓' if is_validated else '', 1, comp['ref'],
                     comp['value'], comp['footprint'], comp.get('lcsc', '')
                 ), tags=(tag,))
         
@@ -1484,39 +1490,39 @@ class SplitView(tk.Toplevel):
         self._draw_pcb(recalculate_scale=False)
     
     def _on_toggle_processed(self, event=None):
-        """Bascule l'état traité"""
+        """Bascule l'état validated"""
         for item in self.tree.selection():
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
-                # Normaliser la valeur pour la clé
                 key = (normalize_value(values[3]), values[4], values[5])
-                if key in self.processed_items:
-                    self.processed_items.discard(key)
+                current = self.component_status.get(key)
+                if current == 'validated':
+                    self.component_status.pop(key, None)
                 else:
-                    self.processed_items.add(key)
+                    self.component_status[key] = 'validated'
         
         self._update_list()
-        self.on_processed_change()
+        self.on_status_change()
     
     def _mark_done(self):
-        """Marque comme fait"""
+        """Marque comme validated"""
         for item in self.tree.selection():
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
                 key = (normalize_value(values[3]), values[4], values[5])
-                self.processed_items.add(key)
+                self.component_status[key] = 'validated'
         self._update_list()
-        self.on_processed_change()
+        self.on_status_change()
     
     def _mark_undone(self):
-        """Démarque"""
+        """Reset le statut"""
         for item in self.tree.selection():
             values = self.tree.item(item, 'values')
             if len(values) >= 6:
                 key = (normalize_value(values[3]), values[4], values[5])
-                self.processed_items.discard(key)
+                self.component_status.pop(key, None)
         self._update_list()
-        self.on_processed_change()
+        self.on_status_change()
     
     def _navigate_prev(self):
         """Navigue vers l'élément précédent"""
@@ -1613,7 +1619,8 @@ class IBomSelectorApp:
         self.selected_components = []
         self.filtered_components = []
         self.selection_rect = None
-        self.processed_items = set()
+        # component_status: dict {key: status} où status = 'validated' | 'hidden' | 'highlighted'
+        self.component_status = {}
         self.sort_column = None
         self.sort_reverse = False
         self.history = []
@@ -1621,7 +1628,7 @@ class IBomSelectorApp:
         self.current_history_index = None
         self.current_item_index = 0  # Pour navigation
         self.view_mode = 'split'  # 'split', 'list', 'pcb'
-        self.highlighted_refs = set()  # Pour highlight PCB
+        self.highlighted_refs = set()  # Pour highlight PCB temporaire (sélection liste)
         self.pcb_scale = 1.0
         self.pcb_offset_x = 50
         self.pcb_offset_y = 50
@@ -1633,7 +1640,7 @@ class IBomSelectorApp:
         self.layer_filter = tk.StringVar(value="all")
         self.search_var = tk.StringVar()
         self.group_by_value_var = tk.BooleanVar(value=self.prefs.get('group_by_value', True))
-        self.status_filter = tk.StringVar(value="all")  # all, done, pending
+        self.status_filter = tk.StringVar(value="all")  # all, validated, hidden, highlighted, pending
         
         self._setup_ui()
         self._setup_keyboard_shortcuts()
@@ -1814,7 +1821,8 @@ class IBomSelectorApp:
         
         tk.Label(list_toolbar, text="Statut:", bg=self.theme['bg_secondary'],
                 fg=self.theme['text_primary'], font=('Segoe UI', 9)).pack(side=tk.LEFT)
-        for text, value in [("Tous", "all"), ("✓", "done"), ("○", "pending")]:
+        # Tous, Validé (vert), Masqué (gris), Surligné (rouge), En attente
+        for text, value in [("All", "all"), ("✓", "validated"), ("👁", "hidden"), ("●", "highlighted"), ("○", "pending")]:
             tk.Radiobutton(list_toolbar, text=text, variable=self.status_filter, value=value,
                           command=self._apply_filters, bg=self.theme['bg_secondary'],
                           fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary'],
@@ -1867,29 +1875,36 @@ class IBomSelectorApp:
                        font=('Segoe UI', 10, 'bold'))
         style.map('Treeview', background=[('selected', self.theme['accent'])])
         
-        columns = ('done', 'qty', 'ref', 'value', 'footprint', 'lcsc')
+        columns = ('status', 'qty', 'ref', 'value', 'footprint', 'lcsc')
         self.tree = ttk.Treeview(tree_container, columns=columns, show='headings', height=10)
         
-        self.tree.tag_configure('done', background=self.theme['row_done'])
+        # Tags pour les différents états
+        self.tree.tag_configure('validated', background=self.theme['row_done'])
+        self.tree.tag_configure('hidden', background=self.theme['row_hidden'])
+        self.tree.tag_configure('highlighted', background=self.theme['row_highlighted'])
         self.tree.tag_configure('pending', background=self.theme['row_pending'])
         self.tree.tag_configure('current', background=self.theme['accent'])
         
-        self.tree.heading('done', text='✓', command=lambda: self._sort_by_column('done'))
+        self.tree.heading('status', text='État', command=lambda: self._sort_by_column('status'))
         self.tree.heading('qty', text='Qté ↕', command=lambda: self._sort_by_column('qty'))
         self.tree.heading('ref', text='Références ↕', command=lambda: self._sort_by_column('ref'))
         self.tree.heading('value', text='Valeur ↕', command=lambda: self._sort_by_column('value'))
         self.tree.heading('footprint', text='Footprint ↕', command=lambda: self._sort_by_column('footprint'))
         self.tree.heading('lcsc', text='LCSC ↕', command=lambda: self._sort_by_column('lcsc'))
         
-        self.tree.column('done', width=40, anchor='center')
+        self.tree.column('status', width=50, anchor='center')
         self.tree.column('qty', width=50, anchor='center')
         self.tree.column('ref', width=180)
         self.tree.column('value', width=120)
         self.tree.column('footprint', width=180)
         self.tree.column('lcsc', width=100)
         
-        self.tree.bind('<Double-1>', self._toggle_processed)
-        self.tree.bind('<space>', self._toggle_processed)
+        # Bindings: Double-clic = validated, Clic-droit = hidden, H = highlighted
+        self.tree.bind('<Double-1>', self._toggle_validated)
+        self.tree.bind('<space>', self._toggle_validated)
+        self.tree.bind('<Button-3>', self._toggle_hidden)
+        self.tree.bind('h', self._toggle_highlighted)
+        self.tree.bind('H', self._toggle_highlighted)
         self.tree.bind('<<TreeviewSelect>>', self._on_tree_select)
         
         scrollbar = ttk.Scrollbar(tree_container, orient=tk.VERTICAL, command=self.tree.yview)
@@ -1912,8 +1927,11 @@ class IBomSelectorApp:
         
         ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
         
-        tk.Button(nav_frame, text="✓ Fait", command=self._mark_selected_processed, **nav_btn_style).pack(side=tk.LEFT, padx=2)
-        tk.Button(nav_frame, text="✗ Défaire", command=self._unmark_selected_processed, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        # Boutons pour les 3 états
+        tk.Button(nav_frame, text="✓ Valider", command=self._mark_validated, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        tk.Button(nav_frame, text="👁 Masquer", command=self._mark_hidden, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        tk.Button(nav_frame, text="● Surligner", command=self._mark_highlighted, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        tk.Button(nav_frame, text="✗ Reset", command=self._clear_status, **nav_btn_style).pack(side=tk.LEFT, padx=2)
         
         ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
         
@@ -2062,24 +2080,47 @@ class IBomSelectorApp:
                         w = max(0.5, track.get('width', 0.2) * self.pcb_scale)
                         self.pcb_canvas.create_line(tx1, ty1, tx2, ty2, fill=color, width=w, capstyle=tk.ROUND)
         
-        # Pads avec highlight
+        # Pads avec couleurs selon statut
         if self.show_pads_var and self.show_pads_var.get():
+            # Construire un mapping ref -> status pour les couleurs
+            ref_to_status = {}
+            for comp in self.selected_components:
+                ref = comp.get('ref', '')
+                norm_value = normalize_value(comp.get('value', ''))
+                key = (norm_value, comp.get('footprint', ''), comp.get('lcsc', ''))
+                status = self.component_status.get(key)
+                if status:
+                    ref_to_status[ref] = status
+            
             for fp in self.parser.footprints:
                 ref = fp.get('ref', '')
                 fp_layer = fp.get('layer', 'F')
-                is_highlighted = ref in self.highlighted_refs
+                # Priorité: component_status > highlighted_refs (sélection liste)
+                comp_status = ref_to_status.get(ref)
+                is_temp_highlighted = ref in self.highlighted_refs
                 
                 for pad in fp.get('pads', []):
-                    self._draw_main_pad(pad, fp_layer, is_highlighted)
+                    self._draw_main_pad(pad, fp_layer, comp_status, is_temp_highlighted)
         
         # Silkscreen + refs
         if self.show_silk_var and self.show_silk_var.get():
+            # Même mapping pour les refs
+            ref_to_status = {}
+            for comp in self.selected_components:
+                ref = comp.get('ref', '')
+                norm_value = normalize_value(comp.get('value', ''))
+                key = (norm_value, comp.get('footprint', ''), comp.get('lcsc', ''))
+                status = self.component_status.get(key)
+                if status:
+                    ref_to_status[ref] = status
+            
             for fp in self.parser.footprints:
                 ref = fp.get('ref', '')
                 bbox_fp = fp.get('bbox', {})
                 if ref and bbox_fp:
-                    is_highlighted = ref in self.highlighted_refs
-                    self._draw_main_ref(ref, bbox_fp, is_highlighted)
+                    comp_status = ref_to_status.get(ref)
+                    is_temp_highlighted = ref in self.highlighted_refs
+                    self._draw_main_ref(ref, bbox_fp, comp_status, is_temp_highlighted)
         
         # Zone de sélection
         if self.selection_rect:
@@ -2089,8 +2130,11 @@ class IBomSelectorApp:
             self.pcb_canvas.create_rectangle(min(cx1, cx2), min(cy1, cy2), max(cx1, cx2), max(cy1, cy2),
                                             outline=self.theme['selection_rect'], width=2, dash=(5, 3))
     
-    def _draw_main_pad(self, pad, fp_layer, is_highlighted=False):
-        """Dessine un pad sur le canvas principal"""
+    def _draw_main_pad(self, pad, fp_layer, comp_status=None, is_temp_highlighted=False):
+        """Dessine un pad sur le canvas principal avec couleur selon statut
+        
+        Priorité couleurs: validated (vert) > hidden (gris) > highlighted (rouge) > temp_highlighted > normal
+        """
         pos = pad.get('pos', [0, 0])
         size = pad.get('size', [0.5, 0.5])
         shape = pad.get('shape', 'rect')
@@ -2100,8 +2144,15 @@ class IBomSelectorApp:
         w = max(2, size[0] * self.pcb_scale)
         h = max(2, size[1] * self.pcb_scale)
         
-        if is_highlighted:
-            color = self.theme['pad_highlight']
+        # Déterminer la couleur selon la priorité
+        if comp_status == 'validated':
+            color = self.theme['row_done']  # Vert
+        elif comp_status == 'hidden':
+            color = self.theme['row_hidden']  # Gris
+        elif comp_status == 'highlighted':
+            color = self.theme['row_highlighted']  # Rouge foncé
+        elif is_temp_highlighted:
+            color = self.theme['pad_highlight']  # Rouge vif (sélection temporaire liste)
         else:
             is_front = 'F' in layers or any(l.startswith('F.') for l in layers)
             color = self.theme['pad_front'] if is_front else self.theme['pad_back']
@@ -2112,8 +2163,8 @@ class IBomSelectorApp:
         else:
             self.pcb_canvas.create_rectangle(cx - w/2, cy - h/2, cx + w/2, cy + h/2, fill=color, outline='')
     
-    def _draw_main_ref(self, ref, bbox, is_highlighted=False):
-        """Dessine la référence d'un composant"""
+    def _draw_main_ref(self, ref, bbox, comp_status=None, is_temp_highlighted=False):
+        """Dessine la référence d'un composant avec couleur selon statut"""
         if not ref or ref == 'REF**':
             return
         
@@ -2126,7 +2177,18 @@ class IBomSelectorApp:
         cx, cy = self._pcb_to_canvas_main(center_x, center_y)
         
         font_size = max(5, min(9, int(min(size[0], size[1]) * self.pcb_scale * 0.4)))
-        color = self.theme['pad_highlight'] if is_highlighted else self.theme['silk_text']
+        
+        # Couleur selon statut
+        if comp_status == 'validated':
+            color = self.theme['success']  # Vert vif
+        elif comp_status == 'hidden':
+            color = self.theme['row_hidden']  # Gris
+        elif comp_status == 'highlighted':
+            color = self.theme['accent']  # Rouge accent
+        elif is_temp_highlighted:
+            color = self.theme['pad_highlight']
+        else:
+            color = self.theme['silk_text']
         
         self.pcb_canvas.create_text(cx, cy, text=ref, fill=color, font=('Consolas', font_size, 'bold'))
     
@@ -2171,19 +2233,20 @@ class IBomSelectorApp:
             self.split_window.focus_force()
             return
         
-        def on_processed_change():
-            """Callback quand les items traités changent"""
+        def on_status_change():
+            """Callback quand les statuts changent"""
             self._update_tree()
             self._update_progress()
+            self._draw_main_pcb(recalculate_scale=False)
         
         self.split_window = SplitView(
             self.root, 
             self.parser, 
             self.selected_components,
-            self.processed_items,
+            self.component_status,
             self.prefs,
             self.theme,
-            on_processed_change
+            on_status_change
         )
         self.split_window.transient(self.root)
     
@@ -2237,21 +2300,22 @@ class IBomSelectorApp:
             return
         
         total = len(self.tree.get_children())
-        done = sum(1 for item in self.tree.get_children() 
-                  if self.tree.item(item, 'values')[0] == '✓')
+        # Compter les validés (✓)
+        validated = sum(1 for item in self.tree.get_children() 
+                       if self.tree.item(item, 'values')[0] == '✓')
         
         width = self.progress_canvas.winfo_width()
         height = self.progress_canvas.winfo_height()
         
         if total > 0:
-            progress = done / total
+            progress = validated / total
             fill_width = width * progress
             
             self.progress_canvas.create_rectangle(0, 0, fill_width, height,
                                                   fill=self.theme['progress_fill'], outline='')
             
             percent = int(progress * 100)
-            self.progress_label.config(text=f"{percent}% ({done}/{total})")
+            self.progress_label.config(text=f"{percent}% ({validated}/{total})")
         else:
             self.progress_label.config(text="0%")
     
@@ -2397,6 +2461,14 @@ class IBomSelectorApp:
         
         status_filter = self.status_filter.get()
         
+        # Symboles pour les états
+        STATUS_SYMBOLS = {
+            'validated': '✓',
+            'hidden': '👁',
+            'highlighted': '●',
+            None: ''
+        }
+        
         if self.group_by_value_var.get():
             # Regrouper
             grouped = {}
@@ -2414,23 +2486,27 @@ class IBomSelectorApp:
                 refs_sorted = sorted(refs, key=lambda r: (r[0], int(''.join(filter(str.isdigit, r)) or 0)))
                 refs_str = ', '.join(refs_sorted)
                 key = (norm_value, footprint, lcsc)
-                is_done = key in self.processed_items
+                status = self.component_status.get(key)  # None, 'validated', 'hidden', 'highlighted'
                 
                 # Filtre statut
-                if status_filter == 'done' and not is_done:
+                if status_filter == 'validated' and status != 'validated':
                     continue
-                if status_filter == 'pending' and is_done:
+                if status_filter == 'hidden' and status != 'hidden':
+                    continue
+                if status_filter == 'highlighted' and status != 'highlighted':
+                    continue
+                if status_filter == 'pending' and status is not None:
                     continue
                 
                 data_list.append({
                     'key': key,
-                    'done': '✓' if is_done else '',
+                    'status_symbol': STATUS_SYMBOLS.get(status, ''),
                     'qty': len(refs),
                     'ref': refs_str,
                     'value': original_value,
                     'footprint': footprint,
                     'lcsc': lcsc,
-                    'is_done': is_done
+                    'status': status
                 })
         else:
             # Sans groupement
@@ -2438,28 +2514,34 @@ class IBomSelectorApp:
             for comp in self.filtered_components:
                 norm_value = normalize_value(comp['value'])
                 key = (norm_value, comp['footprint'], comp['lcsc'])
-                is_done = key in self.processed_items
+                status = self.component_status.get(key)
                 
-                if status_filter == 'done' and not is_done:
+                if status_filter == 'validated' and status != 'validated':
                     continue
-                if status_filter == 'pending' and is_done:
+                if status_filter == 'hidden' and status != 'hidden':
+                    continue
+                if status_filter == 'highlighted' and status != 'highlighted':
+                    continue
+                if status_filter == 'pending' and status is not None:
                     continue
                 
                 data_list.append({
                     'key': key,
-                    'done': '✓' if is_done else '',
+                    'status_symbol': STATUS_SYMBOLS.get(status, ''),
                     'qty': 1,
                     'ref': comp['ref'],
                     'value': comp['value'],
                     'footprint': comp['footprint'],
                     'lcsc': comp['lcsc'],
-                    'is_done': is_done
+                    'status': status
                 })
         
         # Tri
         if self.sort_column:
-            if self.sort_column == 'done':
-                data_list.sort(key=lambda x: (not x['is_done'], x['value']), reverse=self.sort_reverse)
+            if self.sort_column == 'status':
+                # Ordre: validated > hidden > highlighted > pending
+                status_order = {'validated': 0, 'hidden': 1, 'highlighted': 2, None: 3}
+                data_list.sort(key=lambda x: (status_order.get(x['status'], 3), x['value']), reverse=self.sort_reverse)
             elif self.sort_column == 'qty':
                 data_list.sort(key=lambda x: x['qty'], reverse=self.sort_reverse)
             elif self.sort_column == 'ref':
@@ -2474,9 +2556,10 @@ class IBomSelectorApp:
             data_list.sort(key=lambda x: (x['value'], x['ref']))
         
         for data in data_list:
-            tag = 'done' if data['is_done'] else 'pending'
+            # Tag selon le statut
+            tag = data['status'] if data['status'] else 'pending'
             self.tree.insert('', tk.END, values=(
-                data['done'], data['qty'], data['ref'],
+                data['status_symbol'], data['qty'], data['ref'],
                 data['value'], data['footprint'], data['lcsc']
             ), tags=(tag,))
     
@@ -2488,59 +2571,121 @@ class IBomSelectorApp:
             self.sort_column = column
             self.sort_reverse = False
         
-        for col in ('done', 'qty', 'ref', 'value', 'footprint', 'lcsc'):
+        for col in ('status', 'qty', 'ref', 'value', 'footprint', 'lcsc'):
             text = self.tree.heading(col)['text'].rstrip(' ↑↓↕')
             if col == column:
                 arrow = ' ↓' if self.sort_reverse else ' ↑'
             else:
-                arrow = ' ↕' if col != 'done' else ''
+                arrow = ' ↕' if col != 'status' else ''
             self.tree.heading(col, text=text + arrow)
         
         self._update_tree()
     
-    def _toggle_processed(self, event=None):
-        """Bascule l'état traité"""
+    def _get_key_from_values(self, values):
+        """Extrait la clé depuis les valeurs d'une ligne"""
+        if len(values) >= 6:
+            return (normalize_value(values[3]), values[4], values[5])
+        return None
+    
+    def _set_status(self, status):
+        """Définit le statut pour les éléments sélectionnés"""
         selection = self.tree.selection()
         if not selection:
             return
         
         for item in selection:
             values = self.tree.item(item, 'values')
-            if len(values) >= 6:
-                key = (normalize_value(values[3]), values[4], values[5])
-                if key in self.processed_items:
-                    self.processed_items.discard(key)
+            key = self._get_key_from_values(values)
+            if key:
+                if status is None:
+                    # Reset: supprimer du dict
+                    self.component_status.pop(key, None)
                 else:
-                    self.processed_items.add(key)
+                    self.component_status[key] = status
         
         self._update_tree()
         self._update_progress()
+        self._draw_main_pcb(recalculate_scale=False)
     
-    def _mark_selected_processed(self):
-        """Marque comme traité"""
+    def _toggle_validated(self, event=None):
+        """Bascule l'état validé (vert) - double-clic / espace"""
         selection = self.tree.selection()
+        if not selection:
+            return
+        
         for item in selection:
             values = self.tree.item(item, 'values')
-            if len(values) >= 6:
-                key = (normalize_value(values[3]), values[4], values[5])
-                self.processed_items.add(key)
+            key = self._get_key_from_values(values)
+            if key:
+                current = self.component_status.get(key)
+                if current == 'validated':
+                    self.component_status.pop(key, None)
+                else:
+                    self.component_status[key] = 'validated'
+        
         self._update_tree()
         self._update_progress()
+        self._draw_main_pcb(recalculate_scale=False)
     
-    def _unmark_selected_processed(self):
-        """Démarque"""
+    def _toggle_hidden(self, event=None):
+        """Bascule l'état masqué (gris) - clic droit"""
         selection = self.tree.selection()
+        if not selection:
+            return
+        
         for item in selection:
             values = self.tree.item(item, 'values')
-            if len(values) >= 6:
-                key = (normalize_value(values[3]), values[4], values[5])
-                self.processed_items.discard(key)
+            key = self._get_key_from_values(values)
+            if key:
+                current = self.component_status.get(key)
+                if current == 'hidden':
+                    self.component_status.pop(key, None)
+                else:
+                    self.component_status[key] = 'hidden'
+        
         self._update_tree()
         self._update_progress()
+        self._draw_main_pcb(recalculate_scale=False)
     
-    def _unmark_all_processed(self):
-        """Tout démarquer"""
-        self.processed_items.clear()
+    def _toggle_highlighted(self, event=None):
+        """Bascule l'état surligné (rouge) - touche H"""
+        selection = self.tree.selection()
+        if not selection:
+            return
+        
+        for item in selection:
+            values = self.tree.item(item, 'values')
+            key = self._get_key_from_values(values)
+            if key:
+                current = self.component_status.get(key)
+                if current == 'highlighted':
+                    self.component_status.pop(key, None)
+                else:
+                    self.component_status[key] = 'highlighted'
+        
+        self._update_tree()
+        self._update_progress()
+        self._draw_main_pcb(recalculate_scale=False)
+    
+    def _mark_validated(self):
+        """Marque comme validé (vert)"""
+        self._set_status('validated')
+    
+    def _mark_hidden(self):
+        """Marque comme masqué (gris)"""
+        self._set_status('hidden')
+    
+    def _mark_highlighted(self):
+        """Marque comme surligné (rouge)"""
+        self._set_status('highlighted')
+    
+    def _clear_status(self):
+        """Reset le statut (retour à pending)"""
+        self._set_status(None)
+    
+    def _clear_all_status(self):
+        """Tout reset"""
+        self.component_status.clear()
         self._update_tree()
         self._update_progress()
     
@@ -2549,7 +2694,7 @@ class IBomSelectorApp:
         self.selected_components = []
         self.filtered_components = []
         self.selection_rect = None
-        self.processed_items.clear()
+        self.component_status.clear()
         self.current_item_index = 0
         self._update_tree()
         self._update_statistics()
@@ -2700,8 +2845,13 @@ class IBomSelectorApp:
             name = entry.get('name', f"Sélection {i+1}")
             date = entry.get('date', '')
             count = len(entry.get('components', []))
-            processed = len(entry.get('processed', []))
-            items.append(f"{name} ({count} comp., {processed} faits) - {date}")
+            # Compter les validés (nouveau format component_status)
+            status_dict = entry.get('component_status', {})
+            validated = sum(1 for s in status_dict.values() if s == 'validated')
+            # Fallback ancien format 'processed'
+            if not status_dict and 'processed' in entry:
+                validated = len(entry.get('processed', []))
+            items.append(f"{name} ({count} comp., {validated} validés) - {date}")
         
         self.history_combo['values'] = items
         if items and self.current_history_index is not None:
@@ -2740,10 +2890,26 @@ class IBomSelectorApp:
                         'layer': comp['layer']
                     })
         
-        self.processed_items.clear()
-        for proc in entry.get('processed', []):
-            if isinstance(proc, list) and len(proc) == 3:
-                self.processed_items.add(tuple(proc))
+        self.component_status.clear()
+        
+        # Nouveau format: component_status dict
+        status_dict = entry.get('component_status', {})
+        if status_dict:
+            for key_str, status in status_dict.items():
+                # key est stocké comme string, le reconvertir en tuple
+                # Format: "(norm_value, footprint, lcsc)"
+                try:
+                    # Eval safe pour tuple de strings
+                    key = eval(key_str)
+                    if isinstance(key, tuple) and len(key) == 3:
+                        self.component_status[key] = status
+                except:
+                    pass
+        else:
+            # Fallback ancien format 'processed' -> tout passer en validated
+            for proc in entry.get('processed', []):
+                if isinstance(proc, list) and len(proc) == 3:
+                    self.component_status[tuple(proc)] = 'validated'
         
         self._apply_filters()
         self._draw_main_pcb()
@@ -2771,7 +2937,8 @@ class IBomSelectorApp:
             'components': [{'ref': c['ref'], 'value': c['value'],
                            'footprint': c['footprint'], 'lcsc': c['lcsc']}
                           for c in self.selected_components],
-            'processed': [list(p) for p in self.processed_items]
+            # Nouveau format: dict avec clés en string et valeurs = status
+            'component_status': {str(k): v for k, v in self.component_status.items()}
         }
         
         self.history.append(entry)
