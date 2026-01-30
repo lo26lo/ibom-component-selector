@@ -1,14 +1,14 @@
-=== BUILD LOG - Thu Jan 29 03:46:18 PM CET 2026 ===
+=== BUILD LOG - Wed Jan 28 08:32:41 AM CET 2026 ===
 Script: build_apk.sh
 Arguments: --share-logs
 ========================================
-[2026-01-29 15:46:18] Mode partage de logs activé - Les logs seront envoyés sur GitHub
-[2026-01-29 15:46:18] [1/6] Vérification des prérequis...
-[2026-01-29 15:46:25] [2/6] Préparation du projet React Native...
-[2026-01-29 15:47:08] [3/6] Copie des fichiers sources...
-[2026-01-29 15:47:08] [4/6] Configuration de l'application...
-[2026-01-29 15:47:08] [5/6] Build APK Release...
-[2026-01-29 15:47:08] Compilation en cours (peut prendre plusieurs minutes)...
+[2026-01-28 08:32:41] Mode partage de logs activé - Les logs seront envoyés sur GitHub
+[2026-01-28 08:32:41] [1/6] Vérification des prérequis...
+[2026-01-28 08:32:48] [2/6] Préparation du projet React Native...
+[2026-01-30 13:39:53] [3/6] Copie des fichiers sources...
+[2026-01-30 13:39:53] [4/6] Configuration de l'application...
+[2026-01-30 13:39:53] [5/6] Build APK Release...
+[2026-01-30 13:39:53] Compilation en cours (peut prendre plusieurs minutes)...
 
 === GRADLE BUILD OUTPUT ===
 Downloading https://services.gradle.org/distributions/gradle-8.3-all.zip
@@ -69,8 +69,8 @@ Installing Android SDK Build-Tools 33.0.1 in /home/lololo/Android/Sdk/build-tool
 > Task :react-native-async-storage_async-storage:generateReleaseAssets UP-TO-DATE
 > Task :react-native-async-storage_async-storage:packageReleaseAssets
 > Task :react-native-async-storage_async-storage:prepareReleaseArtProfile
-> Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
 > Task :react-native-async-storage_async-storage:prepareLintJarForPublish
+> Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
 > Task :react-native-device-info:preBuild UP-TO-DATE
 > Task :react-native-device-info:preReleaseBuild UP-TO-DATE
 > Task :react-native-device-info:mergeReleaseJniLibFolders
@@ -81,34 +81,45 @@ Installing Android SDK Build-Tools 33.0.1 in /home/lololo/Android/Sdk/build-tool
 > Task :react-native-async-storage_async-storage:writeReleaseAarMetadata
 > Task :react-native-device-info:extractDeepLinksForAarRelease
 > Task :react-native-device-info:generateReleaseBuildConfig
-> Task :react-native-device-info:generateReleaseResources
 > Task :react-native-async-storage_async-storage:parseReleaseLocalResources
+> Task :react-native-device-info:generateReleaseResources
 > Task :react-native-device-info:packageReleaseResources
 > Task :react-native-device-info:parseReleaseLocalResources
 > Task :react-native-device-info:javaPreCompileRelease
-
-> Task :react-native-async-storage_async-storage:processReleaseManifest
-package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
-Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
-Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+> Task :react-native-device-info:mergeReleaseShaders
+> Task :react-native-device-info:compileReleaseShaders NO-SOURCE
+> Task :react-native-device-info:generateReleaseAssets UP-TO-DATE
+> Task :react-native-device-info:packageReleaseAssets
 
 > Task :react-native-device-info:processReleaseManifest
 package="com.learnium.RNDeviceInfo" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-device-info/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.learnium.RNDeviceInfo" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-device-info/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-device-info:mergeReleaseShaders
-> Task :react-native-async-storage_async-storage:mergeReleaseJavaResource
-> Task :react-native-device-info:compileReleaseShaders NO-SOURCE
-> Task :react-native-device-info:generateReleaseAssets UP-TO-DATE
-> Task :react-native-device-info:packageReleaseAssets
+> Task :react-native-async-storage_async-storage:processReleaseManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+
 > Task :react-native-device-info:prepareLintJarForPublish
 > Task :react-native-device-info:prepareReleaseArtProfile
+> Task :react-native-async-storage_async-storage:mergeReleaseJavaResource
 > Task :react-native-device-info:processReleaseJavaRes NO-SOURCE
 > Task :react-native-device-info:mergeReleaseJavaResource
-> Task :react-native-async-storage_async-storage:generateReleaseRFile
-> Task :react-native-device-info:generateReleaseRFile
+> Task :react-native-document-picker:preBuild UP-TO-DATE
+> Task :react-native-document-picker:preReleaseBuild UP-TO-DATE
 > Task :react-native-device-info:writeReleaseAarMetadata
+> Task :react-native-document-picker:mergeReleaseJniLibFolders
+> Task :react-native-document-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-document-picker:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-document-picker:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-document-picker:generateReleaseResValues
+> Task :react-native-document-picker:extractDeepLinksForAarRelease
+> Task :react-native-document-picker:generateReleaseBuildConfig
+> Task :react-native-document-picker:generateReleaseResources
+> Task :react-native-device-info:generateReleaseRFile
+> Task :react-native-async-storage_async-storage:generateReleaseRFile
+> Task :react-native-document-picker:packageReleaseResources
 > Task :react-native-async-storage_async-storage:extractReleaseAnnotations
 
 > Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac
@@ -131,30 +142,19 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-device-info:mergeReleaseConsumerProguardFiles
 > Task :react-native-device-info:syncReleaseLibJars
 > Task :react-native-device-info:bundleReleaseLocalLintAar
-> Task :react-native-document-picker:preBuild UP-TO-DATE
-> Task :react-native-document-picker:preReleaseBuild UP-TO-DATE
-> Task :react-native-document-picker:mergeReleaseJniLibFolders
-> Task :react-native-document-picker:mergeReleaseNativeLibs NO-SOURCE
-> Task :react-native-document-picker:stripReleaseDebugSymbols NO-SOURCE
-> Task :react-native-document-picker:copyReleaseJniLibsProjectAndLocalJars
-> Task :react-native-document-picker:generateReleaseResValues
-> Task :react-native-document-picker:extractDeepLinksForAarRelease
-> Task :react-native-document-picker:generateReleaseBuildConfig
-> Task :react-native-document-picker:generateReleaseResources
-> Task :react-native-document-picker:packageReleaseResources
-> Task :react-native-document-picker:parseReleaseLocalResources
 > Task :react-native-document-picker:javaPreCompileRelease
+> Task :react-native-document-picker:mergeReleaseShaders
 
 > Task :react-native-document-picker:processReleaseManifest
 package="com.reactnativedocumentpicker" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-document-picker/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.reactnativedocumentpicker" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-document-picker/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-document-picker:mergeReleaseShaders
 > Task :react-native-document-picker:compileReleaseShaders NO-SOURCE
+> Task :react-native-document-picker:parseReleaseLocalResources
 > Task :react-native-document-picker:generateReleaseAssets UP-TO-DATE
-> Task :react-native-document-picker:generateReleaseRFile
 > Task :react-native-document-picker:packageReleaseAssets
+> Task :react-native-document-picker:generateReleaseRFile
 > Task :react-native-document-picker:extractReleaseAnnotations
 
 > Task :react-native-document-picker:compileReleaseJavaWithJavac
@@ -166,12 +166,12 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-document-picker:prepareLintJarForPublish
 > Task :react-native-document-picker:prepareReleaseArtProfile
 > Task :react-native-document-picker:processReleaseJavaRes NO-SOURCE
-> Task :react-native-document-picker:mergeReleaseJavaResource
 > Task :react-native-fs:preBuild UP-TO-DATE
+> Task :react-native-fs:preReleaseBuild UP-TO-DATE
+> Task :react-native-document-picker:mergeReleaseJavaResource
 > Task :react-native-document-picker:writeReleaseAarMetadata
 > Task :react-native-document-picker:syncReleaseLibJars
 > Task :react-native-document-picker:bundleReleaseLocalLintAar
-> Task :react-native-fs:preReleaseBuild UP-TO-DATE
 > Task :react-native-fs:mergeReleaseJniLibFolders
 > Task :react-native-fs:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-fs:stripReleaseDebugSymbols NO-SOURCE
@@ -184,16 +184,19 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-fs:parseReleaseLocalResources
 > Task :react-native-fs:javaPreCompileRelease
 > Task :react-native-fs:mergeReleaseShaders
+> Task :react-native-fs:compileReleaseShaders NO-SOURCE
+> Task :react-native-fs:generateReleaseAssets UP-TO-DATE
 
 > Task :react-native-fs:processReleaseManifest
 package="com.rnfs" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-fs/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.rnfs" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-fs/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-fs:compileReleaseShaders NO-SOURCE
-> Task :react-native-fs:generateReleaseAssets UP-TO-DATE
-> Task :react-native-fs:generateReleaseRFile
 > Task :react-native-fs:packageReleaseAssets
+> Task :react-native-fs:prepareLintJarForPublish
+> Task :react-native-fs:prepareReleaseArtProfile
+> Task :react-native-fs:processReleaseJavaRes NO-SOURCE
+> Task :react-native-fs:generateReleaseRFile
 > Task :react-native-fs:extractReleaseAnnotations
 
 > Task :react-native-fs:compileReleaseJavaWithJavac
@@ -202,16 +205,13 @@ Note: Recompile with -Xlint:deprecation for details.
 
 > Task :react-native-fs:mergeReleaseGeneratedProguardFiles
 > Task :react-native-fs:mergeReleaseConsumerProguardFiles
-> Task :react-native-fs:prepareLintJarForPublish
-> Task :react-native-fs:prepareReleaseArtProfile
-> Task :react-native-fs:processReleaseJavaRes NO-SOURCE
-> Task :react-native-fs:mergeReleaseJavaResource
-> Task :react-native-fs:writeReleaseAarMetadata
-> Task :react-native-fs:syncReleaseLibJars
-> Task :react-native-fs:bundleReleaseLocalLintAar
 > Task :react-native-gesture-handler:preBuild UP-TO-DATE
 > Task :react-native-gesture-handler:preReleaseBuild UP-TO-DATE
+> Task :react-native-fs:writeReleaseAarMetadata
+> Task :react-native-fs:mergeReleaseJavaResource
 > Task :react-native-gesture-handler:mergeReleaseJniLibFolders
+> Task :react-native-fs:syncReleaseLibJars
+> Task :react-native-fs:bundleReleaseLocalLintAar
 > Task :react-native-gesture-handler:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-gesture-handler:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-gesture-handler:copyReleaseJniLibsProjectAndLocalJars
@@ -238,20 +238,18 @@ Recommendation: remove package="com.swmansion.gesturehandler" from the source An
 > Task :react-native-reanimated:generateReleaseResources
 > Task :react-native-reanimated:packageReleaseResources
 > Task :react-native-reanimated:parseReleaseLocalResources
-> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
 > Task :react-native-reanimated:javaPreCompileRelease
-> Task :react-native-gesture-handler:javaPreCompileRelease
+> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
 
 > Task :react-native-reanimated:processReleaseManifest
 package="com.swmansion.reanimated" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-reanimated/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.swmansion.reanimated" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-reanimated/android/src/main/AndroidManifest.xml.
 
+> Task :react-native-gesture-handler:javaPreCompileRelease
 > Task :react-native-gesture-handler:mergeReleaseShaders
-> Task :react-native-gesture-handler:compileReleaseShaders NO-SOURCE
-> Task :react-native-gesture-handler:generateReleaseAssets UP-TO-DATE
 > Task :react-native-reanimated:generateReleaseRFile
-> Task :react-native-gesture-handler:packageReleaseAssets
+> Task :react-native-gesture-handler:compileReleaseShaders NO-SOURCE
 
 > Task :react-native-reanimated:compileReleaseJavaWithJavac
 Note: Some input files use or override a deprecated API.
@@ -259,12 +257,14 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 
+> Task :react-native-gesture-handler:generateReleaseAssets UP-TO-DATE
+> Task :react-native-gesture-handler:packageReleaseAssets
 > Task :react-native-gesture-handler:prepareLintJarForPublish
 > Task :react-native-gesture-handler:prepareReleaseArtProfile
-> Task :react-native-gesture-handler:writeReleaseAarMetadata
+> Task :react-native-reanimated:bundleLibCompileToJarRelease
 > Task :react-native-haptic-feedback:preBuild UP-TO-DATE
 > Task :react-native-haptic-feedback:preReleaseBuild UP-TO-DATE
-> Task :react-native-reanimated:bundleLibCompileToJarRelease
+> Task :react-native-gesture-handler:writeReleaseAarMetadata
 > Task :react-native-haptic-feedback:mergeReleaseJniLibFolders
 > Task :react-native-haptic-feedback:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-haptic-feedback:stripReleaseDebugSymbols NO-SOURCE
@@ -276,21 +276,17 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :react-native-haptic-feedback:packageReleaseResources
 > Task :react-native-haptic-feedback:parseReleaseLocalResources
 > Task :react-native-haptic-feedback:javaPreCompileRelease
-> Task :react-native-haptic-feedback:mergeReleaseShaders
-> Task :react-native-haptic-feedback:compileReleaseShaders NO-SOURCE
-> Task :react-native-haptic-feedback:generateReleaseAssets UP-TO-DATE
-> Task :react-native-haptic-feedback:packageReleaseAssets
-> Task :react-native-haptic-feedback:prepareLintJarForPublish
 
 > Task :react-native-haptic-feedback:processReleaseManifest
 package="com.mkuczera" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-haptic-feedback/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.mkuczera" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-haptic-feedback/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-haptic-feedback:prepareReleaseArtProfile
-> Task :react-native-haptic-feedback:processReleaseJavaRes NO-SOURCE
+> Task :react-native-haptic-feedback:mergeReleaseShaders
+> Task :react-native-haptic-feedback:compileReleaseShaders NO-SOURCE
+> Task :react-native-haptic-feedback:generateReleaseAssets UP-TO-DATE
 > Task :react-native-haptic-feedback:generateReleaseRFile
-> Task :react-native-haptic-feedback:mergeReleaseJavaResource
+> Task :react-native-haptic-feedback:packageReleaseAssets
 > Task :react-native-haptic-feedback:extractReleaseAnnotations
 
 > Task :react-native-haptic-feedback:compileReleaseJavaWithJavac
@@ -299,8 +295,11 @@ Note: Recompile with -Xlint:deprecation for details.
 
 > Task :react-native-haptic-feedback:mergeReleaseGeneratedProguardFiles
 > Task :react-native-haptic-feedback:mergeReleaseConsumerProguardFiles
-> Task :react-native-haptic-feedback:syncReleaseLibJars
+> Task :react-native-haptic-feedback:prepareLintJarForPublish
+> Task :react-native-haptic-feedback:prepareReleaseArtProfile
+> Task :react-native-haptic-feedback:processReleaseJavaRes NO-SOURCE
 > Task :react-native-haptic-feedback:writeReleaseAarMetadata
+> Task :react-native-haptic-feedback:mergeReleaseJavaResource
 
 > Task :react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]
 Checking the license for package CMake 3.22.1 in /home/lololo/Android/Sdk/licenses
@@ -333,6 +332,7 @@ w: file:///home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelector
 > Task :react-native-gesture-handler:mergeReleaseGeneratedProguardFiles
 > Task :react-native-gesture-handler:mergeReleaseConsumerProguardFiles
 > Task :react-native-gesture-handler:processReleaseJavaRes
+> Task :react-native-haptic-feedback:syncReleaseLibJars
 > Task :react-native-haptic-feedback:bundleReleaseLocalLintAar
 > Task :react-native-gesture-handler:mergeReleaseJavaResource
 > Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a]
@@ -380,13 +380,13 @@ w: file:///home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelector
 > Task :react-native-safe-area-context:packageReleaseResources
 > Task :react-native-safe-area-context:parseReleaseLocalResources
 > Task :react-native-safe-area-context:javaPreCompileRelease
+> Task :react-native-safe-area-context:mergeReleaseShaders
 
 > Task :react-native-safe-area-context:processReleaseManifest
 package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-safe-area-context:mergeReleaseShaders
 > Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
 > Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
 > Task :react-native-safe-area-context:generateReleaseRFile
@@ -406,14 +406,14 @@ Recommendation: remove package="com.th3rdwave.safeareacontext" from the source A
 > Task :react-native-svg:generateReleaseResources
 > Task :react-native-svg:packageReleaseResources
 > Task :react-native-svg:parseReleaseLocalResources
+> Task :react-native-svg:javaPreCompileRelease
+> Task :react-native-svg:mergeReleaseShaders
 
 > Task :react-native-svg:processReleaseManifest
 package="com.horcrux.svg" found in source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-svg/android/src/main/AndroidManifest.xml.
 Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
 Recommendation: remove package="com.horcrux.svg" from the source AndroidManifest.xml: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/react-native-svg/android/src/main/AndroidManifest.xml.
 
-> Task :react-native-svg:javaPreCompileRelease
-> Task :react-native-svg:mergeReleaseShaders
 > Task :react-native-svg:compileReleaseShaders NO-SOURCE
 > Task :react-native-svg:generateReleaseAssets UP-TO-DATE
 > Task :react-native-svg:generateReleaseRFile
@@ -435,11 +435,11 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :react-native-svg:prepareReleaseArtProfile
 > Task :react-native-svg:prepareLintJarForPublish
 > Task :react-native-svg:processReleaseJavaRes NO-SOURCE
-> Task :react-native-svg:writeReleaseAarMetadata
 > Task :react-native-svg:mergeReleaseJavaResource
-> Task :app:buildKotlinToolingMetadata
+> Task :react-native-svg:writeReleaseAarMetadata
 > Task :react-native-svg:syncReleaseLibJars
 > Task :react-native-svg:bundleReleaseLocalLintAar
+> Task :app:buildKotlinToolingMetadata
 > Task :app:generateCodegenSchemaFromJavaScript SKIPPED
 > Task :app:generateCodegenArtifactsFromSchema SKIPPED
 > Task :app:generatePackageList
@@ -479,264 +479,212 @@ warning: the transform cache was reset.
               Fast - Scalable - Integrated
 
 
-info Writing bundle output to: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle
-info Writing sourcemap output to: /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/intermediates/sourcemaps/react/release/index.android.bundle.packager.map
-info Done writing bundle output
-info Done writing sourcemap output
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:2511:18: warning: the variable "DebuggerInternal" was not declared in function "__shouldPauseOnThrow"
-          typeof DebuggerInternal !== 'undefined' &&
-                 ^~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:6165:7: warning: the variable "setTimeout" was not declared in function "logCapturedError"
-      setTimeout(function () {
-      ^~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:4134:108: warning: the variable "nativeFabricUIManager" was not declared in function "onChange"
-...lInstanceHandle ? (from && nativeFabricUIManager.setIsJSResponder(from.sta...
-                              ^~~~~~~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:4746:21: warning: the variable "clearTimeout" was not declared in anonymous function " 118#"
-    cancelTimeout = clearTimeout;
-                    ^~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:8496:30: warning: the variable "__REACT_DEVTOOLS_GLOBAL_HOOK__" was not declared in anonymous function " 118#"
-  if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
-                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:10857:5: warning: the variable "setImmediate" was not declared in function "handleResolved"
-    setImmediate(function () {
-    ^~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15132:12: warning: the variable "fetch" was not declared in anonymous function " 358#"
-    fetch: fetch,
-           ^~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15133:14: warning: the variable "Headers" was not declared in anonymous function " 358#"
-    Headers: Headers,
-             ^~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15134:14: warning: the variable "Request" was not declared in anonymous function " 358#"
-    Request: Request,
-             ^~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15135:15: warning: the variable "Response" was not declared in anonymous function " 358#"
-    Response: Response
-              ^~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15292:24: warning: the variable "FileReader" was not declared in function "readBlobAsArrayBuffer"
-      var reader = new FileReader();
-                       ^~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15343:36: warning: the variable "Blob" was not declared in anonymous function " 369#"
-        } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-                                   ^~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15345:40: warning: the variable "FormData" was not declared in anonymous function " 369#"
-        } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-                                       ^~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15347:44: warning: the variable "URLSearchParams" was not declared in anonymous function " 369#"
-...e if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body...
-                                 ^~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15466:26: warning: the variable "AbortController" was not declared in anonymous function " 375#"
-          var ctrl = new AbortController();
-                         ^~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15600:23: warning: the variable "XMLHttpRequest" was not declared in anonymous function " 379#"
-        var xhr = new XMLHttpRequest();
-                      ^~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:15145:71: warning: the variable "self" was not declared in anonymous function " 361#"
-...undefined' && globalThis || typeof self !== 'undefined' && self ||
-                                      ^~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:25682:27: warning: the variable "performance" was not declared in anonymous function " 683#"
-  if ("object" === typeof performance && "function" === typeof performance.no...
-                          ^~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:25705:26: warning: the variable "navigator" was not declared in anonymous function " 683#"
-  "undefined" !== typeof navigator && undefined !== navigator.scheduling && u...
-                         ^~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:25815:37: warning: the variable "MessageChannel" was not declared in anonymous function " 683#"
-  };else if ("undefined" !== typeof MessageChannel) {
-                                    ^~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:25830:34: warning: the variable "nativeRuntimeScheduler" was not declared in anonymous function " 683#"
-... = "undefined" !== typeof nativeRuntimeScheduler ? nativeRuntimeScheduler....
-                             ^~~~~~~~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:35111:34: warning: the variable "requestAnimationFrame" was not declared in function "start 9#"
-...    this._animationFrame = requestAnimationFrame(this.onUpdate.bind(this));
-                              ^~~~~~~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:59123:18: warning: the variable "localStorage" was not declared in function "getStorage"
-          return localStorage;
-                 ^~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:68952:11: warning: the variable "_WORKLET" was not declared in function "runOnRuntime"
-      if (_WORKLET) {
-          ^~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:69307:114: warning: the variable "location" was not declared in function "registerSensor 1#"
-...E(_dependencyMap[4]).isWeb)() && location.protocol !== 'https:' ? ' Make s...
-                                    ^~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:69851:26: warning: Direct call to eval(), but lexical scope is not supported.
-            workletFun = eval('(' + initData.code + '\n)');
-                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:69873:112: warning: the variable "_toString" was not declared in function "valueUnpacker"
-...recognized by value unpacker: "${_toString(objectToUnpack)}".`);
-                                    ^~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:76757:27: warning: the variable "HTMLElement" was not declared in function "findDescendantWithExitingAnimation"
-    if (!(node instanceof HTMLElement)) {
-                          ^~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:76784:24: warning: the variable "MutationObserver" was not declared in function "addHTMLMutationObserver"
-    var observer = new MutationObserver(function (mutationsList) {
-                       ^~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:78741:41: warning: the variable "getComputedStyle" was not declared in function "fixElementPosition"
-...entBorderTopValue = parseInt(getComputedStyle(parent).borderTopWidth);
-                                ^~~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:78911:45: warning: the variable "structuredClone" was not declared in function "handleLayoutTransition"
-...ormCopy = existingTransform ? structuredClone(existingTransform) : [];
-                                 ^~~~~~~~~~~~~~~
-/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle:89012:5: warning: the variable "jest" was not declared in function "beforeTest"
-    jest.useFakeTimers();
-    ^~~~
+error Unable to resolve module react-native-qrcode-svg from /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/src/components/Modals/QRTransferModal.tsx: react-native-qrcode-svg could not be found within the project or in these directories:
+  node_modules
+[0m [90m 15 |[39m   [33mClipboard[39m[33m,[39m
+ [90m 16 |[39m } [36mfrom[39m [32m'react-native'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 17 |[39m [36mimport[39m [33mQRCode[39m [36mfrom[39m [32m'react-native-qrcode-svg'[39m[33m;[39m
+ [90m    |[39m                     [31m[1m^[22m[39m
+ [90m 18 |[39m [36mimport[39m { useTheme } [36mfrom[39m [32m'../../theme'[39m[33m;[39m
+ [90m 19 |[39m [36mimport[39m { useSessionStore[33m,[39m useAppStore } [36mfrom[39m [32m'../../store'[39m[33m;[39m
+ [90m 20 |[39m [36mimport[39m { useToastContext } [36mfrom[39m [32m'../../hooks'[39m[33m;[39m[0m.
+Error: Unable to resolve module react-native-qrcode-svg from /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/src/components/Modals/QRTransferModal.tsx: react-native-qrcode-svg could not be found within the project or in these directories:
+  node_modules
+[0m [90m 15 |[39m   [33mClipboard[39m[33m,[39m
+ [90m 16 |[39m } [36mfrom[39m [32m'react-native'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 17 |[39m [36mimport[39m [33mQRCode[39m [36mfrom[39m [32m'react-native-qrcode-svg'[39m[33m;[39m
+ [90m    |[39m                     [31m[1m^[22m[39m
+ [90m 18 |[39m [36mimport[39m { useTheme } [36mfrom[39m [32m'../../theme'[39m[33m;[39m
+ [90m 19 |[39m [36mimport[39m { useSessionStore[33m,[39m useAppStore } [36mfrom[39m [32m'../../store'[39m[33m;[39m
+ [90m 20 |[39m [36mimport[39m { useToastContext } [36mfrom[39m [32m'../../hooks'[39m[33m;[39m[0m
+    at ModuleResolver.resolveDependency (/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/metro/src/node-haste/DependencyGraph/ModuleResolution.js:139:15)
+    at DependencyGraph.resolveDependency (/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/metro/src/node-haste/DependencyGraph.js:232:43)
+    at /home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/metro/src/lib/transformHelpers.js:156:21
+    at resolveDependencies (/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/metro/src/DeltaBundler/buildSubgraph.js:42:25)
+    at visit (/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/metro/src/DeltaBundler/buildSubgraph.js:83:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Promise.all (index 7)
+    at async visit (/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+    at async Promise.all (index 13)
+    at async visit (/home/lololo/iboom/ibom-component-selector-main/.rn_build/IBomSelectorBuild/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
 
-> Task :react-native-safe-area-context:syncReleaseLibJars
-> Task :react-native-safe-area-context:bundleReleaseLocalLintAar
-> Task :app:generateReleaseResValues
-> Task :app:mapReleaseSourceSetPaths
-> Task :app:generateReleaseResources
-> Task :app:packageReleaseResources
-> Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease
-> Task :react-native-async-storage_async-storage:extractDeepLinksRelease
-> Task :react-native-device-info:extractDeepLinksRelease
-> Task :react-native-document-picker:extractDeepLinksRelease
-> Task :react-native-fs:extractDeepLinksRelease
-> Task :app:parseReleaseLocalResources
-> Task :react-native-gesture-handler:extractDeepLinksRelease
-> Task :react-native-haptic-feedback:extractDeepLinksRelease
-> Task :react-native-reanimated:extractDeepLinksRelease
-> Task :react-native-safe-area-context:extractDeepLinksRelease
-> Task :react-native-svg:extractDeepLinksRelease
-> Task :app:mergeReleaseResources
-> Task :app:processReleaseMainManifest
-> Task :app:processReleaseManifest
-> Task :react-native-async-storage_async-storage:compileReleaseLibraryResources
-> Task :react-native-device-info:compileReleaseLibraryResources
-> Task :react-native-document-picker:compileReleaseLibraryResources
-> Task :react-native-fs:compileReleaseLibraryResources
-> Task :app:processReleaseManifestForPackage
-> Task :react-native-gesture-handler:compileReleaseLibraryResources
-> Task :react-native-haptic-feedback:compileReleaseLibraryResources
-> Task :react-native-reanimated:compileReleaseLibraryResources
-> Task :react-native-safe-area-context:compileReleaseLibraryResources
-> Task :react-native-svg:compileReleaseLibraryResources
-> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
-> Task :react-native-document-picker:bundleLibCompileToJarRelease
-> Task :react-native-device-info:bundleLibCompileToJarRelease
-> Task :react-native-haptic-feedback:bundleLibCompileToJarRelease
-> Task :react-native-fs:bundleLibCompileToJarRelease
-> Task :react-native-safe-area-context:bundleLibCompileToJarRelease
-> Task :react-native-gesture-handler:bundleLibCompileToJarRelease
-> Task :app:javaPreCompileRelease
-> Task :app:extractProguardFiles
-> Task :react-native-svg:bundleLibCompileToJarRelease
-> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease
-> Task :react-native-async-storage_async-storage:writeReleaseLintModelMetadata
-> Task :react-native-async-storage_async-storage:createFullJarRelease
-> Task :react-native-device-info:bundleLibRuntimeToJarRelease
-> Task :react-native-device-info:writeReleaseLintModelMetadata
-> Task :react-native-device-info:createFullJarRelease
-> Task :react-native-document-picker:writeReleaseLintModelMetadata
-> Task :react-native-document-picker:bundleLibRuntimeToJarRelease
-> Task :react-native-document-picker:createFullJarRelease
-> Task :react-native-fs:bundleLibRuntimeToJarRelease
-> Task :react-native-fs:writeReleaseLintModelMetadata
-> Task :react-native-fs:createFullJarRelease
-> Task :react-native-gesture-handler:writeReleaseLintModelMetadata
-> Task :react-native-haptic-feedback:bundleLibRuntimeToJarRelease
-> Task :react-native-haptic-feedback:writeReleaseLintModelMetadata
-> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease
-> Task :react-native-gesture-handler:createFullJarRelease
-> Task :react-native-haptic-feedback:createFullJarRelease
-> Task :react-native-reanimated:writeReleaseLintModelMetadata
-> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
-> Task :react-native-safe-area-context:createFullJarRelease
-> Task :react-native-safe-area-context:writeReleaseLintModelMetadata
-> Task :react-native-reanimated:bundleLibRuntimeToJarRelease
-> Task :react-native-svg:bundleLibRuntimeToJarRelease
-> Task :react-native-reanimated:createFullJarRelease
-> Task :react-native-svg:createFullJarRelease
-> Task :react-native-svg:writeReleaseLintModelMetadata
-> Task :app:mergeReleaseJniLibFolders
-> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectOnly
-> Task :react-native-device-info:copyReleaseJniLibsProjectOnly
-> Task :react-native-document-picker:copyReleaseJniLibsProjectOnly
-> Task :react-native-fs:copyReleaseJniLibsProjectOnly
-> Task :react-native-gesture-handler:copyReleaseJniLibsProjectOnly
-> Task :react-native-haptic-feedback:copyReleaseJniLibsProjectOnly
-> Task :react-native-reanimated:copyReleaseJniLibsProjectOnly
-> Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
-> Task :react-native-svg:copyReleaseJniLibsProjectOnly
-> Task :app:processReleaseResources
-> Task :app:mergeReleaseNativeLibs
-> Task :app:compileReleaseKotlin
-> Task :app:compileReleaseJavaWithJavac
-> Task :app:stripReleaseDebugSymbols
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:checkReleaseDuplicateClasses
-> Task :app:mergeReleaseNativeDebugMetadata
-> Task :app:dexBuilderRelease
-> Task :app:desugarReleaseFileDependencies
-> Task :app:lintVitalAnalyzeRelease
-> Task :app:lintVitalReportRelease
-> Task :app:lintVitalRelease
-> Task :app:mergeReleaseArtProfile
-> Task :app:mergeReleaseGlobalSynthetics
-> Task :app:mergeReleaseShaders
-> Task :app:compileReleaseShaders NO-SOURCE
-> Task :app:generateReleaseAssets UP-TO-DATE
-> Task :app:mergeReleaseAssets
-> Task :app:processReleaseJavaRes
-> Task :app:compressReleaseAssets
-> Task :app:mergeReleaseJavaResource
-> Task :app:collectReleaseDependencies
-> Task :app:sdkReleaseDependencyData
-> Task :app:validateSigningRelease
-> Task :app:writeReleaseAppMetadata
-> Task :app:writeReleaseSigningConfigVersions
-> Task :react-native-async-storage_async-storage:bundleReleaseAar
-> Task :react-native-async-storage_async-storage:mapReleaseSourceSetPaths
-> Task :react-native-async-storage_async-storage:mergeReleaseResources
-> Task :react-native-device-info:bundleReleaseAar
-> Task :react-native-device-info:mapReleaseSourceSetPaths
-> Task :react-native-async-storage_async-storage:verifyReleaseResources
-> Task :react-native-device-info:mergeReleaseResources
-> Task :react-native-async-storage_async-storage:assembleRelease
-> Task :react-native-document-picker:bundleReleaseAar
-> Task :react-native-document-picker:mapReleaseSourceSetPaths
-> Task :react-native-document-picker:mergeReleaseResources
-> Task :react-native-fs:bundleReleaseAar
-> Task :react-native-fs:mapReleaseSourceSetPaths
-> Task :react-native-device-info:verifyReleaseResources
-> Task :app:mergeExtDexRelease
-> Task :react-native-document-picker:verifyReleaseResources
-> Task :react-native-fs:mergeReleaseResources
-> Task :react-native-device-info:assembleRelease
-> Task :react-native-document-picker:assembleRelease
-> Task :app:optimizeReleaseResources
-> Task :react-native-gesture-handler:bundleReleaseAar
-> Task :react-native-gesture-handler:mapReleaseSourceSetPaths
-> Task :react-native-fs:verifyReleaseResources
-> Task :react-native-gesture-handler:mergeReleaseResources
-> Task :react-native-fs:assembleRelease
-> Task :react-native-haptic-feedback:bundleReleaseAar
-> Task :react-native-haptic-feedback:mapReleaseSourceSetPaths
-> Task :react-native-haptic-feedback:mergeReleaseResources
-> Task :react-native-gesture-handler:verifyReleaseResources
-> Task :react-native-gesture-handler:assembleRelease
-> Task :react-native-haptic-feedback:verifyReleaseResources
-> Task :app:mergeDexRelease
-> Task :react-native-reanimated:bundleReleaseAar
-> Task :react-native-haptic-feedback:assembleRelease
-> Task :react-native-reanimated:mapReleaseSourceSetPaths
-> Task :app:compileReleaseArtProfile
-> Task :react-native-reanimated:mergeReleaseResources
-> Task :react-native-safe-area-context:bundleReleaseAar
-> Task :react-native-safe-area-context:mapReleaseSourceSetPaths
-> Task :react-native-safe-area-context:mergeReleaseResources
-> Task :react-native-svg:bundleReleaseAar
-> Task :react-native-svg:mapReleaseSourceSetPaths
-> Task :react-native-reanimated:verifyReleaseResources
-> Task :react-native-svg:mergeReleaseResources
-> Task :react-native-reanimated:assembleRelease
-> Task :react-native-safe-area-context:verifyReleaseResources
-> Task :react-native-safe-area-context:assembleRelease
-> Task :react-native-svg:verifyReleaseResources
-> Task :react-native-svg:assembleRelease
-> Task :app:packageRelease
-> Task :app:createReleaseApkListingFileRedirect
-> Task :app:assembleRelease
+> Task :app:createBundleReleaseJsAndAssets FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:createBundleReleaseJsAndAssets'.
+> Process 'command 'node'' finished with non-zero exit value 1
+
+* Try:
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:createBundleReleaseJsAndAssets'.
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:149)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:282)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:147)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:80)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.process.internal.ExecException: Process 'command 'node'' finished with non-zero exit value 1
+	at org.gradle.process.internal.DefaultExecHandle$ExecResultImpl.assertNormalExitValue(DefaultExecHandle.java:431)
+	at org.gradle.process.internal.DefaultExecAction.execute(DefaultExecAction.java:38)
+	at org.gradle.process.internal.DefaultExecActionFactory.exec(DefaultExecActionFactory.java:202)
+	at org.gradle.api.internal.project.DefaultProject.exec(DefaultProject.java:1232)
+	at com.facebook.react.tasks.BundleHermesCTask.runCommand(BundleHermesCTask.kt:130)
+	at com.facebook.react.tasks.BundleHermesCTask.run(BundleHermesCTask.kt:90)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:248)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.run(DefaultBuildOperationExecutor.java:68)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:233)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:216)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:199)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:166)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:41)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:74)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:50)
+	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:28)
+	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.executeDelegateBroadcastingChanges(CaptureStateAfterExecutionStep.java:100)
+	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:72)
+	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:50)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:179)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:70)
+	at org.gradle.internal.Either$Right.fold(Either.java:175)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:59)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:68)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:25)
+	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:36)
+	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:22)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:91)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:55)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:55)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:77)
+	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:38)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:94)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:49)
+	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:71)
+	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.executeWithNonEmptySources(SkipEmptyWorkStep.java:177)
+	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:81)
+	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:53)
+	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:32)
+	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:21)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:75)
+	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:41)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:66)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:66)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:38)
+	at org.gradle.internal.execution.steps.AssignWorkspaceStep.lambda$execute$0(AssignWorkspaceStep.java:32)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:293)
+	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:37)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:27)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:47)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:34)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:64)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:146)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:80)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
@@ -744,10 +692,9 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 3m 3s
-369 actionable tasks: 369 executed
-[2026-01-29 15:50:12] [6/6] Finalisation...
-[2026-01-29 15:50:12] ✅ Build réussi! APK: /home/lololo/iboom/ibom-component-selector-main/ReactNative/build/IBomSelector.apk
+BUILD FAILED in 3m 34s
+225 actionable tasks: 225 executed
+[2026-01-30 13:43:29] [6/6] Finalisation...
+[2026-01-30 13:43:29] ❌ APK non trouvé
 
-=== BUILD RÉUSSI - Thu Jan 29 03:50:12 PM CET 2026 ===
--rw-rw-r-- 1 lololo lololo 23M Jan 29 15:50 /home/lololo/iboom/ibom-component-selector-main/ReactNative/build/IBomSelector.apk
+=== FIN DU BUILD (ERREUR code: 1) - Fri Jan 30 01:43:29 PM CET 2026 ===
