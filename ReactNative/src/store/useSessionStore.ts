@@ -235,6 +235,42 @@ export const useSessionStore = create<SessionStoreState>()(
     {
       name: 'ibom-session',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 2, // Nouvelle version pour migration
+      migrate: (persistedState: any, version: number) => {
+        // Migration depuis l'ancien format (version 0 ou 1)
+        if (version < 2) {
+          console.log('Migration session store vers v2...');
+          const oldState = persistedState as any;
+          const newComponentStatus: Record<string, ComponentStatus> = {};
+          
+          // Migrer validatedColumns -> componentStatus
+          if (Array.isArray(oldState.validatedColumns)) {
+            oldState.validatedColumns.forEach((key: string) => {
+              newComponentStatus[key] = 'validated';
+            });
+          }
+          
+          // Migrer hiddenColumns -> componentStatus (écrase validated si conflit)
+          if (Array.isArray(oldState.hiddenColumns)) {
+            oldState.hiddenColumns.forEach((key: string) => {
+              newComponentStatus[key] = 'hidden';
+            });
+          }
+          
+          // Ne pas migrer highlightedColumns (état temporaire)
+          
+          return {
+            ...defaultSession,
+            lastHtmlPath: oldState.lastHtmlPath || null,
+            lastLcscPath: oldState.lastLcscPath || null,
+            selectedComponents: oldState.selectedComponents || [],
+            processedItems: oldState.processedItems || [],
+            componentStatus: newComponentStatus,
+            lastModified: oldState.lastModified || 0,
+          };
+        }
+        return persistedState as SessionStoreState;
+      },
       onRehydrateStorage: () => (state: SessionStoreState | undefined) => {
         state?.setHasHydrated(true);
       },
