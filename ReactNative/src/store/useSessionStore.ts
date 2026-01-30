@@ -308,22 +308,14 @@ export const useSessionStore = create<SessionStoreState>()(
       onRehydrateStorage: () => (state: SessionStoreState | undefined) => {
         state?.setHasHydrated(true);
       },
-      // Persister uniquement les données importantes (pas highlighted, c'est temporaire)
+      // Persister toutes les données importantes (y compris highlighted)
       partialize: (state: SessionStoreState) => {
-        // Filtrer les highlighted pour ne pas les persister
-        const persistedStatus: Record<string, ComponentStatus> = {};
-        Object.entries(state.componentStatus).forEach(([key, status]) => {
-          if (status !== 'highlighted') {
-            persistedStatus[key] = status as ComponentStatus;
-          }
-        });
-        
         return {
           lastHtmlPath: state.lastHtmlPath,
           lastLcscPath: state.lastLcscPath,
           selectedComponents: state.selectedComponents,
           processedItems: state.processedItems,
-          componentStatus: persistedStatus,
+          componentStatus: state.componentStatus,
           rectangleSelectedRefs: state.rectangleSelectedRefs,
           selectionRect: state.selectionRect,
           lastModified: state.lastModified,
