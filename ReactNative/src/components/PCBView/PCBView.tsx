@@ -52,6 +52,7 @@ export function PCBView({
   const selectedComponents = useAppStore((s) => s.selectedComponents);
   const highlightedComponents = useAppStore((s) => s.highlightedComponents);
   const setSelectedComponents = useAppStore((s) => s.setSelectedComponents);
+  const setHighlightedComponents = useAppStore((s) => s.setHighlightedComponents);
   const selectionRect = useAppStore((s) => s.selectionRect);
   const setSelectionRect = useAppStore((s) => s.setSelectionRect);
 
@@ -221,6 +222,9 @@ export function PCBView({
       const selected = getComponentsInRect(start.x, start.y, end.x, end.y);
       setSelectedComponents(selected);
       
+      // Mettre à jour les composants surlignés sur le PCB (rouge)
+      setHighlightedComponents(selected);
+      
       // Sauvegarder le rectangle dans le store (persisté dans useAppStore)
       setSelectionRect({ 
         x1: Math.min(start.x, end.x), 
@@ -240,7 +244,7 @@ export function PCBView({
     setIsTouching(false);
     setSelectionStart(null);
     setSelectionEnd(null);
-  }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setSelectionRect, setRectangleSelectedRefs, onSelectionComplete]);
+  }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setHighlightedComponents, setSelectionRect, setRectangleSelectedRefs, onSelectionComplete]);
 
   // Render component - les pads sont déjà colorés en rouge dans renderPads
   // Plus besoin de dessiner quoi que ce soit ici
@@ -469,23 +473,24 @@ export function PCBView({
         const w = Math.max(1.5, size[0] * transform.scale);
         const h = Math.max(1.5, size[1] * transform.scale);
         
-        // Couleur selon l'état (priorité: sélection rectangle > surligné > validé > masqué > normal)
+        // Couleur selon l'état (priorité: validé/masqué/surligné > sélection rectangle > normal)
+        // Ainsi, un composant validé dans la sélection reste vert
         const isTopLayer = layers.includes('F') || layers.some((l: string) => l.startsWith('F.'));
         let fillColor: string;
         let opacity = 0.85;
         
-        if (isRectangleSelected) {
-          fillColor = selectionColor;  // Rouge - sélection rectangle sur PCB
-          opacity = 1.0;
-        } else if (isHighlighted) {
-          fillColor = highlightedColor;  // Rouge - double-tap dans la liste
-          opacity = 1.0;
-        } else if (isValidated) {
-          fillColor = validatedColor;  // Vert - swipe gauche
+        if (isValidated) {
+          fillColor = validatedColor;  // Vert - swipe gauche (priorité haute)
           opacity = 0.9;
         } else if (isHidden) {
           fillColor = hiddenColor;  // Gris - swipe droite
           opacity = 0.7;
+        } else if (isHighlighted) {
+          fillColor = highlightedColor;  // Rouge - double-tap dans la liste
+          opacity = 1.0;
+        } else if (isRectangleSelected) {
+          fillColor = selectionColor;  // Rouge - sélection rectangle sur PCB
+          opacity = 1.0;
         } else {
           fillColor = isTopLayer ? frontColor : backColor;
         }
