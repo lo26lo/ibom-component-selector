@@ -60,14 +60,14 @@ Complete migration of IBom Selector from **Kivy/Python** to **React Native/TypeS
 |---------|--------|--------|
 | **Swipe Left** | Validate | 🟢 Green - component done |
 | **Swipe Right** | Hide | ⚫ Gray - disappears from list |
-| **Double-tap** | Highlight | 🔵 Blue - temporary highlight |
+| **Double-tap** | Highlight | � Red - temporary highlight |
 | **Long-press** | Details | Show component details modal |
 
 ### 🎨 Component Status System (Single State)
 - ✅ **One state per component** - No conflicts, last gesture wins
 - ✅ **Validated (Green 🟢)** - Swipe left to mark as done
 - ✅ **Hidden (Gray ⚫)** - Swipe right to hide from list
-- ✅ **Highlighted (Blue 🔵)** - Double-tap to highlight temporarily
+- ✅ **Highlighted (Red 🔴)** - Double-tap to highlight temporarily
 - ✅ **Rectangle Selection (Red 🔴)** - Draw on PCB to select components
 - ✅ **Hidden manager** - Restore hidden groups via "Masq" button
 - ✅ **Toast with Undo** - Quick undo after each action
@@ -81,7 +81,7 @@ Complete migration of IBom Selector from **Kivy/Python** to **React Native/TypeS
 
 ### ❓ Help & Documentation
 - ✅ **Integrated help** - "?" button for quick access to help modal
-- ✅ **Color legend** - Explains green/gray/blue/red states
+- ✅ **Color legend** - Explains green/gray/red states
 - ✅ **Gesture guide** - Explains swipe, double-tap, long-press actions
 - ✅ **Single state rule** - One state per component explanation
 

@@ -57,6 +57,7 @@ export function PCBView({
 
   // Session store - nouveau système unifié
   const componentStatus = useSessionStore((s) => s.componentStatus);
+  const setRectangleSelectedRefs = useSessionStore((s) => s.setRectangleSelectedRefs);
 
   // Récupérer les footprints et edges depuis le parser
   const footprints = useMemo(() => parser?.getFootprints() || [], [parser]);
@@ -220,13 +221,16 @@ export function PCBView({
       const selected = getComponentsInRect(start.x, start.y, end.x, end.y);
       setSelectedComponents(selected);
       
-      // Sauvegarder le rectangle dans le store (persisté)
+      // Sauvegarder le rectangle dans le store (persisté dans useAppStore)
       setSelectionRect({ 
         x1: Math.min(start.x, end.x), 
         y1: Math.min(start.y, end.y), 
         x2: Math.max(start.x, end.x), 
         y2: Math.max(start.y, end.y) 
       });
+
+      // Sauvegarder les refs dans la session (persisté dans useSessionStore)
+      setRectangleSelectedRefs(selected.map(c => c.ref));
 
       if (onSelectionComplete) {
         onSelectionComplete(selected);
@@ -236,7 +240,7 @@ export function PCBView({
     setIsTouching(false);
     setSelectionStart(null);
     setSelectionEnd(null);
-  }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setSelectionRect, onSelectionComplete]);
+  }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setSelectionRect, setRectangleSelectedRefs, onSelectionComplete]);
 
   // Render component - les pads sont déjà colorés en rouge dans renderPads
   // Plus besoin de dessiner quoi que ce soit ici

@@ -45,6 +45,7 @@ export function HomeScreen() {
   const currentHtmlPath = useAppStore((s) => s.currentHtmlPath);
   const setCurrentHtmlPath = useAppStore((s) => s.setCurrentHtmlPath);
   const setSelectedComponents = useAppStore((s) => s.setSelectedComponents);
+  const setHighlightedComponents = useAppStore((s) => s.setHighlightedComponents);
   const toggleProcessed = useAppStore((s) => s.toggleProcessed);
 
   const autoSave = usePreferencesStore((s) => s.autoSave);
@@ -59,6 +60,7 @@ export function HomeScreen() {
   const componentStatus = useSessionStore((s) => s.componentStatus);
   const setComponentStatus = useSessionStore((s) => s.setComponentStatus);
   const clearAllStatus = useSessionStore((s) => s.clearAllStatus);
+  const rectangleSelectedRefs = useSessionStore((s) => s.rectangleSelectedRefs);
   
   // Compter les états
   const hiddenCount = Object.values(componentStatus).filter(s => s === 'hidden').length;
@@ -104,6 +106,7 @@ export function HomeScreen() {
               setCurrentHtmlPath(session.lastHtmlPath);
               console.log('Fichier PCB rechargé:', session.lastHtmlPath);
               // Note: setParser() auto-sélectionne TOUS les composants du fichier
+              // La sélection rectangle sera restaurée dans l'effet suivant
             } catch (e) {
               console.warn('Impossible de recharger le fichier PCB:', e);
             }
@@ -123,6 +126,19 @@ export function HomeScreen() {
     };
     restoreAsync();
   }, [sessionHasHydrated, sessionRestored, restoreSession, setCurrentHtmlPath, processedItems, toggleProcessed, loadHTMLFile]);
+
+  // Restaurer la sélection rectangle après le chargement des composants
+  useEffect(() => {
+    if (sessionRestored && components.length > 0 && rectangleSelectedRefs.length > 0) {
+      // Filtrer les composants par les refs sauvegardés
+      const refsSet = new Set(rectangleSelectedRefs);
+      const highlightedComps = components.filter(c => refsSet.has(c.ref));
+      if (highlightedComps.length > 0) {
+        setHighlightedComponents(highlightedComps);
+        console.log(`Sélection rectangle restaurée: ${highlightedComps.length} composants`);
+      }
+    }
+  }, [sessionRestored, components, rectangleSelectedRefs, setHighlightedComponents]);
 
   // Sauvegarder la session à chaque changement
   useEffect(() => {
@@ -199,8 +215,8 @@ export function HomeScreen() {
     switch (pcbColorFilter) {
       case 'all': return '🎨';
       case 'validated': return '🟢';
-      case 'hidden': return '⚫';  // Gris au lieu de jaune
-      case 'highlighted': return '🔵';
+      case 'hidden': return '⚫';  // Gris
+      case 'highlighted': return '🔴';  // Rouge
       case 'normal': return '⚪';
     }
   }, [pcbColorFilter]);

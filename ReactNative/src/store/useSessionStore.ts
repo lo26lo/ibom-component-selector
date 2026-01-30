@@ -33,6 +33,9 @@ export interface SessionState {
   // NOUVEAU: État unique par composant (groupKey -> status)
   componentStatus: Record<string, ComponentStatus>;
 
+  // Sélection rectangle sur le PCB (liste de refs)
+  rectangleSelectedRefs: string[];
+
   // Timestamp de dernière modification
   lastModified: number;
 }
@@ -75,6 +78,11 @@ interface SessionStoreState extends SessionState {
   // Action pour effacer la session
   clearSession: () => void;
 
+  // Action pour la sélection rectangle
+  setRectangleSelectedRefs: (refs: string[]) => void;
+  getRectangleSelectedRefs: () => string[];
+  clearRectangleSelection: () => void;
+
   // === COMPATIBILITÉ (pour migration progressive) ===
   // Ces fonctions redirigent vers le nouveau système
   toggleColumnValidated: (groupKey: string) => void;
@@ -96,6 +104,7 @@ const defaultSession: SessionState = {
   selectedComponents: [],
   processedItems: [],
   componentStatus: {},
+  rectangleSelectedRefs: [],
   lastModified: 0,
 };
 
@@ -210,6 +219,11 @@ export const useSessionStore = create<SessionStoreState>()(
       isColumnHighlighted: (groupKey) => get().isHighlighted(groupKey),
       clearHighlightedColumns: () => get().clearHighlighted(),
 
+      // Sélection rectangle PCB
+      setRectangleSelectedRefs: (refs) => set({ rectangleSelectedRefs: refs, lastModified: Date.now() }),
+      getRectangleSelectedRefs: () => get().rectangleSelectedRefs,
+      clearRectangleSelection: () => set({ rectangleSelectedRefs: [], lastModified: Date.now() }),
+
       restoreSession: () => {
         const state = get();
         if (state.lastModified > 0 && state.lastHtmlPath) {
@@ -219,6 +233,7 @@ export const useSessionStore = create<SessionStoreState>()(
             selectedComponents: state.selectedComponents,
             processedItems: state.processedItems,
             componentStatus: state.componentStatus,
+            rectangleSelectedRefs: state.rectangleSelectedRefs,
             lastModified: state.lastModified,
           };
         }
@@ -266,10 +281,16 @@ export const useSessionStore = create<SessionStoreState>()(
             selectedComponents: oldState.selectedComponents || [],
             processedItems: oldState.processedItems || [],
             componentStatus: newComponentStatus,
+            rectangleSelectedRefs: oldState.rectangleSelectedRefs || [],
             lastModified: oldState.lastModified || 0,
           };
         }
-        return persistedState as SessionStoreState;
+        // Assurer que rectangleSelectedRefs existe pour v2 aussi
+        const state = persistedState as any;
+        if (!state.rectangleSelectedRefs) {
+          state.rectangleSelectedRefs = [];
+        }
+        return state as SessionStoreState;
       },
       onRehydrateStorage: () => (state: SessionStoreState | undefined) => {
         state?.setHasHydrated(true);
@@ -290,6 +311,7 @@ export const useSessionStore = create<SessionStoreState>()(
           selectedComponents: state.selectedComponents,
           processedItems: state.processedItems,
           componentStatus: persistedStatus,
+          rectangleSelectedRefs: state.rectangleSelectedRefs,
           lastModified: state.lastModified,
         };
       },
