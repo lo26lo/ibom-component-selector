@@ -54,7 +54,8 @@ export const ComponentRow = memo(function ComponentRow({
   const componentKey = `${component.value}|${component.footprint}|${component.lcsc}`;
 
   // Nouveau système unifié: un seul état par composant
-  const componentStatus = useSessionStore((s) => s.getComponentStatus(componentKey));
+  // IMPORTANT: On doit sélectionner directement depuis componentStatus pour que le composant se re-rende
+  const componentStatus = useSessionStore((s) => s.componentStatus[componentKey] || null);
   const setComponentStatus = useSessionStore((s) => s.setComponentStatus);
   const toggleStatus = useSessionStore((s) => s.toggleStatus);
 
