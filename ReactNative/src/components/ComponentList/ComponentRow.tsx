@@ -4,7 +4,7 @@
  * SYSTÈME SIMPLIFIÉ: Un seul état par composant
  * - Swipe gauche = validated (vert)
  * - Swipe droite = hidden (gris)
- * - Double-tap = highlighted (bleu)
+ * - Double-tap = highlighted (rouge)
  */
 
 import React, { useCallback, memo, useRef } from 'react';
@@ -105,7 +105,7 @@ export const ComponentRow = memo(function ComponentRow({
     }
   };
 
-  // Double-tap = surligner en bleu ce groupe (toggle)
+  // Double-tap = surligner en rouge ce groupe (toggle)
   const handlePress = useCallback(() => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;

@@ -389,11 +389,11 @@ export function PCBView({
     const selectionColor = isEinkMode ? '#404040' : '#D04040';  // Rouge - sélection rectangle
     const validatedColor = theme.bgValidated;  // Vert - validé
     const hiddenColor = theme.bgHidden;        // Jaune - masqué
-    const highlightedColor = theme.bgHighlighted; // Bleu - surligné (double-tap)
+    const highlightedColor = theme.bgHighlighted; // Rouge - surligné (double-tap)
     
     // Créer des Sets pour lookup rapide
     // highlightedComponents = sélection rectangle sur le PCB (rouge)
-    // highlightedColumns = double-tap sur la liste (bleu)
+    // highlightedColumns = double-tap sur la liste (rouge)
     const rectangleSelectionRefs = new Set(highlightedComponents.map(c => c.ref));
 
     // Créer une map de TOUS les composants par ref pour trouver leur groupKey
@@ -428,7 +428,7 @@ export function PCBView({
       // Déterminer l'état de ce composant avec le nouveau système
       const isRectangleSelected = rectangleSelectionRefs.has(fpRef);  // Sélection rectangle = rouge
       const status = groupKey ? componentStatus[groupKey] : null;
-      const isHighlighted = status === 'highlighted';  // Double-tap = bleu
+      const isHighlighted = status === 'highlighted';  // Double-tap = rouge
       const isValidated = status === 'validated';
       const isHidden = status === 'hidden';
 
@@ -474,7 +474,7 @@ export function PCBView({
           fillColor = selectionColor;  // Rouge - sélection rectangle sur PCB
           opacity = 1.0;
         } else if (isHighlighted) {
-          fillColor = highlightedColor;  // Bleu - double-tap dans la liste
+          fillColor = highlightedColor;  // Rouge - double-tap dans la liste
           opacity = 1.0;
         } else if (isValidated) {
           fillColor = validatedColor;  // Vert - swipe gauche

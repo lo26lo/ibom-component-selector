@@ -38,7 +38,7 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
         {
           icon: '◆',
           color: theme.bgHighlighted,
-          text: `Surligné (double-tap) - ${isEinkMode ? 'gris foncé' : 'bleu'}, temporaire`,
+          text: `Surligné (double-tap) - ${isEinkMode ? 'gris foncé' : 'rouge'}, temporaire`,
         },
         {
           icon: '■',
@@ -63,7 +63,7 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
         {
           icon: '👆👆',
           color: theme.bgHighlighted,
-          text: 'Double-tap : Surligner ce groupe (🔵 bleu, temporaire)',
+          text: 'Double-tap : Surligner ce groupe (� rouge, temporaire)',
         },
         {
           icon: '👆⏳',

@@ -6,7 +6,7 @@
  * 
  * - Swipe gauche = validated (vert)
  * - Swipe droite = hidden (gris)  
- * - Double-tap = highlighted (bleu)
+ * - Double-tap = highlighted (rouge)
  * - Sélection rectangle PCB = état temporaire séparé (rouge)
  */
 

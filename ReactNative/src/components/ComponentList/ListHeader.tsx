@@ -1,6 +1,6 @@
 /**
  * ListHeader - En-tête de la liste avec boutons de tri
- * Double-tap sur une colonne = surligner les composants (bleu)
+ * Double-tap sur une colonne = surligner les composants (rouge)
  * Long-press sur une colonne = valider les composants (vert)
  */
 

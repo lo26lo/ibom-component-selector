@@ -13,15 +13,15 @@ export interface ThemeColors {
 
   // États des colonnes/composants
   bgValidated: string;      // Vert - colonne validée
-  bgHidden: string;         // Jaune - colonne masquée
-  bgHighlighted: string;    // Bleu - surligné via double-tap
+  bgHidden: string;         // Gris - colonne masquée
+  bgHighlighted: string;    // Rouge - surligné via double-tap
 
   // Texte
   textPrimary: string;
   textSecondary: string;
   textOnValidated: string;  // Texte sur fond vert
-  textOnHidden: string;     // Texte sur fond jaune
-  textOnHighlighted: string; // Texte sur fond bleu
+  textOnHidden: string;     // Texte sur fond gris
+  textOnHighlighted: string; // Texte sur fond rouge
 
   // Bordures
   border: string;
@@ -56,14 +56,14 @@ export const normalTheme: ThemeColors = {
   // États des colonnes/composants
   bgValidated: '#2d5a2d',     // Vert foncé
   bgHidden: '#808080',        // Gris (masqué)
-  bgHighlighted: '#2a4a6a',   // Bleu foncé
+  bgHighlighted: '#6a2a2a',   // Rouge foncé
 
   // Texte
   textPrimary: '#ffffff',
   textSecondary: '#cccccc',
   textOnValidated: '#90ee90',  // Vert clair
   textOnHidden: '#ffffff',     // Blanc
-  textOnHighlighted: '#87ceeb', // Bleu clair
+  textOnHighlighted: '#ffb0b0', // Rose clair
 
   // Bordures
   border: '#808099',

@@ -31,7 +31,7 @@ const defaultPreferences: Preferences = {
   autoHighlight: true,
   fontSize: 11,
   vibrationEnabled: true,
-  autoSave: false,
+  autoSave: true,
   autoSaveMinutes: 5,
   showSilkscreen: false,
   hideHiddenComponents: false, // Par défaut, afficher en jaune
