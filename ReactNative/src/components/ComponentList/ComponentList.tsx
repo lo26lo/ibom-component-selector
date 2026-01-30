@@ -38,26 +38,30 @@ export function ComponentList({
   const prefFontSize = usePreferencesStore((s) => s.fontSize);
   const hideHiddenComponents = usePreferencesStore((s) => s.hideHiddenComponents);
 
-  // Session store pour les états de colonnes
-  const hiddenColumns = useSessionStore((s) => s.hiddenColumns);
-  const clearHighlightedColumns = useSessionStore((s) => s.clearHighlightedColumns);
+  // Session store - nouveau système unifié
+  const componentStatus = useSessionStore((s) => s.componentStatus) || {};
+  const clearHighlighted = useSessionStore((s) => s.clearHighlighted);
 
   // Filter and sort components
   const filteredComponents = useMemo(() => {
     let result = [...selectedComponents];
 
+    // Calculer le nombre de masqués
+    const hiddenKeys = Object.entries(componentStatus)
+      .filter(([_, status]) => status === 'hidden')
+      .map(([key]) => key);
+
     // Debug: log pour le filtrage des masqués
     console.log('ComponentList filter:', {
       selectedCount: selectedComponents.length,
-      hiddenColumnsCount: hiddenColumns.length,
-      hiddenColumns: hiddenColumns.slice(0, 3),
+      hiddenCount: hiddenKeys.length,
     });
 
     // Toujours filtrer les composants masqués (ils disparaissent de la liste)
-    if (hiddenColumns.length > 0) {
+    if (hiddenKeys.length > 0) {
       result = result.filter((c) => {
         const key = `${c.value}|${c.footprint}|${c.lcsc}`;
-        return !hiddenColumns.includes(key);
+        return !hiddenKeys.includes(key);
       });
       console.log('Après filtrage masqués:', result.length);
     }
@@ -133,7 +137,7 @@ export function ComponentList({
     });
 
     return result;
-  }, [selectedComponents, filters, processedItems]);
+  }, [selectedComponents, filters, processedItems, componentStatus]);
 
   // Progress stats
   const progressStats = useMemo(() => {
@@ -219,8 +223,11 @@ export function ComponentList({
 
   // Handler pour effacer les highlights
   const handleClearHighlights = useCallback(() => {
-    clearHighlightedColumns();
-  }, [clearHighlightedColumns]);
+    clearHighlighted();
+  }, [clearHighlighted]);
+
+  // Info bar - calculer le nombre de masqués
+  const hiddenCount = Object.values(componentStatus).filter(s => s === 'hidden').length;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
@@ -236,7 +243,7 @@ export function ComponentList({
       {/* Info bar */}
       <View style={[styles.infoBar, { backgroundColor: theme.bgSecondary }]}>
         <Text style={[styles.infoText, { color: theme.textPrimary }]}>
-          Sel: {selectedComponents.length} | Masq: {hiddenColumns.length}
+          Sel: {selectedComponents.length} | Masq: {hiddenCount}
         </Text>
         <Text style={[styles.infoText, { color: theme.textPrimary }]}>
           Traités: {progressStats.done}/{progressStats.total}
