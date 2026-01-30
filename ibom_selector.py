@@ -1641,6 +1641,7 @@ class IBomSelectorApp:
         self.search_var = tk.StringVar()
         self.group_by_value_var = tk.BooleanVar(value=self.prefs.get('group_by_value', True))
         self.status_filter = tk.StringVar(value="all")  # all, validated, hidden, highlighted, pending
+        self.show_hidden_var = tk.BooleanVar(value=False)  # Par défaut, cacher les masqués
         
         self._setup_ui()
         self._setup_keyboard_shortcuts()
@@ -1800,10 +1801,23 @@ class IBomSelectorApp:
         self.pcb_pan_start_y = None
         
         # ----- Panneau Liste -----
-        self.list_frame = tk.LabelFrame(self.content_paned, text="Composants (double-clic = marquer fait)",
+        self.list_frame = tk.LabelFrame(self.content_paned, text="Composants",
                                         bg=self.theme['bg_secondary'], fg=self.theme['text_primary'],
                                         font=('Segoe UI', 10, 'bold'))
         self.content_paned.add(self.list_frame, height=350)
+        
+        # Légende des raccourcis et couleurs
+        legend_frame = tk.Frame(self.list_frame, bg=self.theme['bg_secondary'])
+        legend_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        tk.Label(legend_frame, text="Raccourcis:", bg=self.theme['bg_secondary'],
+                fg=self.theme['text_primary'], font=('Segoe UI', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
+        tk.Label(legend_frame, text="Double-clic/Espace = ✓ Validé", 
+                bg=self.theme['row_done'], fg='#ffffff', font=('Segoe UI', 8), padx=4).pack(side=tk.LEFT, padx=2)
+        tk.Label(legend_frame, text="Clic-droit = — Masqué",
+                bg=self.theme['row_hidden'], fg='#ffffff', font=('Segoe UI', 8), padx=4).pack(side=tk.LEFT, padx=2)
+        tk.Label(legend_frame, text="Touche H = ★ Surligné",
+                bg=self.theme['row_highlighted'], fg='#ffffff', font=('Segoe UI', 8), padx=4).pack(side=tk.LEFT, padx=2)
         
         # Toolbar Liste (filtres)
         list_toolbar = tk.Frame(self.list_frame, bg=self.theme['bg_secondary'])
@@ -1821,12 +1835,23 @@ class IBomSelectorApp:
         
         tk.Label(list_toolbar, text="Statut:", bg=self.theme['bg_secondary'],
                 fg=self.theme['text_primary'], font=('Segoe UI', 9)).pack(side=tk.LEFT)
-        # Tous, Validé (vert), Masqué (gris), Surligné (rouge), En attente
-        for text, value in [("All", "all"), ("✓", "validated"), ("👁", "hidden"), ("●", "highlighted"), ("○", "pending")]:
+        # Filtres: Tous, Validé (vert ✓), Masqué (gris —), Surligné (rouge ★), En attente (○)
+        for text, value in [("All", "all"), ("✓ Val", "validated"), ("— Masq", "hidden"), ("★ Surl", "highlighted"), ("○ Att", "pending")]:
             tk.Radiobutton(list_toolbar, text=text, variable=self.status_filter, value=value,
                           command=self._apply_filters, bg=self.theme['bg_secondary'],
                           fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary'],
                           font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=2)
+        
+        ttk.Separator(list_toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
+        
+        # Checkbox pour afficher les masqués
+        self.hidden_count_label = tk.Label(list_toolbar, text="", bg=self.theme['bg_secondary'],
+                                          fg=self.theme['row_hidden'], font=('Segoe UI', 8))
+        self.hidden_count_label.pack(side=tk.LEFT)
+        tk.Checkbutton(list_toolbar, text="Voir masqués", variable=self.show_hidden_var,
+                      command=self._apply_filters, bg=self.theme['bg_secondary'],
+                      fg=self.theme['row_hidden'], selectcolor=self.theme['bg_tertiary'],
+                      font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=2)
         
         ttk.Separator(list_toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
         
@@ -1844,6 +1869,11 @@ class IBomSelectorApp:
                       command=self._apply_filters, bg=self.theme['bg_secondary'],
                       fg=self.theme['text_primary'], selectcolor=self.theme['bg_tertiary'],
                       font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+        
+        # Bouton Aide
+        tk.Button(list_toolbar, text="? Aide", command=self._show_help,
+                 bg=self.theme['bg_tertiary'], fg=self.theme['text_primary'], relief=tk.FLAT,
+                 font=('Segoe UI', 8)).pack(side=tk.RIGHT, padx=5)
         
         self.stats_var = tk.StringVar()
         tk.Label(list_toolbar, textvariable=self.stats_var, bg=self.theme['bg_secondary'],
@@ -1902,7 +1932,7 @@ class IBomSelectorApp:
         # Bindings: Double-clic = validated, Clic-droit = hidden, H = highlighted
         self.tree.bind('<Double-1>', self._toggle_validated)
         self.tree.bind('<space>', self._toggle_validated)
-        self.tree.bind('<Button-3>', self._toggle_hidden)
+        self.tree.bind('<Button-3>', self._on_right_click_hide)  # Sélectionne + masque
         self.tree.bind('h', self._toggle_highlighted)
         self.tree.bind('H', self._toggle_highlighted)
         self.tree.bind('<<TreeviewSelect>>', self._on_tree_select)
@@ -1927,10 +1957,22 @@ class IBomSelectorApp:
         
         ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
         
-        # Boutons pour les 3 états
-        tk.Button(nav_frame, text="✓ Valider", command=self._mark_validated, **nav_btn_style).pack(side=tk.LEFT, padx=2)
-        tk.Button(nav_frame, text="👁 Masquer", command=self._mark_hidden, **nav_btn_style).pack(side=tk.LEFT, padx=2)
-        tk.Button(nav_frame, text="● Surligner", command=self._mark_highlighted, **nav_btn_style).pack(side=tk.LEFT, padx=2)
+        # Boutons pour les 3 états - avec couleurs distinctes
+        val_btn = tk.Button(nav_frame, text="✓ Valider", command=self._mark_validated,
+                           bg='#1a5a2a', fg='#ffffff', activebackground='#2d8a3d',
+                           relief=tk.FLAT, padx=10, pady=2, font=('Segoe UI', 9, 'bold'))
+        val_btn.pack(side=tk.LEFT, padx=2)
+        
+        hide_btn = tk.Button(nav_frame, text="— Masquer", command=self._mark_hidden,
+                            bg='#505050', fg='#ffffff', activebackground='#707070',
+                            relief=tk.FLAT, padx=10, pady=2, font=('Segoe UI', 9, 'bold'))
+        hide_btn.pack(side=tk.LEFT, padx=2)
+        
+        high_btn = tk.Button(nav_frame, text="★ Surligner", command=self._mark_highlighted,
+                            bg='#8a2a2a', fg='#ffffff', activebackground='#aa4a4a',
+                            relief=tk.FLAT, padx=10, pady=2, font=('Segoe UI', 9, 'bold'))
+        high_btn.pack(side=tk.LEFT, padx=2)
+        
         tk.Button(nav_frame, text="✗ Reset", command=self._clear_status, **nav_btn_style).pack(side=tk.LEFT, padx=2)
         
         ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
@@ -2250,6 +2292,77 @@ class IBomSelectorApp:
         )
         self.split_window.transient(self.root)
     
+    def _show_help(self):
+        """Affiche la fenêtre d'aide"""
+        help_text = """
+═══════════════════════════════════════════
+   IBom Component Selector - Aide
+═══════════════════════════════════════════
+
+🎯 SYSTÈME D'ÉTATS DES COMPOSANTS
+
+  ✓ VALIDÉ (vert)
+    → Double-clic ou touche Espace
+    → Composant traité/soudé
+    
+  — MASQUÉ (gris)  
+    → Clic-droit sur la ligne
+    → Disparaît de la liste (sauf si "Voir masqués")
+    → Pour les composants à ignorer
+    
+  ★ SURLIGNÉ (rouge)
+    → Touche H
+    → Pour marquer temporairement
+
+═══════════════════════════════════════════
+
+🖱️ INTERACTIONS
+
+  • Double-clic / Espace = Valider (vert)
+  • Clic-droit = Masquer (disparaît)
+  • Touche H = Surligner (rouge)
+  • Clic sur PCB = Ouvrir sélection zone
+
+═══════════════════════════════════════════
+
+⌨️ RACCOURCIS CLAVIER
+
+  Ctrl+O = Ouvrir fichier
+  Ctrl+L = Charger fichier
+  Ctrl+S = Exporter Excel
+  Ctrl+F = Recherche
+  ← → = Navigation préc/suiv
+  Espace = Valider sélection
+  H = Surligner sélection
+  Échap = Effacer sélection
+  F5 = Rafraîchir PCB
+
+═══════════════════════════════════════════
+
+💾 SAUVEGARDE
+
+  • Auto-save activé par défaut
+  • Historique des sélections sauvegardé
+  • États (validé/masqué/surligné) persistés
+
+═══════════════════════════════════════════
+"""
+        help_win = tk.Toplevel(self.root)
+        help_win.title("Aide - IBom Selector")
+        help_win.geometry("500x600")
+        help_win.configure(bg=self.theme['bg_primary'])
+        help_win.transient(self.root)
+        
+        text_widget = tk.Text(help_win, bg=self.theme['bg_primary'], fg=self.theme['text_primary'],
+                             font=('Consolas', 10), wrap=tk.WORD, padx=15, pady=15)
+        text_widget.pack(fill=tk.BOTH, expand=True)
+        text_widget.insert('1.0', help_text)
+        text_widget.config(state=tk.DISABLED)
+        
+        tk.Button(help_win, text="Fermer", command=help_win.destroy,
+                 bg=self.theme['accent'], fg='#ffffff', relief=tk.FLAT,
+                 padx=20, pady=5, font=('Segoe UI', 10)).pack(pady=10)
+    
     def _show_options(self):
         """Affiche la fenêtre d'options"""
         options_win = tk.Toplevel(self.root)
@@ -2442,12 +2555,20 @@ class IBomSelectorApp:
         """Met à jour les statistiques"""
         if not self.selected_components:
             self.stats_var.set("")
+            self.hidden_count_label.config(text="")
             return
         
         total = len(self.selected_components)
         filtered = len(self.filtered_components)
         front = sum(1 for c in self.selected_components if c.get('layer', 'F') == 'F')
         back = total - front
+        
+        # Compter les masqués
+        hidden_count = sum(1 for s in self.component_status.values() if s == 'hidden')
+        if hidden_count > 0:
+            self.hidden_count_label.config(text=f"({hidden_count})")
+        else:
+            self.hidden_count_label.config(text="")
         
         if filtered == total:
             self.stats_var.set(f"Total: {total} | Front: {front} | Back: {back}")
@@ -2461,11 +2582,11 @@ class IBomSelectorApp:
         
         status_filter = self.status_filter.get()
         
-        # Symboles pour les états
+        # Symboles pour les états - caractères simples et clairs
         STATUS_SYMBOLS = {
             'validated': '✓',
-            'hidden': '👁',
-            'highlighted': '●',
+            'hidden': '—',
+            'highlighted': '★',
             None: ''
         }
         
@@ -2487,6 +2608,10 @@ class IBomSelectorApp:
                 refs_str = ', '.join(refs_sorted)
                 key = (norm_value, footprint, lcsc)
                 status = self.component_status.get(key)  # None, 'validated', 'hidden', 'highlighted'
+                
+                # Cacher les masqués par défaut (sauf si show_hidden ou filtre hidden)
+                if status == 'hidden' and not self.show_hidden_var.get() and status_filter != 'hidden':
+                    continue
                 
                 # Filtre statut
                 if status_filter == 'validated' and status != 'validated':
@@ -2515,6 +2640,10 @@ class IBomSelectorApp:
                 norm_value = normalize_value(comp['value'])
                 key = (norm_value, comp['footprint'], comp['lcsc'])
                 status = self.component_status.get(key)
+                
+                # Cacher les masqués par défaut (sauf si show_hidden ou filtre hidden)
+                if status == 'hidden' and not self.show_hidden_var.get() and status_filter != 'hidden':
+                    continue
                 
                 if status_filter == 'validated' and status != 'validated':
                     continue
@@ -2646,6 +2775,22 @@ class IBomSelectorApp:
         self._update_tree()
         self._update_progress()
         self._draw_main_pcb(recalculate_scale=False)
+    
+    def _on_right_click_hide(self, event):
+        """Clic droit: sélectionne la ligne sous le curseur et la masque"""
+        # Identifier la ligne sous le curseur
+        item = self.tree.identify_row(event.y)
+        if item:
+            # Sélectionner cette ligne
+            self.tree.selection_set(item)
+            # Puis masquer
+            values = self.tree.item(item, 'values')
+            key = self._get_key_from_values(values)
+            if key:
+                self.component_status[key] = 'hidden'
+                self._update_tree()
+                self._update_progress()
+                self._draw_main_pcb(recalculate_scale=False)
     
     def _toggle_highlighted(self, event=None):
         """Bascule l'état surligné (rouge) - touche H"""
