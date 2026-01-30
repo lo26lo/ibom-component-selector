@@ -1,5 +1,6 @@
 /**
  * Toast - Notifications temporaires avec support Undo
+ * Animations désactivées en mode e-ink pour éviter le ghosting
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -21,26 +22,29 @@ interface ToastProps {
 }
 
 export function Toast({ toast, onDismiss }: ToastProps) {
-  const { theme } = useTheme();
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(50)).current;
+  const { theme, isEinkMode } = useTheme();
+  const opacity = useRef(new Animated.Value(isEinkMode ? 1 : 0)).current;
+  const translateY = useRef(new Animated.Value(isEinkMode ? 0 : 50)).current;
 
   const duration = toast.duration || 3000;
 
   useEffect(() => {
-    // Animate in
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // En mode e-ink, pas d'animation (évite le ghosting)
+    if (!isEinkMode) {
+      // Animate in
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
 
     // Auto dismiss
     const timer = setTimeout(() => {
@@ -51,6 +55,12 @@ export function Toast({ toast, onDismiss }: ToastProps) {
   }, []);
 
   const handleDismiss = () => {
+    // En mode e-ink, dismiss instantané
+    if (isEinkMode) {
+      onDismiss(toast.id);
+      return;
+    }
+
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 0,

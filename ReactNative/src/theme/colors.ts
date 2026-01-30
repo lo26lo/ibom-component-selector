@@ -85,27 +85,28 @@ export const normalTheme: ThemeColors = {
 
 /**
  * Thème pour mode e-ink (haut contraste noir/blanc)
+ * Utilise des niveaux de gris très différents pour distinguer les états
  */
 export const einkTheme: ThemeColors = {
   // Fonds
   bgPrimary: '#ffffff',
-  bgSecondary: '#f2f2f2',
-  bgSelected: '#d9d9d9',
-  bgProcessed: '#cccccc',
-  bgButton: '#e6e6e6',
-  bgButtonActive: '#bfbfbf',
+  bgSecondary: '#f0f0f0',
+  bgSelected: '#d0d0d0',
+  bgProcessed: '#e0e0e0',
+  bgButton: '#e8e8e8',
+  bgButtonActive: '#c0c0c0',
 
-  // États des colonnes/composants
-  bgValidated: '#c8e6c9',     // Vert pâle
-  bgHidden: '#fff9c4',        // Jaune pâle
-  bgHighlighted: '#bbdefb',   // Bleu pâle
+  // États des composants - niveaux de gris très distincts
+  bgValidated: '#d0d0d0',     // Gris clair (25% noir) - validé
+  bgHidden: '#909090',        // Gris moyen (50% noir) - masqué
+  bgHighlighted: '#404040',   // Gris foncé (75% noir) - surligné
 
   // Texte
   textPrimary: '#000000',
-  textSecondary: '#4d4d4d',
-  textOnValidated: '#1b5e20',  // Vert foncé
-  textOnHidden: '#f57f17',     // Orange/jaune foncé
-  textOnHighlighted: '#0d47a1', // Bleu foncé
+  textSecondary: '#404040',
+  textOnValidated: '#000000',  // Noir sur gris clair
+  textOnHidden: '#000000',     // Noir sur gris moyen
+  textOnHighlighted: '#ffffff', // Blanc sur gris foncé
 
   // Bordures
   border: '#000000',

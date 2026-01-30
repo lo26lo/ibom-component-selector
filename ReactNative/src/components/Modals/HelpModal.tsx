@@ -19,31 +19,31 @@ interface HelpSection {
 }
 
 export function HelpModal({ visible, onClose }: HelpModalProps) {
-  const { theme } = useTheme();
+  const { theme, isEinkMode } = useTheme();
 
   const sections: HelpSection[] = [
     {
       title: '🎨 Couleurs des composants',
       items: [
         {
-          icon: '●',
+          icon: '✓',
           color: theme.bgValidated,
-          text: 'Vert : Validé (swipe gauche) - ce groupe est terminé',
+          text: `Validé (swipe gauche) - ${isEinkMode ? 'gris clair' : 'vert'}, ce groupe est terminé`,
         },
         {
-          icon: '●',
+          icon: '▬',
           color: theme.bgHidden,
-          text: 'Gris : Masqué (swipe droite) - disparaît de la liste',
+          text: `Masqué (swipe droite) - ${isEinkMode ? 'gris moyen' : 'gris'}, disparaît de la liste`,
         },
         {
-          icon: '●',
+          icon: '◆',
           color: theme.bgHighlighted,
-          text: 'Bleu : Surligné (double-tap) - mis en évidence temporairement',
+          text: `Surligné (double-tap) - ${isEinkMode ? 'gris foncé' : 'bleu'}, temporaire`,
         },
         {
-          icon: '🔴',
+          icon: '■',
           color: '#D04040',
-          text: 'Rouge : Sélection rectangle sur le PCB (temporaire)',
+          text: 'Sélection rectangle sur le PCB (temporaire, rouge)',
         },
       ],
     },

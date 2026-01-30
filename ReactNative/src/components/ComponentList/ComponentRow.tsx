@@ -261,20 +261,24 @@ export const ComponentRow = memo(function ComponentRow({
           {
             backgroundColor: bgColor,
             borderBottomColor: theme.borderLight,
-            borderLeftWidth: showBorder ? 4 : 0,
+            // En mode e-ink, bordure plus épaisse pour meilleure visibilité
+            borderLeftWidth: showBorder ? (isEinkMode ? 6 : 4) : 0,
             borderLeftColor: borderColor,
           },
         ]}
       >
-        {/* Indicateur de statut */}
+        {/* Indicateur de statut - symboles plus distincts en e-ink */}
         <View style={styles.processedIndicator}>
           <Text style={[styles.processedText, { 
             color: textColor,
             opacity: visualState !== 'normal' ? 1 : 0.3,
+            // Police plus grande en e-ink pour meilleure lisibilité
+            fontSize: isEinkMode ? 16 : 14,
+            fontWeight: isEinkMode ? 'bold' : 'normal',
           }]}>
             {visualState === 'validated' ? '✓' : 
-             visualState === 'hidden' ? '−' : 
-             visualState === 'highlighted' ? '●' : '○'}
+             visualState === 'hidden' ? '▬' : 
+             visualState === 'highlighted' ? '◆' : '○'}
           </Text>
         </View>
 
