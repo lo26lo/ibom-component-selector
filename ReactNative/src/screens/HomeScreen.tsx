@@ -27,6 +27,7 @@ import {
   FilePicker,
   HelpModal,
   HiddenColumnsModal,
+  QRTransferModal,
 } from '../components/Modals';
 import { spacing } from '../theme/spacing';
 import type { Component } from '../core/types';
@@ -82,6 +83,7 @@ export function HomeScreen() {
   const [showDetail, setShowDetail] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showHiddenColumns, setShowHiddenColumns] = useState(false);
+  const [showQRTransfer, setShowQRTransfer] = useState(false);
   const [detailComponent, setDetailComponent] = useState<Component | null>(null);
 
   // Filtre de couleur pour le PCB
@@ -304,6 +306,12 @@ export function HomeScreen() {
             style={styles.toolButton}
           />
           <ThemedButton
+            title="📡"
+            onPress={() => setShowQRTransfer(true)}
+            size="small"
+            style={styles.toolButton}
+          />
+          <ThemedButton
             title={`Masq (${hiddenCount})`}
             onPress={() => setShowHiddenColumns(true)}
             size="small"
@@ -421,6 +429,10 @@ export function HomeScreen() {
         <HiddenColumnsModal
           visible={showHiddenColumns}
           onClose={() => setShowHiddenColumns(false)}
+        />
+        <QRTransferModal
+          visible={showQRTransfer}
+          onClose={() => setShowQRTransfer(false)}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

@@ -6,3 +6,4 @@ export { ComponentDetailModal } from './ComponentDetailModal';
 export { FilePicker } from './FilePicker';
 export { HelpModal } from './HelpModal';
 export { HiddenColumnsModal } from './HiddenColumnsModal';
+export { QRTransferModal } from './QRTransferModal';

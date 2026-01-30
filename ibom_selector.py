@@ -38,6 +38,18 @@ except ImportError:
     HAS_LZSTRING = False
     print("lzstring non disponible, utilisation du décompresseur intégré")
 
+# QR Code support
+try:
+    import qrcode
+    from PIL import Image, ImageTk
+    HAS_QRCODE = True
+except ImportError:
+    HAS_QRCODE = False
+    print("qrcode/pillow non disponible - pip install qrcode pillow")
+
+import base64
+import zlib
+
 
 # ==================== THEMES ====================
 
@@ -1982,6 +1994,16 @@ class IBomSelectorApp:
         tk.Button(nav_frame, text="Sauver", command=self._save_current_to_history, **nav_btn_style).pack(side=tk.LEFT, padx=2)
         tk.Button(nav_frame, text="Charger", command=self._load_history_selection, **nav_btn_style).pack(side=tk.LEFT, padx=2)
         
+        ttk.Separator(nav_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
+        
+        # Boutons QR Code pour transfert
+        tk.Button(nav_frame, text="📤 QR", command=self._show_qr_export, 
+                 bg='#2a5a8a', fg='#ffffff', activebackground='#3a7aba',
+                 relief=tk.FLAT, padx=8, pady=2, font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=2)
+        tk.Button(nav_frame, text="📥 QR", command=self._show_qr_import,
+                 bg='#5a8a2a', fg='#ffffff', activebackground='#7aba3a',
+                 relief=tk.FLAT, padx=8, pady=2, font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=2)
+        
         self.nav_label = tk.Label(nav_frame, text="", bg=self.theme['bg_secondary'],
                                  fg=self.theme['text_secondary'], font=('Segoe UI', 9))
         self.nav_label.pack(side=tk.RIGHT, padx=5)
@@ -2357,6 +2379,18 @@ class IBomSelectorApp:
   • États (validé/masqué/surligné) persistés
 
 ═══════════════════════════════════════════
+
+📡 TRANSFERT PC ↔ APK
+
+  📤 QR = Exporter l'état vers APK
+    → Génère un QR code à scanner
+    → Ou code à copier/coller
+    
+  📥 QR = Importer depuis APK
+    → Coller le code exporté de l'APK
+    → Restaure les statuts validé/masqué
+
+═══════════════════════════════════════════
 """
         help_win = tk.Toplevel(self.root)
         help_win.title("Aide - IBom Selector")
@@ -2373,6 +2407,207 @@ class IBomSelectorApp:
         tk.Button(help_win, text="Fermer", command=help_win.destroy,
                  bg=self.theme['accent'], fg='#ffffff', relief=tk.FLAT,
                  padx=20, pady=5, font=('Segoe UI', 10)).pack(pady=10)
+    
+    def _get_transfer_data(self):
+        """Génère les données de transfert (format unifié PC/APK)"""
+        return {
+            'version': '1.0',
+            'type': 'ibom_state',
+            'timestamp': datetime.now().isoformat(),
+            'file': Path(self.file_var.get()).name if self.file_var.get() else None,
+            'componentStatus': {str(k): v for k, v in self.component_status.items()},
+            'summary': {
+                'total': len(self.selected_components),
+                'validated': sum(1 for s in self.component_status.values() if s == 'validated'),
+                'hidden': sum(1 for s in self.component_status.values() if s == 'hidden'),
+                'highlighted': sum(1 for s in self.component_status.values() if s == 'highlighted'),
+            }
+        }
+    
+    def _compress_for_qr(self, data):
+        """Compresse les données pour QR code (JSON -> zlib -> base64)"""
+        json_str = json.dumps(data, separators=(',', ':'))
+        compressed = zlib.compress(json_str.encode('utf-8'), level=9)
+        return base64.b64encode(compressed).decode('ascii')
+    
+    def _decompress_from_qr(self, encoded):
+        """Décompresse les données QR (base64 -> zlib -> JSON)"""
+        compressed = base64.b64decode(encoded)
+        json_str = zlib.decompress(compressed).decode('utf-8')
+        return json.loads(json_str)
+    
+    def _show_qr_export(self):
+        """Affiche un QR code pour exporter l'état actuel"""
+        if not HAS_QRCODE:
+            messagebox.showerror("Erreur", "Module qrcode non installé.\n\npip install qrcode pillow")
+            return
+        
+        if not self.component_status:
+            messagebox.showwarning("Attention", "Aucun état à exporter.\nValidez/masquez des composants d'abord.")
+            return
+        
+        # Générer les données
+        data = self._get_transfer_data()
+        encoded = self._compress_for_qr(data)
+        
+        # Vérifier la taille (QR code limite ~3000 caractères)
+        if len(encoded) > 2500:
+            messagebox.showwarning("Attention", 
+                f"Données trop volumineuses ({len(encoded)} chars).\n"
+                "Seuls les statuts seront exportés.")
+            # Version allégée
+            data = {
+                'v': '1.0',
+                't': 'ibom',
+                'cs': {str(k): v[0] for k, v in self.component_status.items()}  # v/h/p pour validated/hidden/highlighted
+            }
+            encoded = self._compress_for_qr(data)
+        
+        # Créer le QR code
+        qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=8, border=2)
+        qr.add_data(encoded)
+        qr.make(fit=True)
+        
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Afficher dans une fenêtre
+        qr_win = tk.Toplevel(self.root)
+        qr_win.title("📤 Exporter vers APK")
+        qr_win.geometry("450x550")
+        qr_win.configure(bg=self.theme['bg_primary'])
+        qr_win.transient(self.root)
+        
+        tk.Label(qr_win, text="Scannez ce QR code avec l'APK", 
+                font=('Segoe UI', 14, 'bold'), bg=self.theme['bg_primary'], 
+                fg=self.theme['text_primary']).pack(pady=15)
+        
+        # Convertir pour Tkinter
+        photo = ImageTk.PhotoImage(qr_img.resize((350, 350)))
+        label = tk.Label(qr_win, image=photo, bg='white')
+        label.image = photo  # Garder référence
+        label.pack(pady=10)
+        
+        # Stats
+        stats_text = f"✓ {data.get('summary', {}).get('validated', 0)} validés | "
+        stats_text += f"— {data.get('summary', {}).get('hidden', 0)} masqués | "
+        stats_text += f"★ {data.get('summary', {}).get('highlighted', 0)} surlignés"
+        tk.Label(qr_win, text=stats_text, font=('Segoe UI', 10),
+                bg=self.theme['bg_primary'], fg=self.theme['text_secondary']).pack(pady=5)
+        
+        tk.Label(qr_win, text=f"Taille: {len(encoded)} caractères", font=('Segoe UI', 9),
+                bg=self.theme['bg_primary'], fg=self.theme['text_secondary']).pack()
+        
+        # Bouton copier le code
+        def copy_code():
+            self.root.clipboard_clear()
+            self.root.clipboard_append(encoded)
+            messagebox.showinfo("Copié", "Code copié dans le presse-papier")
+        
+        btn_frame = tk.Frame(qr_win, bg=self.theme['bg_primary'])
+        btn_frame.pack(pady=15)
+        
+        tk.Button(btn_frame, text="📋 Copier code", command=copy_code,
+                 bg=self.theme['bg_tertiary'], fg=self.theme['text_primary'],
+                 relief=tk.FLAT, padx=15, pady=5).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Fermer", command=qr_win.destroy,
+                 bg=self.theme['accent'], fg='#ffffff', relief=tk.FLAT,
+                 padx=15, pady=5).pack(side=tk.LEFT, padx=5)
+    
+    def _show_qr_import(self):
+        """Importe un état depuis un code (collé ou scanné)"""
+        import_win = tk.Toplevel(self.root)
+        import_win.title("📥 Importer depuis APK")
+        import_win.geometry("450x350")
+        import_win.configure(bg=self.theme['bg_primary'])
+        import_win.transient(self.root)
+        
+        tk.Label(import_win, text="Collez le code exporté depuis l'APK", 
+                font=('Segoe UI', 14, 'bold'), bg=self.theme['bg_primary'], 
+                fg=self.theme['text_primary']).pack(pady=15)
+        
+        tk.Label(import_win, text="(Généré via Export > Partager état QR)", 
+                font=('Segoe UI', 10), bg=self.theme['bg_primary'], 
+                fg=self.theme['text_secondary']).pack()
+        
+        # Zone de texte
+        text_frame = tk.Frame(import_win, bg=self.theme['bg_primary'])
+        text_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        
+        text_widget = tk.Text(text_frame, height=8, bg=self.theme['bg_secondary'], 
+                             fg=self.theme['text_primary'], font=('Consolas', 10),
+                             insertbackground=self.theme['text_primary'])
+        text_widget.pack(fill=tk.BOTH, expand=True)
+        
+        def do_import():
+            code = text_widget.get('1.0', tk.END).strip()
+            if not code:
+                messagebox.showwarning("Attention", "Collez un code d'abord")
+                return
+            
+            try:
+                data = self._decompress_from_qr(code)
+                
+                # Valider le format
+                if data.get('type') != 'ibom_state' and data.get('t') != 'ibom':
+                    raise ValueError("Format invalide")
+                
+                # Importer les statuts
+                status_dict = data.get('componentStatus', data.get('cs', {}))
+                imported_count = 0
+                
+                for key_str, status in status_dict.items():
+                    # Convertir la clé string en tuple
+                    try:
+                        # Format: "('value', 'footprint', 'lcsc')"
+                        if key_str.startswith('('):
+                            key = eval(key_str)
+                        else:
+                            # Format simplifié
+                            key = tuple(key_str.split('|'))
+                    except:
+                        continue
+                    
+                    # Convertir status abrégé si nécessaire
+                    if status == 'v':
+                        status = 'validated'
+                    elif status == 'h':
+                        status = 'hidden'
+                    elif status == 'p':
+                        status = 'highlighted'
+                    
+                    if status in ('validated', 'hidden', 'highlighted'):
+                        self.component_status[key] = status
+                        imported_count += 1
+                
+                self._update_tree()
+                self._update_progress()
+                self._draw_main_pcb(recalculate_scale=False)
+                
+                messagebox.showinfo("Succès", f"✓ {imported_count} statuts importés")
+                import_win.destroy()
+                
+            except Exception as e:
+                messagebox.showerror("Erreur", f"Import échoué:\n{str(e)}")
+        
+        def paste_clipboard():
+            try:
+                text_widget.delete('1.0', tk.END)
+                text_widget.insert('1.0', self.root.clipboard_get())
+            except:
+                pass
+        
+        btn_frame = tk.Frame(import_win, bg=self.theme['bg_primary'])
+        btn_frame.pack(pady=15)
+        
+        tk.Button(btn_frame, text="📋 Coller", command=paste_clipboard,
+                 bg=self.theme['bg_tertiary'], fg=self.theme['text_primary'],
+                 relief=tk.FLAT, padx=15, pady=5).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="✓ Importer", command=do_import,
+                 bg=self.theme['success'], fg='#ffffff', relief=tk.FLAT,
+                 padx=15, pady=5).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Annuler", command=import_win.destroy,
+                 bg=self.theme['accent'], fg='#ffffff', relief=tk.FLAT,
+                 padx=15, pady=5).pack(side=tk.LEFT, padx=5)
     
     def _show_options(self):
         """Affiche la fenêtre d'options"""
