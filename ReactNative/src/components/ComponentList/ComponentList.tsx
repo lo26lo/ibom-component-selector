@@ -47,6 +47,7 @@ export function ComponentList({
   const hideHiddenComponents = usePreferencesStore((s) => s.hideHiddenComponents);
 
   // Session store - nouveau système unifié
+  const sessionHasHydrated = useSessionStore((s) => s._hasHydrated);
   const componentStatus = useSessionStore((s) => s.componentStatus) || {};
   const clearHighlighted = useSessionStore((s) => s.clearHighlighted);
 
@@ -61,6 +62,11 @@ export function ComponentList({
 
   // Filter and sort components
   const filteredComponents = useMemo(() => {
+    // Attendre que le store soit hydraté avant de filtrer
+    if (!sessionHasHydrated) {
+      return [];
+    }
+    
     let result = [...selectedComponents];
 
     // Calculer le nombre de masqués
@@ -147,7 +153,7 @@ export function ComponentList({
     });
 
     return result;
-  }, [selectedComponents, filters, processedItems, componentStatus, showHidden]);
+  }, [selectedComponents, filters, processedItems, componentStatus, showHidden, sessionHasHydrated]);
 
   // Progress stats
   const progressStats = useMemo(() => {
@@ -239,7 +245,7 @@ export function ComponentList({
   }, [clearHighlighted]);
 
   // Info bar - calculer le nombre de masqués
-  const hiddenCount = Object.values(componentStatus).filter(s => s === 'hidden').length;
+  const hiddenCount = sessionHasHydrated ? Object.values(componentStatus).filter(s => s === 'hidden').length : 0;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
