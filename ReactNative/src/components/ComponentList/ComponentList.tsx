@@ -50,19 +50,6 @@ export function ComponentList({
   const componentStatus = useSessionStore((s) => s.componentStatus) || {};
   const clearHighlighted = useSessionStore((s) => s.clearHighlighted);
 
-  // Debug: log des clés au démarrage
-  const statusKeys = Object.keys(componentStatus);
-  if (statusKeys.length > 0 && selectedComponents.length > 0) {
-    const firstComponent = selectedComponents[0];
-    const generatedKey = `${firstComponent.value}|${firstComponent.footprint}|${firstComponent.lcsc}`;
-    console.log('DEBUG KEYS:', {
-      storedKeysCount: statusKeys.length,
-      storedKeysSample: statusKeys.slice(0, 2),
-      generatedKeySample: generatedKey,
-      match: statusKeys.includes(generatedKey),
-    });
-  }
-
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -81,20 +68,12 @@ export function ComponentList({
       .filter(([_, status]) => status === 'hidden')
       .map(([key]) => key);
 
-    // Debug: log pour le filtrage des masqués
-    console.log('ComponentList filter:', {
-      selectedCount: selectedComponents.length,
-      hiddenCount: hiddenKeys.length,
-      showHidden,
-    });
-
     // Filtrer les masqués sauf si showHidden est activé
     if (hiddenKeys.length > 0 && !showHidden) {
       result = result.filter((c) => {
         const key = `${c.value}|${c.footprint}|${c.lcsc}`;
         return !hiddenKeys.includes(key);
       });
-      console.log('Après filtrage masqués:', result.length);
     }
 
     // Layer filter
@@ -226,11 +205,13 @@ export function ComponentList({
     ({ item }: { item: Component }) => {
       const key = `${item.value}|${item.footprint}|${item.lcsc}`;
       const isProcessed = processedItems.has(key);
+      const status = componentStatus[key] || null;
 
       return (
         <ComponentRow
           component={item}
           isProcessed={isProcessed}
+          componentStatus={status}
           onToggleProcessed={toggleProcessed}
           onPress={onComponentPress}
           onLongPress={onComponentLongPress}
@@ -238,7 +219,7 @@ export function ComponentList({
         />
       );
     },
-    [processedItems, toggleProcessed, onComponentPress, onComponentLongPress, prefFontSize]
+    [processedItems, componentStatus, toggleProcessed, onComponentPress, onComponentLongPress, prefFontSize]
   );
 
   const keyExtractor = useCallback(
