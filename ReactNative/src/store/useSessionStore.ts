@@ -13,7 +13,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Component } from '../core/types';
+import type { Component, SelectionRect } from '../core/types';
 
 // Type unique pour l'état d'un composant
 export type ComponentStatus = 'validated' | 'hidden' | 'highlighted';
@@ -35,6 +35,9 @@ export interface SessionState {
 
   // Sélection rectangle sur le PCB (liste de refs)
   rectangleSelectedRefs: string[];
+
+  // Rectangle de sélection (coordonnées board)
+  selectionRect: SelectionRect | null;
 
   // Timestamp de dernière modification
   lastModified: number;
@@ -82,6 +85,10 @@ interface SessionStoreState extends SessionState {
   setRectangleSelectedRefs: (refs: string[]) => void;
   getRectangleSelectedRefs: () => string[];
   clearRectangleSelection: () => void;
+  
+  // Action pour le rectangle de sélection
+  setSelectionRect: (rect: SelectionRect | null) => void;
+  getSelectionRect: () => SelectionRect | null;
 
   // === COMPATIBILITÉ (pour migration progressive) ===
   // Ces fonctions redirigent vers le nouveau système
@@ -105,6 +112,7 @@ const defaultSession: SessionState = {
   processedItems: [],
   componentStatus: {},
   rectangleSelectedRefs: [],
+  selectionRect: null,
   lastModified: 0,
 };
 
@@ -222,7 +230,11 @@ export const useSessionStore = create<SessionStoreState>()(
       // Sélection rectangle PCB
       setRectangleSelectedRefs: (refs) => set({ rectangleSelectedRefs: refs, lastModified: Date.now() }),
       getRectangleSelectedRefs: () => get().rectangleSelectedRefs,
-      clearRectangleSelection: () => set({ rectangleSelectedRefs: [], lastModified: Date.now() }),
+      clearRectangleSelection: () => set({ rectangleSelectedRefs: [], selectionRect: null, lastModified: Date.now() }),
+
+      // Rectangle de sélection (coordonnées board)
+      setSelectionRect: (rect) => set({ selectionRect: rect, lastModified: Date.now() }),
+      getSelectionRect: () => get().selectionRect,
 
       restoreSession: () => {
         const state = get();
@@ -234,6 +246,7 @@ export const useSessionStore = create<SessionStoreState>()(
             processedItems: state.processedItems,
             componentStatus: state.componentStatus,
             rectangleSelectedRefs: state.rectangleSelectedRefs,
+            selectionRect: state.selectionRect,
             lastModified: state.lastModified,
           };
         }
@@ -312,6 +325,7 @@ export const useSessionStore = create<SessionStoreState>()(
           processedItems: state.processedItems,
           componentStatus: persistedStatus,
           rectangleSelectedRefs: state.rectangleSelectedRefs,
+          selectionRect: state.selectionRect,
           lastModified: state.lastModified,
         };
       },

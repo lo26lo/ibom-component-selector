@@ -61,6 +61,10 @@ export function HomeScreen() {
   const setComponentStatus = useSessionStore((s) => s.setComponentStatus);
   const clearAllStatus = useSessionStore((s) => s.clearAllStatus);
   const rectangleSelectedRefs = useSessionStore((s) => s.rectangleSelectedRefs);
+  const sessionSelectionRect = useSessionStore((s) => s.selectionRect);
+  
+  // useAppStore pour restaurer le rectangle visuellement
+  const setSelectionRect = useAppStore((s) => s.setSelectionRect);
   
   // Compter les états
   const hiddenCount = Object.values(componentStatus).filter(s => s === 'hidden').length;
@@ -137,8 +141,14 @@ export function HomeScreen() {
         setHighlightedComponents(highlightedComps);
         console.log(`Sélection rectangle restaurée: ${highlightedComps.length} composants`);
       }
+      
+      // Restaurer aussi le rectangle visuel
+      if (sessionSelectionRect) {
+        setSelectionRect(sessionSelectionRect);
+        console.log('Rectangle visuel restauré');
+      }
     }
-  }, [sessionRestored, components, rectangleSelectedRefs, setHighlightedComponents]);
+  }, [sessionRestored, components, rectangleSelectedRefs, sessionSelectionRect, setHighlightedComponents, setSelectionRect]);
 
   // Sauvegarder la session à chaque changement
   useEffect(() => {

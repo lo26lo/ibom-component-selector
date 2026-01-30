@@ -59,6 +59,7 @@ export function PCBView({
   // Session store - nouveau système unifié
   const componentStatus = useSessionStore((s) => s.componentStatus);
   const setRectangleSelectedRefs = useSessionStore((s) => s.setRectangleSelectedRefs);
+  const setSessionSelectionRect = useSessionStore((s) => s.setSelectionRect);
 
   // Récupérer les footprints et edges depuis le parser
   const footprints = useMemo(() => parser?.getFootprints() || [], [parser]);
@@ -225,15 +226,19 @@ export function PCBView({
       // Mettre à jour les composants surlignés sur le PCB (rouge)
       setHighlightedComponents(selected);
       
-      // Sauvegarder le rectangle dans le store (persisté dans useAppStore)
-      setSelectionRect({ 
+      // Rectangle en coordonnées board
+      const rect = { 
         x1: Math.min(start.x, end.x), 
         y1: Math.min(start.y, end.y), 
         x2: Math.max(start.x, end.x), 
         y2: Math.max(start.y, end.y) 
-      });
-
-      // Sauvegarder les refs dans la session (persisté dans useSessionStore)
+      };
+      
+      // Sauvegarder le rectangle dans useAppStore (pour affichage immédiat)
+      setSelectionRect(rect);
+      
+      // Sauvegarder aussi dans la session (persisté dans useSessionStore)
+      setSessionSelectionRect(rect);
       setRectangleSelectedRefs(selected.map(c => c.ref));
 
       if (onSelectionComplete) {
@@ -244,7 +249,7 @@ export function PCBView({
     setIsTouching(false);
     setSelectionStart(null);
     setSelectionEnd(null);
-  }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setHighlightedComponents, setSelectionRect, setRectangleSelectedRefs, onSelectionComplete]);
+  }, [isTouching, selectionStart, selectionEnd, screenToBoard, getComponentsInRect, setSelectedComponents, setHighlightedComponents, setSelectionRect, setSessionSelectionRect, setRectangleSelectedRefs, onSelectionComplete]);
 
   // Render component - les pads sont déjà colorés en rouge dans renderPads
   // Plus besoin de dessiner quoi que ce soit ici
