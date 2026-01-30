@@ -6,6 +6,24 @@
 import { Buffer } from 'buffer';
 import pako from 'pako';
 
+// Polyfill TextEncoder/TextDecoder pour React Native (requis par pako)
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = class TextEncoder {
+    encode(str: string): Uint8Array {
+      const buf = Buffer.from(str, 'utf-8');
+      return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+    }
+  } as any;
+}
+
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = class TextDecoder {
+    decode(arr: Uint8Array): string {
+      return Buffer.from(arr).toString('utf-8');
+    }
+  } as any;
+}
+
 export interface TransferData {
   version: string;
   type: 'ibom_state';
